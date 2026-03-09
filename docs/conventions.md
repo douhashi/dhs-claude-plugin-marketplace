@@ -29,7 +29,8 @@ spira/
 ├── agents/
 │   ├── planner.md
 │   ├── implementer.md
-│   └── reviewer.md
+│   ├── reviewer.md
+│   └── qa.md
 ├── hooks/
 │   └── hooks.json
 ├── scripts/
