@@ -1,25 +1,32 @@
-# Spira
+# dhs-claude-plugin-marketplace
 
-Claude Code プラグインとして、自律的な開発サイクルを支援するツール群を提供する。
+Claude Code プラグインのローカルマーケットプレイス。
 
-## 提供機能
+## マーケットプレイス構成
+
+```
+dhs-claude-plugin-marketplace/
+├── .claude-plugin/
+│   └── marketplace.json      # マーケットプレイスマニフェスト
+├── spira/                    # プラグイン: 自律的開発サイクル支援
+│   ├── .claude-plugin/
+│   │   └── plugin.json
+│   ├── skills/
+│   ├── agents/
+│   └── README.md
+├── docs/                     # ドキュメント
+└── CLAUDE.md
+```
+
+## プラグイン一覧
+
+### spira
+
+自律的な開発サイクルを支援するツール群を提供する Claude Code プラグイン。
 
 - **開発環境セットアップ**: プロジェクトの初期セットアップを行うエージェント/スキル
 - **開発サイクル自動化**: 計画・実装・レビューを自律的に回すエージェント/スキル
 - **タスク管理**: `gh project` を操作するスキル群
-
-## プロジェクト構成
-
-```
-spira/
-├── .claude-plugin/
-│   └── plugin.json          # プラグインマニフェスト
-├── skills/                  # スキル定義
-├── agents/                  # エージェント定義
-├── hooks/                   # フック設定
-├── scripts/                 # ユーティリティスクリプト
-└── docs/                    # ドキュメント
-```
 
 ## ドキュメント
 
@@ -35,16 +42,26 @@ spira/
 
 ## 開発
 
-### ローカルテスト
+### マーケットプレイス登録
 
 ```bash
-claude --plugin-dir .
+/plugin marketplace add /path/to/dhs-claude-plugin-marketplace
 ```
 
-プラグインに変更を加えた場合は Claude Code を再起動して反映させる。
+### プラグインインストール
+
+```bash
+/plugin install spira@dhs-claude-plugin-marketplace
+```
+
+### ローカルテスト（プラグイン単体）
+
+```bash
+claude --plugin-dir ./spira
+```
 
 ### デバッグ
 
 ```bash
-claude --debug --plugin-dir .
+claude --debug --plugin-dir ./spira
 ```

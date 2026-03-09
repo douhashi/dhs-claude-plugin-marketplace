@@ -1,0 +1,13 @@
+{
+  "name": "dhs-claude-plugin-marketplace",
+  "owner": {
+    "name": "douhashi"
+  },
+  "plugins": [
+    {
+      "name": "spira",
+      "source": "./spira",
+      "description": "自律的な開発サイクルを支援するツール群を提供する Claude Code プラグイン"
+    }
+  ]
+}

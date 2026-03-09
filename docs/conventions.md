@@ -17,31 +17,32 @@
 ## ディレクトリ構造
 
 ```
-spira/
+dhs-claude-plugin-marketplace/
 ├── .claude-plugin/
-│   └── plugin.json
-├── skills/
-│   ├── setup-dev/
-│   │   └── SKILL.md
-│   ├── implement/
-│   │   └── SKILL.md
-│   └── ...
-├── agents/
-│   ├── planner.md
-│   ├── implementer.md
-│   ├── reviewer.md
-│   └── qa.md
-├── hooks/
-│   └── hooks.json
-├── scripts/
-│   └── ...
+│   └── marketplace.json       # マーケットプレイスマニフェスト
+├── spira/                     # プラグイン本体
+│   ├── .claude-plugin/
+│   │   └── plugin.json
+│   ├── skills/
+│   │   ├── implement/
+│   │   │   └── SKILL.md
+│   │   └── ...
+│   ├── agents/
+│   │   ├── planner.md
+│   │   ├── implementer.md
+│   │   ├── reviewer.md
+│   │   └── qa.md
+│   ├── hooks/
+│   │   └── hooks.json
+│   ├── scripts/
+│   │   └── ...
+│   └── README.md
 ├── docs/
 │   ├── plugin-spec.md
 │   ├── skills-spec.md
 │   ├── agents-spec.md
 │   └── conventions.md
-├── CLAUDE.md
-└── README.md
+└── CLAUDE.md
 ```
 
 ## スキル設計方針
