@@ -31,7 +31,8 @@ dhs-claude-plugin-marketplace/
 │   │   ├── planner.md
 │   │   ├── implementer.md
 │   │   ├── reviewer.md
-│   │   └── qa.md
+│   │   ├── qa.md
+│   │   └── setup.md
 │   ├── hooks/
 │   │   └── hooks.json
 │   ├── scripts/
