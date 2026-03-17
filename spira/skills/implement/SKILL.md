@@ -1,19 +1,31 @@
 ---
 name: implement
 description: "GitHub Issue に基づいて設計・実装・レビューを自律的に回す開発サイクル。implement, develop, build, 実装して、開発して"
-argument-hint: "<Issue番号>"
+argument-hint: "<Issue URL>"
 disable-model-invocation: true
 user-invocable: true
 ---
 
-GitHub Issue #$ARGUMENTS の設計 → 実装 → レビューの開発サイクルを実行してください。
+GitHub Issue $ARGUMENTS の設計 → 実装 → レビューの開発サイクルを実行してください。
+
+## Issue URL と Issue 番号
+
+引数として渡された Issue URL から Issue 番号を抽出してください。
+
+```
+ISSUE_URL="$ARGUMENTS"
+ISSUE_NO=$(echo "$ISSUE_URL" | grep -oE '[0-9]+$')
+```
+
+以降、`ISSUE_URL` は `gh issue view` や `gh issue comment` などの GitHub CLI コマンドに渡す識別子として使います。
+`ISSUE_NO` はブランチ名・コミットメッセージ・PR タイトルなど、番号が必要な箇所で使います。
 
 ## Issue の取得
 
 まず Bash ツールで Issue の内容を取得してください。**コマンドは必ず分けて実行すること。**
 
-1. `gh issue view $ARGUMENTS`
-2. `gh issue view $ARGUMENTS --comments`
+1. `gh issue view ISSUE_URL`
+2. `gh issue view ISSUE_URL --comments`
 
 取得した内容をもとに以降の Phase を進めてください。
 
@@ -23,7 +35,7 @@ GitHub Issue #$ARGUMENTS の設計 → 実装 → レビューの開発サイク
 コメント本文は必ずヒアドキュメントで渡してください:
 
 ```
-gh issue comment $ARGUMENTS --body "$(cat <<'EOF'
+gh issue comment ISSUE_URL --body "$(cat <<'EOF'
 コメント内容
 EOF
 )"
@@ -34,7 +46,7 @@ EOF
 実装作業の前に、`gh wt` を使ってワークツリーを作成してください。
 
 ```
-gh wt add impl-$ARGUMENTS
+gh wt add impl-ISSUE_NO
 ```
 
 以降の Phase 2（実装）および Phase 4（修正）では、このワークツリー内で作業を行ってください。
@@ -79,7 +91,7 @@ Phase 1 の計画内容から、タスクの種類を判定してください。
 #### setup エージェントを使う場合
 
 **Agent ツールを `subagent_type: "setup"` で起動**し、Phase 1 の計画に基づいて環境を構築させてください。
-**ワークツリー `impl-$ARGUMENTS` 内で作業すること。**
+**ワークツリー `impl-ISSUE_NO` 内で作業すること。**
 
 ```
 Agent ツール呼び出し:
@@ -96,7 +108,7 @@ Agent ツール呼び出し:
 #### implementer エージェントを使う場合
 
 **Agent ツールを `subagent_type: "implementer"` で起動**し、Phase 1 の計画に基づいてコードを実装させてください。
-**ワークツリー `impl-$ARGUMENTS` 内で作業すること。**
+**ワークツリー `impl-ISSUE_NO` 内で作業すること。**
 
 ```
 Agent ツール呼び出し:
@@ -140,7 +152,7 @@ reviewer エージェントの結果を受け取ったら:
 
 reviewer エージェントが「要修正」と判定した場合:
 1. 問題点をまとめる
-2. **Phase 2 で使用したのと同じエージェント（`setup` または `implementer`）を再度起動**し、ワークツリー `impl-$ARGUMENTS` 内で指摘事項を修正させる
+2. **Phase 2 で使用したのと同じエージェント（`setup` または `implementer`）を再度起動**し、ワークツリー `impl-ISSUE_NO` 内で指摘事項を修正させる
 3. 修正内容を Issue にコメントとして記録する（見出し: `## 修正内容 (N回目)`）
 4. **Agent ツールを `subagent_type: "reviewer"` で再度起動**してレビューする
 5. レビュー結果を Issue にコメントとして記録する
@@ -157,7 +169,7 @@ reviewer が「OK」の場合は Phase 5 に進んでください。
 1. ワークツリー内で変更をコミットする（未コミットの変更がある場合）
    ```
    gh wt -- git add -A
-   gh wt -- git commit -m "Implement #$ARGUMENTS"
+   gh wt -- git commit -m "Implement #ISSUE_NO"
    ```
 2. リモートにプッシュする
    ```
@@ -165,8 +177,8 @@ reviewer が「OK」の場合は Phase 5 に進んでください。
    ```
 3. PR を作成する
    ```
-   gh pr create --head impl-$ARGUMENTS --title "Implement #$ARGUMENTS" --body "$(cat <<'EOF'
-   Closes #$ARGUMENTS
+   gh pr create --head impl-ISSUE_NO --title "Implement #ISSUE_NO" --body "$(cat <<'EOF'
+   Closes #ISSUE_NO
 
    ## 変更内容
    （実装内容の概要をここに記述）
@@ -203,13 +215,13 @@ Agent ツール呼び出し:
 
 **CI 失敗の場合**:
 1. qa エージェントから返された失敗内容を Issue にコメントとして記録する（見出し: `## CI 失敗 (N回目)`）
-2. **Phase 2 で使用したのと同じエージェント（`setup` または `implementer`）を起動**し、ワークツリー `impl-$ARGUMENTS` 内で CI 失敗の原因を修正させる
+2. **Phase 2 で使用したのと同じエージェント（`setup` または `implementer`）を起動**し、ワークツリー `impl-ISSUE_NO` 内で CI 失敗の原因を修正させる
    - プロンプトには失敗したチェック名・エラー内容を含めること
 3. 修正内容を Issue にコメントとして記録する（見出し: `## CI 修正 (N回目)`）
 4. ワークツリー内で変更をコミット・プッシュする
    ```
    gh wt -- git add -A
-   gh wt -- git commit -m "Fix CI failure for #$ARGUMENTS (attempt N)"
+   gh wt -- git commit -m "Fix CI failure for #ISSUE_NO (attempt N)"
    gh wt -- git push
    ```
 5. 6a に戻り、再度 qa エージェントで CI チェックを監視する
@@ -225,4 +237,4 @@ Agent ツール呼び出し:
 - PR URL とマージ結果
 
 最後に、ユーザーへの最終報告としてリポジトリの Issue URL と PR URL を含む簡潔なサマリーを出力してください。
-Issue URL は `gh issue view $ARGUMENTS --json url -q .url` で取得してください。
+Issue URL は ISSUE_URL をそのまま使用してください。
