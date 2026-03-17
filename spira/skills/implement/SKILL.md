@@ -40,7 +40,7 @@ Agent ツール呼び出し:
 
 プロンプトには以下の手順を **この順序で** 実行するよう指示してください:
 
-1. `ghq get OWNER/REPOSITORY` でリポジトリをクローンする
+1. `gh q get OWNER/REPOSITORY` でリポジトリをクローンする
 2. `cd ~/ghq/github.com/OWNER/REPOSITORY` で作業ディレクトリに移動する
 3. `.coder/setup.sh` が存在する場合は実行する（`bash .coder/setup.sh`）
 
