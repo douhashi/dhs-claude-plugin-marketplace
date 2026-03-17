@@ -8,17 +8,43 @@ user-invocable: true
 
 GitHub Issue $ARGUMENTS の設計 → 実装 → レビューの開発サイクルを実行してください。
 
-## Issue URL と Issue 番号
+## Issue URL の解析
 
-引数として渡された Issue URL から Issue 番号を抽出してください。
+引数として渡された Issue URL から以下の変数を抽出してください。
 
 ```
 ISSUE_URL="$ARGUMENTS"
+# 例: https://github.com/octocat/hello-world/issues/42
+OWNER=$(echo "$ISSUE_URL" | sed -E 's|.*/([^/]+)/[^/]+/issues/[0-9]+$|\1|')
+REPOSITORY=$(echo "$ISSUE_URL" | sed -E 's|.*/([^/]+)/issues/[0-9]+$|\1|')
 ISSUE_NO=$(echo "$ISSUE_URL" | grep -oE '[0-9]+$')
 ```
 
-以降、`ISSUE_URL` は `gh issue view` や `gh issue comment` などの GitHub CLI コマンドに渡す識別子として使います。
-`ISSUE_NO` はブランチ名・コミットメッセージ・PR タイトルなど、番号が必要な箇所で使います。
+| 変数 | 用途 |
+|:--|:--|
+| `ISSUE_URL` | `gh issue view` / `gh issue comment` など GitHub CLI コマンドの識別子 |
+| `OWNER` | リポジトリオーナー |
+| `REPOSITORY` | リポジトリ名 |
+| `ISSUE_NO` | ブランチ名・コミットメッセージ・PR タイトルなど番号が必要な箇所 |
+
+## Phase 0: 環境準備（setup エージェント）
+
+**Agent ツールを `subagent_type: "setup"` で起動**し、リポジトリのクローンと開発環境のセットアップを行わせてください。
+
+```
+Agent ツール呼び出し:
+  subagent_type: "setup"
+  description: "リポジトリのクローンと環境構築"
+  prompt: （以下の内容を含める）
+```
+
+プロンプトには以下の手順を **この順序で** 実行するよう指示してください:
+
+1. `ghq get OWNER/REPOSITORY` でリポジトリをクローンする
+2. `cd ~/ghq/github.com/OWNER/REPOSITORY` で作業ディレクトリに移動する
+3. `.coder/setup.sh` が存在する場合は実行する（`bash .coder/setup.sh`）
+
+**以降のすべての Phase は `~/ghq/github.com/OWNER/REPOSITORY` を作業ディレクトリとして実行してください。**
 
 ## Issue の取得
 
