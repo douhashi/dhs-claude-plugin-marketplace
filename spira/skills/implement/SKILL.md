@@ -1,12 +1,13 @@
 ---
 name: implement
-description: "GitHub Issue に基づいて設計・実装・レビューを自律的に回す開発サイクル。implement, develop, build, 実装して、開発して"
+description: "GitHub Issue に基づいて実装・レビューを自律的に回す開発サイクル。implement, develop, build, 実装して、開発して"
 argument-hint: "<Issue URL>"
 disable-model-invocation: true
 user-invocable: true
 ---
 
-GitHub Issue $ARGUMENTS の設計 → 実装 → レビューの開発サイクルを実行してください。
+GitHub Issue $ARGUMENTS の実装 → レビューの開発サイクルを実行してください。
+事前に `spira:plan` で作成された実装計画が Issue コメントに記録されている前提です。
 
 ## Issue URL の解析
 
@@ -85,28 +86,9 @@ gh wt -- npm test
 
 ## 手順
 
-### Phase 1: 設計（planner エージェント）
-
-**Agent ツールを `subagent_type: "planner"` で起動**し、タスクの実装計画を作成させてください。
-
-```
-Agent ツール呼び出し:
-  subagent_type: "planner"
-  description: "実装計画を作成"
-  prompt: （以下の内容を含める）
-```
-
-プロンプトには以下を含めてください:
-- Issue の内容（タイトル・本文・コメント）
-- 計画には CLAUDE.md の「コードとドキュメントの同期」方針に従い、ドキュメント更新も含めること
-
-planner エージェントの結果を受け取ったら:
-1. 計画内容をユーザーに提示する
-2. Issue にコメントとして記録する（見出し: `## 実装計画`）
-
 ### Phase 2: 実装（implementer or setup エージェント）
 
-Phase 1 の計画内容から、タスクの種類を判定してください。
+Issue コメントに記録されている実装計画（見出し: `## 実装計画`）を取得し、タスクの種類を判定してください。
 
 **判定基準**:
 - **環境構築タスク**: ライブラリのインストール、環境マネージャ（mise 等）の設定、フレームワークの初期化、CI の設定など、開発環境のセットアップが主目的の場合 → `setup` エージェントを使用
@@ -116,7 +98,7 @@ Phase 1 の計画内容から、タスクの種類を判定してください。
 
 #### setup エージェントを使う場合
 
-**Agent ツールを `subagent_type: "setup"` で起動**し、Phase 1 の計画に基づいて環境を構築させてください。
+**Agent ツールを `subagent_type: "setup"` で起動**し、実装計画に基づいて環境を構築させてください。
 **ワークツリー `impl-ISSUE_NO` 内で作業すること。**
 
 ```
@@ -127,13 +109,13 @@ Agent ツール呼び出し:
 ```
 
 プロンプトには以下を含めてください:
-- Phase 1 で作成された実装計画の全文
+- Issue コメントから取得した実装計画の全文
 - 計画に忠実に環境を構築すること
 - ワークツリーのパス（`gh wt list` で確認）内で作業すること
 
 #### implementer エージェントを使う場合
 
-**Agent ツールを `subagent_type: "implementer"` で起動**し、Phase 1 の計画に基づいてコードを実装させてください。
+**Agent ツールを `subagent_type: "implementer"` で起動**し、実装計画に基づいてコードを実装させてください。
 **ワークツリー `impl-ISSUE_NO` 内で作業すること。**
 
 ```
@@ -144,7 +126,7 @@ Agent ツール呼び出し:
 ```
 
 プロンプトには以下を含めてください:
-- Phase 1 で作成された実装計画の全文
+- Issue コメントから取得した実装計画の全文
 - 計画に忠実に実装すること
 - ワークツリーのパス（`gh wt list` で確認）内で作業すること
 
