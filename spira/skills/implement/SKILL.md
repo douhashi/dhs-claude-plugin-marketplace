@@ -60,19 +60,14 @@ EOF
 
 ### ワークツリーの作成
 
-実装作業の前に、`gh wt` を使ってワークツリーを作成する。
+実装作業の前に、ワークツリーを作成する。
 
 ```
-gh wt add impl-ISSUE_NO
+git worktree add ../impl-ISSUE_NO -b impl-ISSUE_NO
 ```
 
+ワークツリーのパスは `gh wt list` で確認できる。
 以降の Phase 2（実装）および Phase 4（修正）では、このワークツリー内で作業を行う。
-ワークツリー内でコマンドを実行するには以下の形式を使う:
-
-```
-gh wt -- git diff
-gh wt -- npm test
-```
 
 ## 手順
 
@@ -101,7 +96,7 @@ Agent ツール呼び出し:
 プロンプトには以下を含めてください:
 - Issue コメントから取得した実装計画の全文
 - 計画に忠実に環境を構築すること
-- ワークツリーのパス（`gh wt list` で確認）内で作業すること
+- ワークツリー内で作業すること
 
 #### implementer エージェントを使う場合
 
@@ -118,7 +113,7 @@ Agent ツール呼び出し:
 プロンプトには以下を含めてください:
 - Issue コメントから取得した実装計画の全文
 - 計画に忠実に実装すること
-- ワークツリーのパス（`gh wt list` で確認）内で作業すること
+- ワークツリー内で作業すること
 
 #### 共通: 結果の記録
 
@@ -140,7 +135,7 @@ Agent ツール呼び出し:
 プロンプトには以下を含めてください:
 - Issue の内容
 - 実装計画の概要
-- ワークツリー内で `gh wt -- git diff` を使って変更内容を確認すること
+- ワークツリー内で `git diff` を使って変更内容を確認すること
 
 reviewer エージェントの結果を受け取ったら:
 1. レビュー結果をユーザーに提示する
@@ -166,12 +161,12 @@ reviewer が「OK」の場合は Phase 5 に進んでください。
 
 1. ワークツリー内で変更をコミットする（未コミットの変更がある場合）
    ```
-   gh wt -- git add -A
-   gh wt -- git commit -m "Implement #ISSUE_NO"
+   git add -A
+   git commit -m "Implement #ISSUE_NO"
    ```
 2. リモートにプッシュする
    ```
-   gh wt -- git push -u origin HEAD
+   git push -u origin HEAD
    ```
 3. PR を作成する
    ```
@@ -218,9 +213,9 @@ Agent ツール呼び出し:
 3. 修正内容を Issue にコメントとして記録する（見出し: `## CI 修正 (N回目)`）
 4. ワークツリー内で変更をコミット・プッシュする
    ```
-   gh wt -- git add -A
-   gh wt -- git commit -m "Fix CI failure for #ISSUE_NO (attempt N)"
-   gh wt -- git push
+   git add -A
+   git commit -m "Fix CI failure for #ISSUE_NO (attempt N)"
+   git push
    ```
 5. 6a に戻り、再度 qa エージェントで CI チェックを監視する
 
