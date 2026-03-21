@@ -24,6 +24,8 @@ dhs-claude-plugin-marketplace/
 │   ├── .claude-plugin/
 │   │   └── plugin.json
 │   ├── skills/
+│   │   ├── brainstorming/
+│   │   │   └── SKILL.md
 │   │   ├── implement/
 │   │   │   └── SKILL.md
 │   │   └── ...
