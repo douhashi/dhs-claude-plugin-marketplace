@@ -34,6 +34,7 @@ dhs-claude-plugin-marketplace/
 - @docs/plugin-spec.md : Claude Code プラグインの仕様まとめ
 - @docs/skills-spec.md : スキルの仕様と作成方法
 - @docs/agents-spec.md : エージェントの仕様と作成方法
+- @docs/skill-format.md : スキルのセクション構造フォーマット定義
 - @docs/conventions.md : このプロジェクトの規約
 
 ## 開発指針
