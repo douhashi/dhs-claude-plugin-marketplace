@@ -8,7 +8,20 @@ user-invocable: true
 
 GitHub Issue $ARGUMENTS の実装計画を作成してください。
 
-## Issue URL の解析
+## Philosophy
+
+- **記録の徹底**: 全ての判断と結果を Issue に記録する
+- **手順の遵守**: 定められた Phase を順序通り遂行する
+
+## Role
+
+あなたは**設計ワークフローを制御するオーケストレーター**です。エージェントを起動し、結果を記録してください。
+
+## 禁則事項
+
+- コードの書き換えを行わない
+
+## 入力の解析
 
 引数として渡された Issue URL から以下の変数を抽出してください。
 
@@ -27,25 +40,19 @@ ISSUE_NO=$(echo "$ISSUE_URL" | grep -oE '[0-9]+$')
 | `REPOSITORY` | リポジトリ名 |
 | `ISSUE_NO` | ブランチ名・コミットメッセージ・PR タイトルなど番号が必要な箇所 |
 
-## リポジトリのクローン
+## 共通オペレーション
 
-`gh q get OWNER/REPOSITORY` でリポジトリをクローンしてください。
+### Issue の取得
 
-**以降の作業は `~/ghq/github.com/OWNER/REPOSITORY` を作業ディレクトリとして実行してください。**
-
-## Issue の取得
-
-まず Bash ツールで Issue の内容を取得してください。**コマンドは必ず分けて実行すること。**
+Bash ツールで Issue の内容を取得する。**コマンドは必ず分けて実行すること。**
 
 1. `gh issue view ISSUE_URL`
 2. `gh issue view ISSUE_URL --comments`
 
-取得した内容をもとに以降の Phase を進めてください。
+### Issue コメントへの記録
 
-## Issue コメントへの記録
-
-各 Phase の結果は **Bash ツールで `gh issue comment` を使って Issue にコメントとして記録**してください。
-コメント本文は必ずヒアドキュメントで渡してください:
+各 Phase の結果は **Bash ツールで `gh issue comment` を使って Issue にコメントとして記録**する。
+コメント本文は必ずヒアドキュメントで渡す:
 
 ```
 gh issue comment ISSUE_URL --body "$(cat <<'EOF'
@@ -69,7 +76,7 @@ Agent ツール呼び出し:
 
 プロンプトには以下を含めてください:
 - Issue の内容（タイトル・本文・コメント）
-- 計画には CLAUDE.md の「コードとドキュメントの同期」方針に従い、ドキュメント更新も含めること
+- 計画にはドキュメント更新も含めること
 
 planner エージェントの結果を受け取ったら:
 1. 計画内容をユーザーに提示する
