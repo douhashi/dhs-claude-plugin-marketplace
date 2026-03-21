@@ -9,7 +9,16 @@ user-invocable: true
 GitHub Issue $ARGUMENTS の実装 → レビューの開発サイクルを実行してください。
 事前に `spira:plan` で作成された実装計画が Issue コメントに記録されている前提です。
 
-## Issue URL の解析
+## Philosophy
+
+- **記録の徹底**: 全ての判断と結果を Issue に記録する
+- **手順の遵守**: 定められた Phase を順序通り遂行する
+
+## Role
+
+あなたは**実装ワークフローを制御するオーケストレーター**です。エージェントを起動し、結果を記録してください。
+
+## 入力の解析
 
 引数として渡された Issue URL から以下の変数を抽出してください。
 
@@ -28,38 +37,19 @@ ISSUE_NO=$(echo "$ISSUE_URL" | grep -oE '[0-9]+$')
 | `REPOSITORY` | リポジトリ名 |
 | `ISSUE_NO` | ブランチ名・コミットメッセージ・PR タイトルなど番号が必要な箇所 |
 
-## Phase 0: 環境準備（setup エージェント）
+## 共通オペレーション
 
-**Agent ツールを `subagent_type: "setup"` で起動**し、リポジトリのクローンと開発環境のセットアップを行わせてください。
+### Issue の取得
 
-```
-Agent ツール呼び出し:
-  subagent_type: "setup"
-  description: "リポジトリのクローンと環境構築"
-  prompt: （以下の内容を含める）
-```
-
-プロンプトには以下の手順を **この順序で** 実行するよう指示してください:
-
-1. `gh q get OWNER/REPOSITORY` でリポジトリをクローンする
-2. `cd ~/ghq/github.com/OWNER/REPOSITORY` で作業ディレクトリに移動する
-3. `.coder/setup.sh` が存在する場合は実行する（`bash .coder/setup.sh`）
-
-**以降のすべての Phase は `~/ghq/github.com/OWNER/REPOSITORY` を作業ディレクトリとして実行してください。**
-
-## Issue の取得
-
-まず Bash ツールで Issue の内容を取得してください。**コマンドは必ず分けて実行すること。**
+Bash ツールで Issue の内容を取得する。**コマンドは必ず分けて実行すること。**
 
 1. `gh issue view ISSUE_URL`
 2. `gh issue view ISSUE_URL --comments`
 
-取得した内容をもとに以降の Phase を進めてください。
+### Issue コメントへの記録
 
-## Issue コメントへの記録
-
-各 Phase の結果は **Bash ツールで `gh issue comment` を使って Issue にコメントとして記録**してください。
-コメント本文は必ずヒアドキュメントで渡してください:
+各 Phase の結果は **Bash ツールで `gh issue comment` を使って Issue にコメントとして記録**する。
+コメント本文は必ずヒアドキュメントで渡す:
 
 ```
 gh issue comment ISSUE_URL --body "$(cat <<'EOF'
@@ -68,16 +58,16 @@ EOF
 )"
 ```
 
-## ワークツリーの作成
+### ワークツリーの作成
 
-実装作業の前に、`gh wt` を使ってワークツリーを作成してください。
+実装作業の前に、`gh wt` を使ってワークツリーを作成する。
 
 ```
 gh wt add impl-ISSUE_NO
 ```
 
-以降の Phase 2（実装）および Phase 4（修正）では、このワークツリー内で作業を行ってください。
-ワークツリー内でコマンドを実行するには以下の形式を使います:
+以降の Phase 2（実装）および Phase 4（修正）では、このワークツリー内で作業を行う。
+ワークツリー内でコマンドを実行するには以下の形式を使う:
 
 ```
 gh wt -- git diff
