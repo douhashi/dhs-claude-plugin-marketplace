@@ -26,6 +26,8 @@ dhs-claude-plugin-marketplace/
 │   ├── skills/
 │   │   ├── brainstorming/
 │   │   │   └── SKILL.md
+│   │   ├── decide/
+│   │   │   └── SKILL.md
 │   │   ├── implement/
 │   │   │   └── SKILL.md
 │   │   └── ...
@@ -33,6 +35,7 @@ dhs-claude-plugin-marketplace/
 │   │   ├── planner.md
 │   │   ├── implementer.md
 │   │   ├── reviewer.md
+│   │   ├── po.md
 │   │   ├── qa.md
 │   │   └── setup.md
 │   ├── hooks/
