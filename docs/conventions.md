@@ -26,9 +26,13 @@ dhs-claude-plugin-marketplace/
 │   ├── skills/
 │   │   ├── brainstorming/
 │   │   │   └── SKILL.md
+│   │   ├── create-issue/
+│   │   │   └── SKILL.md
 │   │   ├── decide/
 │   │   │   └── SKILL.md
 │   │   ├── implement/
+│   │   │   └── SKILL.md
+│   │   ├── update-doc/
 │   │   │   └── SKILL.md
 │   │   └── ...
 │   ├── agents/
