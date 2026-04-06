@@ -2,7 +2,6 @@
 name: create-issue
 description: "議論結果や指示に基づいてGitHub Issueを作成する。create-issue, Issue作成, 起票, チケット"
 argument-hint: "[リポジトリ(owner/repo形式)]"
-disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Bash
 ---

@@ -2,7 +2,6 @@
 name: update-doc
 description: "議論結果や指示に基づいてドキュメントを更新する。update-doc, ドキュメント更新, 文書更新, 反映"
 argument-hint: "<更新対象のファイルパスまたは更新内容の指示>"
-disable-model-invocation: true
 user-invocable: true
 ---
 
