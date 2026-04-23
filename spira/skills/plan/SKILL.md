@@ -81,7 +81,7 @@ Agent ツール呼び出し:
 planner エージェントの結果を受け取ったら:
 1. 計画内容をユーザーに提示する
 2. Issue にコメントとして記録する（見出し: `## 実装計画`）
-3. 「設計判断が必要な論点」が「なし」でなければ Phase 1.5 に進む。「なし」であればここで終了
+3. 「設計判断が必要な論点」が「なし」でなければ Phase 1.5 に進む。「なし」であれば Phase 2 に進む
 
 ### Phase 1.5: 設計判断（PO エージェント）
 
@@ -104,3 +104,26 @@ PO エージェントの判断を受け取ったら:
 1. 判断結果をユーザーに提示する
 2. Issue にコメントとして記録する（見出し: `## 設計判断`）
 3. 判断結果を反映した実装計画の修正が必要であれば、planner エージェントを再度起動して計画を更新し、Issue にコメントとして記録する（見出し: `## 実装計画（修正版）`）
+4. Phase 2 に進む
+
+### Phase 2: ラベル付与
+
+Issue に `planned` ラベルを付与してください。ラベルが存在しない場合は作成してから付与します。
+
+1. ラベル存在確認:
+
+   ```
+   gh label list --repo OWNER/REPOSITORY --search planned --json name --jq '.[].name' | grep -x planned
+   ```
+
+2. ラベルが存在しなければ、青色（`0075ca`）で作成:
+
+   ```
+   gh label create planned --repo OWNER/REPOSITORY --color 0075ca --description "実装計画が策定済み"
+   ```
+
+3. Issue にラベルを付与:
+
+   ```
+   gh issue edit ISSUE_URL --add-label planned
+   ```
