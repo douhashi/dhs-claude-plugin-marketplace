@@ -2,7 +2,6 @@
 name: implement
 description: "GitHub Issue に基づいて実装・レビューを自律的に回す開発サイクル。implement, develop, build, 実装して、開発して"
 argument-hint: "<Issue URL>"
-disable-model-invocation: true
 user-invocable: true
 ---
 

@@ -2,7 +2,6 @@
 name: plan
 description: "GitHub Issue に基づいて実装計画を作成する。plan, 計画して, 設計して"
 argument-hint: "<Issue URL>"
-disable-model-invocation: true
 user-invocable: true
 ---
 
