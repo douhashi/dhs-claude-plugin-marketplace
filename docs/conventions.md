@@ -30,7 +30,13 @@ dhs-claude-plugin-marketplace/
 │   │   │   └── SKILL.md
 │   │   ├── decide/
 │   │   │   └── SKILL.md
+│   │   ├── do/
+│   │   │   └── SKILL.md
 │   │   ├── implement/
+│   │   │   └── SKILL.md
+│   │   ├── pick/
+│   │   │   └── SKILL.md
+│   │   ├── plan/
 │   │   │   └── SKILL.md
 │   │   ├── update-doc/
 │   │   │   └── SKILL.md
@@ -38,7 +44,6 @@ dhs-claude-plugin-marketplace/
 │   ├── agents/
 │   │   ├── planner.md
 │   │   ├── implementer.md
-│   │   ├── reviewer.md
 │   │   ├── po.md
 │   │   ├── qa.md
 │   │   └── setup.md
