@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-set -euo pipefail
+#
+# Uninstall marketplace plugins.
+#   scripts/uninstall.sh            # ALL plugins (from marketplace.json)
+#   scripts/uninstall.sh tts-notify # only the named plugin(s)
+#
+. "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 
-MARKETPLACE_NAME="dhs-claude-plugin-marketplace"
-PLUGIN_NAME="${1:-spira}"
-
-echo "==> プラグインをアンインストール: ${PLUGIN_NAME}@${MARKETPLACE_NAME}"
-claude plugin uninstall "${PLUGIN_NAME}@${MARKETPLACE_NAME}"
-
-echo "==> 完了。Claude Code を再起動してください。"
+mp_foreach mp_uninstall "$@"
+mp_done

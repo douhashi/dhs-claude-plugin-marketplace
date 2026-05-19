@@ -1,18 +1,12 @@
 #!/usr/bin/env bash
-set -euo pipefail
+#
+# Reinstall (uninstall -> re-register -> install) marketplace plugins.
+#   scripts/update.sh            # ALL plugins (from marketplace.json)
+#   scripts/update.sh tts-notify # only the named plugin(s)
+#
+. "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-MARKETPLACE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-MARKETPLACE_NAME="dhs-claude-plugin-marketplace"
-PLUGIN_NAME="${1:-spira}"
-
-echo "==> プラグインをアンインストール: ${PLUGIN_NAME}@${MARKETPLACE_NAME}"
-claude plugin uninstall "${PLUGIN_NAME}@${MARKETPLACE_NAME}"
-
-echo "==> マーケットプレイスを登録: $MARKETPLACE_DIR"
-claude plugin marketplace add "$MARKETPLACE_DIR"
-
-echo "==> プラグインをインストール: ${PLUGIN_NAME}@${MARKETPLACE_NAME}"
-claude plugin install "${PLUGIN_NAME}@${MARKETPLACE_NAME}"
-
-echo "==> 完了。Claude Code を再起動してください。"
+mp_foreach mp_uninstall "$@"
+mp_register
+mp_foreach mp_install "$@"
+mp_done
