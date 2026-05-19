@@ -51,6 +51,8 @@ read -r -d '' STOP_PROMPT <<'EOF'
   （逐語カタカナ化）してはならない。例「needs your permission」を
   「ニーズ ユア パーミッション」とせず「許可を求めています」と訳す。
   日本語化した上で、固有名詞・技術用語（Bash, GitHub 等）のみカタカナ表記
+- 数値が変更前→変更後の形で示されたら**両方残す**。「30秒から120秒へ変更」
+  の「30秒から」を落とさない
 
 各 sentence は `text` と `reading` の 2 フィールド。**どちらも自然な日本語の
 文**であること（英文の音写は禁止）:
@@ -93,6 +95,11 @@ read -r -d '' NOTIFICATION_PROMPT <<'EOF'
   use Bash」を「クロード ニーズ ユア パーミッション…」とせず
   「Claude が Bash の使用許可を求めています」と訳す。日本語化した上で
   固有名詞・技術用語のみカタカナ表記
+- **ファイルパス・ツールID（`mcp__…` 等）・ブランチ名・コマンドの細部は
+  そのまま読み上げず概念で表現する**。アンダースコア・スラッシュ・拡張子を
+  1 文字ずつ音写しない。例 `mcp__github__create_pull_request` →
+  「GitHub のプルリクエスト作成ツール」、`src/app/config.py` →
+  「設定ファイル」、`origin/main` → 「メインブランチ」
 
 各 sentence は `text` と `reading` の 2 フィールド。**どちらも自然な日本語の
 文**であること（英文の音写は禁止）:
@@ -115,6 +122,15 @@ read -r -d '' NOTIFICATION_PROMPT <<'EOF'
   入力:    "Claude needs your permission to use Bash"
   text:    "Bash の使用許可を求めています。"
   reading: "バッシュ の使用許可を求めています。"
+
+識別子を概念化する例（1 文字ずつ音写しない）:
+  入力:    "Claude needs your permission to use mcp__github__create_pull_request"
+  text:    "GitHub のプルリクエスト作成ツールの使用許可を求めています。"
+  reading: "ギットハブ のプルリクエスト作成ツールの使用許可を求めています。"
+
+  入力:    "Claude needs your permission to use Edit on src/app/config.py"
+  text:    "設定ファイルの編集許可を求めています。"
+  reading: "設定ファイルの編集許可を求めています。"
 EOF
 
 if [ "$MODE" = "notification" ]; then
