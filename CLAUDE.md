@@ -14,6 +14,13 @@ dhs-claude-plugin-marketplace/
 │   ├── skills/
 │   ├── agents/
 │   └── README.md
+├── tts-notify/               # プラグイン: 通知の要約読み上げ（フック）
+│   ├── .claude-plugin/
+│   │   └── plugin.json
+│   ├── hooks/
+│   ├── bin/
+│   ├── lib/
+│   └── README.md
 ├── docs/                     # ドキュメント
 └── CLAUDE.md
 ```
@@ -34,6 +41,18 @@ dhs-claude-plugin-marketplace/
 - **一気通貫サイクル**: 計画から PR マージまでを単一フローで実行するスキル（`spira:do`）
 - **次タスク抽出**: 対応すべき Issue を 1 件抽出するスキル（`spira:pick`）
 - **タスク管理**: `gh project` を操作するスキル群
+
+### tts-notify
+
+Claude の Stop / SubagentStop / Notification を OpenRouter で短く要約し、
+ローカル TTS（stt-tts-runpod の `tts_say.sh`）で読み上げるフックプラグイン。
+
+- **薄い共通ディスパッチャ**: 3 イベントを単一 `dispatch.sh` に集約、`setsid`
+  でデタッチして即 return（Claude を非ブロッキング）。常駐サービス不要
+- **要約**: OpenRouter 構造化出力（プロンプト/スキーマは irodori-tts-docker
+  coordinator から忠実移植）。鍵は `~/.config/tts-notify/env`（リポ外・600）
+- **単一フライト**: `flock -n` で再生/要約中の新イベントはドロップ（先がち）
+- 詳細は `tts-notify/README.md`
 
 ## ドキュメント
 

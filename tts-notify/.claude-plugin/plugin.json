@@ -1,0 +1,9 @@
+{
+  "name": "tts-notify",
+  "version": "0.1.0",
+  "description": "Claude の Stop / SubagentStop / Notification を OpenRouter で短く要約し、ローカル TTS (stt-tts-runpod の tts_say.sh) で読み上げるフックプラグイン",
+  "repository": "https://github.com/douhashi/dhs-claude-plugin-marketplace",
+  "license": "MIT",
+  "keywords": ["hooks", "tts", "notification", "openrouter", "voice"],
+  "hooks": "./hooks/hooks.json"
+}

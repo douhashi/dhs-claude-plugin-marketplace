@@ -8,6 +8,11 @@
       "name": "spira",
       "source": "./spira",
       "description": "自律的な開発サイクルを支援するツール群を提供する Claude Code プラグイン"
+    },
+    {
+      "name": "tts-notify",
+      "source": "./tts-notify",
+      "description": "Claude の Stop / SubagentStop / Notification を OpenRouter で要約しローカル TTS で読み上げるフックプラグイン"
     }
   ]
 }
