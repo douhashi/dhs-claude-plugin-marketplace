@@ -21,7 +21,7 @@ fi
 
 # Playback via stt-tts-runpod's tts_say.sh. Overridable for other machines.
 : "${TTS_NOTIFY_SAY:=$HOME/ghq/github.com/douhashi/stt-tts-runpod/scripts/tts_say.sh}"
-: "${TTS_NOTIFY_PRESET:=sophie}"
+: "${TTS_NOTIFY_PRESET:=gena}"
 : "${TTS_NOTIFY_VOLUME:=50}"
 : "${TTS_NOTIFY_CUE:=default}"
 

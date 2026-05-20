@@ -77,7 +77,7 @@ fi
 
 [ "$SOURCE" = "subagent_stop" ] && readings="サブエージェント: $readings"
 
-# --- play (sophie / volume 50 / start cue) via tts_say.sh ------------------
+# --- play (gena / volume 50 / start cue) via tts_say.sh ------------------
 [ -x "$TTS_NOTIFY_SAY" ] || { log "tts_say.sh not found: $TTS_NOTIFY_SAY"; exit 0; }
 printf '%s\n' "$readings" \
   | TTS_PRESET="$TTS_NOTIFY_PRESET" \

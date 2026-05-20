@@ -85,7 +85,7 @@ SubagentStop フック）は**重複発火するので削除**すること。
 | `OPENROUTER_MODEL` | `openai/gpt-5-mini` | 要約モデル |
 | `OPENROUTER_URL` | `https://openrouter.ai/api/v1/chat/completions` | エンドポイント |
 | `TTS_NOTIFY_SAY` | `~/ghq/github.com/douhashi/stt-tts-runpod/scripts/tts_say.sh` | 読み上げコマンド |
-| `TTS_NOTIFY_PRESET` | `sophie` | 声プリセット |
+| `TTS_NOTIFY_PRESET` | `gena` | 声プリセット |
 | `TTS_NOTIFY_VOLUME` | `50` | 音量 %（tts_say.sh の `TTS_VOLUME`） |
 | `TTS_NOTIFY_CUE` | `default` | 開始効果音（tts_say.sh の `TTS_CUE`） |
 | `TTS_NOTIFY_TRANSCRIPT_WAIT` | `5` | transcript フラッシュ待ち秒 |
