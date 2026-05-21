@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# tts-notify thin dispatcher (shared by Stop / SubagentStop / Notification).
+# tts-notify thin dispatcher (shared by Stop / Notification).
 #
 # Claude Code blocks until a hook returns, so this MUST be fast and never do
 # real work: it only stashes the event JSON and detaches the worker, then

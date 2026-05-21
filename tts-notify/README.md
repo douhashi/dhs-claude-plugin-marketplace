@@ -1,8 +1,11 @@
 # tts-notify
 
-Claude Code の **Stop / SubagentStop / Notification** を OpenRouter で短く
+Claude Code の **Stop / Notification** を OpenRouter で短く
 要約し、ローカル TTS（[stt-tts-runpod](https://github.com/douhashi/stt-tts-runpod)
 の `scripts/tts_say.sh`）で読み上げるフックプラグイン。
+
+Notification は「ツール使用許可要求」など**ユーザーのアクションが要る通知だけ**を
+読み上げ、入力待ちアイドル通知（`waiting for your input` 等）はドロップする。
 
 旧 `~/.claude/hooks/tts-on-*.sh` ＋ 常駐コーディネータ（:16101）構成の置き換え。
 **常駐サービス不要**（デタッチ worker 方式）。
@@ -13,7 +16,7 @@ Claude Code の **Stop / SubagentStop / Notification** を OpenRouter で短く
 tts-notify/
 ├── .claude-plugin/plugin.json   # マニフェスト（hooks: ./hooks/hooks.json）
 ├── hooks/
-│   ├── hooks.json               # Stop/SubagentStop/Notification → dispatch.sh
+│   ├── hooks.json               # Stop/Notification → dispatch.sh
 │   └── dispatch.sh              # 薄い共通ディスパッチャ（即 setsid デタッチ→即 return）
 ├── bin/worker.sh                # デタッチ実行: 抽出→要約→tts_say.sh
 └── lib/
@@ -22,7 +25,7 @@ tts-notify/
     └── summarize.sh             # OpenRouter 要約（プロンプト/スキーマは coordinator 由来）
 ```
 
-3 イベントは **単一 `dispatch.sh`**（`--source` 引数で差分）に集約。dispatch は
+2 イベントは **単一 `dispatch.sh`**（`--source` 引数で差分）に集約。dispatch は
 イベント JSON を stash して `setsid` で `worker.sh` を即デタッチし即 return する
 ため、Claude Code を一切ブロックしない。失敗は常に静かな no-op（exit 0）。
 
@@ -32,7 +35,9 @@ tts-notify/
 2. `worker.sh` …
    - **単一フライト**: `flock -n`。再生/要約中に来た新イベントは**ドロップ**
      （先がち・キューなし・取り戻しなし。意図的に単純化）
-   - テキスト取得: notification は `.message`、stop/subagent_stop は
+   - notification は `.message` を判定し、入力待ちアイドル通知はドロップ。
+     許可要求など要アクション通知のみ要約対象
+   - テキスト取得: notification は `.message`、stop は
      transcript から最新 assistant 本文＋直前 user（最大 `TTS_NOTIFY_TRANSCRIPT_WAIT`
      秒バウンドでフラッシュ待ち）
    - OpenRouter で要約（`stop`=1〜2 文 / `notification`=1 文、`text`+`reading`
@@ -40,7 +45,7 @@ tts-notify/
    - `reading`（英単語→カタカナ版）を `tts_say.sh` で読み上げ
 3. 鍵欠如/要約失敗時の graceful degrade:
    - notification → 生メッセージをそのまま読み上げ
-   - stop/subagent_stop → ドロップ（assistant 本文は長大になりうるため生読みしない）
+   - stop → ドロップ（assistant 本文は長大になりうるため生読みしない）
 
 ## セットアップ
 
@@ -74,8 +79,8 @@ cd ~/ghq/github.com/douhashi/stt-tts-runpod && scripts/local_serve.sh -d
 /plugin install tts-notify@dhs-claude-plugin-marketplace
 ```
 
-旧構成（`~/.claude/settings.json` の `tts-on-*.sh` を指す Stop/Notification/
-SubagentStop フック）は**重複発火するので削除**すること。
+旧構成（`~/.claude/settings.json` の `tts-on-*.sh` を指す Stop/Notification
+フック）は**重複発火するので削除**すること。
 
 ## 設定（`~/.config/tts-notify/env` または環境変数）
 

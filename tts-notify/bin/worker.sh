@@ -3,15 +3,18 @@
 # tts-notify detached worker. Launched by hooks/dispatch.sh via setsid so it
 # runs AFTER the hook already returned (Claude is never blocked).
 #
-# Pipeline: parse event -> gather text (transcript for stop/subagent_stop,
-# message for notification) -> OpenRouter summarize (ported prompts) ->
+# Pipeline: parse event -> gather text (transcript for stop, message for
+# notification) -> OpenRouter summarize (ported prompts) ->
 # play the `reading` sentences via stt-tts-runpod's tts_say.sh.
+#
+# Notification: idle "waiting for input" messages are dropped; only
+# action-required notifications (e.g. tool permission prompts) are spoken.
 #
 # Concurrency (kept deliberately simple per request): a single non-blocking
 # flock. If a worker is already running (summarizing or playing), new events
 # are DROPPED — first-wins, no queue, no catch-up.
 #
-# Args: $1 = source (stop|subagent_stop|notification)  $2 = event JSON file
+# Args: $1 = source (stop|notification)  $2 = event JSON file
 #
 set +e
 
@@ -34,6 +37,12 @@ flock -n 9 || { log "busy -> drop"; exit 0; }
 if [ "$SOURCE" = "notification" ]; then
   raw="$(printf '%s' "$event" | jq -r '.message // empty' 2>/dev/null)"
   [ -n "$raw" ] || { log "empty notification -> drop"; exit 0; }
+  # 入力待ちアイドル通知は読み上げない。許可要求など「ユーザーのアクションが
+  # 要る」通知だけ拾う。idle と確証が持てないものは安全側で全て通す。
+  case "$raw" in
+    *"waiting for your input"*|*"appears to be idle"*|*"入力を待"*)
+      log "idle notification -> drop"; exit 0 ;;
+  esac
   mode="notification"
   src_text="$raw"
 else
@@ -74,8 +83,6 @@ if [ -z "$readings" ]; then
     exit 0
   fi
 fi
-
-[ "$SOURCE" = "subagent_stop" ] && readings="サブエージェント: $readings"
 
 # --- play (gena / volume 50 / start cue) via tts_say.sh ------------------
 [ -x "$TTS_NOTIFY_SAY" ] || { log "tts_say.sh not found: $TTS_NOTIFY_SAY"; exit 0; }
