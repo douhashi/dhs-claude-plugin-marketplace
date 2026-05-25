@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 #
-# OpenRouter summarizer. Reads the source text on stdin, returns one TTS
-# `reading` line per summarized sentence on stdout. Empty output on ANY
-# failure (no key / HTTP / parse / validation) so the caller degrades.
+# OpenRouter summarizer. Reads the source text on stdin, returns one NDJSON
+# object per summarized sentence on stdout: {"say": <reading>, "show": <text>}.
+# worker.sh maps this onto a hailer /hail group — `say` -> segment.speech
+# (spoken via TTS), `show` -> segment.text (display / ntfy push). Empty output
+# on ANY failure (no key / HTTP / parse / validation) so the caller degrades;
+# response validation + drop-reason logging live in lib/validate.py.
 #
 # Prompts and the structured-output (strict json_schema) contract are ported
 # verbatim from irodori-tts-docker's coordinator (summarizer.py / llm_schema.py):
 #   stop          -> 1..2 sentences, each {text, reading}
 #   notification  -> exactly 1 sentence, {text, reading}
-# `reading` is the English->katakana version actually fed to TTS.
+# `reading` is the English->katakana version fed to TTS (-> `say`); `text` is
+# the natural-Japanese display form (-> `show`).
 #
 set +e
 
@@ -200,6 +204,13 @@ if [ -n "$err" ]; then exit 0; fi
 content="$(printf '%s' "$resp" | jq -r '.choices[0].message.content // empty' 2>/dev/null)"
 [ -n "$content" ] || exit 0
 
-# content is itself a JSON string constrained by the schema.
-printf '%s' "$content" | jq -r '.sentences[].reading // empty' 2>/dev/null \
-  | sed '/^[[:space:]]*$/d'
+# content is a schema-constrained JSON string. Hand it to validate.py (stdlib)
+# which emits the NDJSON contract `say`=reading (spoken) / `show`=text (display)
+# and explains every dropped sentence on stderr. We route those reasons into
+# worker.log so failures are visible instead of vanishing into a silent jq drop.
+verr="$(mktemp /tmp/tts-notify.verr.XXXXXX 2>/dev/null)"
+printf '%s' "$content" | python3 "$ROOT/lib/validate.py" 2>"${verr:-/dev/null}"
+if [ -n "$verr" ] && [ -s "$verr" ]; then
+  while IFS= read -r line; do [ -n "$line" ] && log "validate: $line"; done <"$verr"
+fi
+[ -n "$verr" ] && rm -f "$verr"

@@ -19,11 +19,13 @@ fi
 : "${OPENROUTER_URL:=https://openrouter.ai/api/v1/chat/completions}"
 # OPENROUTER_API_KEY intentionally has no default (empty => graceful degrade).
 
-# Playback via stt-tts-runpod's tts_say.sh. Overridable for other machines.
-: "${TTS_NOTIFY_SAY:=$HOME/ghq/github.com/douhashi/stt-tts-runpod/scripts/tts_say.sh}"
+# Playback/notify via hailer's broker (POST /hail). HAIL_URL is shared with the
+# `hail` CLI so one config serves both. Volume is owned by the broker channel
+# (hail volume / admin UI), not stamped here. cue is a boolean; preset selects
+# the voice (fenrys|gena|sophie).
+: "${HAIL_URL:=http://127.0.0.1:8080}"
 : "${TTS_NOTIFY_PRESET:=gena}"
-: "${TTS_NOTIFY_VOLUME:=50}"
-: "${TTS_NOTIFY_CUE:=default}"
+: "${TTS_NOTIFY_CUE:=true}"
 
 # Bounded poll (sec) for the assistant turn to be flushed to the transcript.
 : "${TTS_NOTIFY_TRANSCRIPT_WAIT:=5}"

@@ -44,14 +44,17 @@ dhs-claude-plugin-marketplace/
 
 ### tts-notify
 
-Claude の Stop / SubagentStop / Notification を OpenRouter で短く要約し、
-ローカル TTS（stt-tts-runpod の `tts_say.sh`）で読み上げるフックプラグイン。
+Claude の Stop / Notification を OpenRouter で短く要約し、hailer の broker
+（`POST /hail`）経由で音声読み上げ＋モバイル通知するフックプラグイン。
 
-- **薄い共通ディスパッチャ**: 3 イベントを単一 `dispatch.sh` に集約、`setsid`
+- **薄い共通ディスパッチャ**: 2 イベントを単一 `dispatch.sh` に集約、`setsid`
   でデタッチして即 return（Claude を非ブロッキング）。常駐サービス不要
 - **要約**: OpenRouter 構造化出力（プロンプト/スキーマは irodori-tts-docker
-  coordinator から忠実移植）。鍵は `~/.config/tts-notify/env`（リポ外・600）
-- **単一フライト**: `flock -n` で再生/要約中の新イベントはドロップ（先がち）
+  coordinator から忠実移植）。応答は `lib/validate.py`（stdlib）で検証・正規化し
+  弾いた理由をログ。鍵は `~/.config/tts-notify/env`（リポ外・600）
+- **配送**: 要約を hailer segment（`show`→text / `say`→speech）に変換し
+  broker へ POST。読み上げ・通知の配送と音量は broker が担う（`HAIL_URL` で接続先）
+- **単一フライト**: `flock -n` で要約〜POST 中の新イベントはドロップ（先がち）
 - 詳細は `tts-notify/README.md`
 
 ## ドキュメント

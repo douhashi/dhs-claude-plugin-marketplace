@@ -4,15 +4,19 @@
 # runs AFTER the hook already returned (Claude is never blocked).
 #
 # Pipeline: parse event -> gather text (transcript for stop, message for
-# notification) -> OpenRouter summarize (ported prompts) ->
-# play the `reading` sentences via stt-tts-runpod's tts_say.sh.
+# notification) -> OpenRouter summarize (ported prompts, validated by
+# lib/validate.py into NDJSON {say, show}) -> broadcast via hailer's broker
+# (POST /hail). Each sentence becomes a segment: `show` -> text (ntfy push body),
+# `say` (reading) -> speech (synthesized by TTS). The broker fans out to every
+# enabled channel and owns volume; playback happens asynchronously over there.
 #
 # Notification: idle "waiting for input" messages are dropped; only
 # action-required notifications (e.g. tool permission prompts) are spoken.
 #
 # Concurrency (kept deliberately simple per request): a single non-blocking
-# flock. If a worker is already running (summarizing or playing), new events
-# are DROPPED — first-wins, no queue, no catch-up.
+# flock held across gather + summarize + the /hail POST. If a worker is already
+# in that window, new events are DROPPED — first-wins, no queue, no catch-up.
+# (The POST returns immediately; ordering of actual playback is the broker's.)
 #
 # Args: $1 = source (stop|notification)  $2 = event JSON file
 #
@@ -70,12 +74,14 @@ $asst"
 fi
 
 # --- summarize -------------------------------------------------------------
-readings="$(printf '%s' "$src_text" | "$ROOT/lib/summarize.sh" "$mode")"
+# summary is NDJSON: one {"say": reading, "show": text} object per sentence.
+summary="$(printf '%s' "$src_text" | "$ROOT/lib/summarize.sh" "$mode")"
 
-if [ -z "$readings" ]; then
+if [ -z "$summary" ]; then
   if [ "$SOURCE" = "notification" ]; then
     # Notifications are already short: speak the raw message (graceful degrade).
-    readings="$raw"
+    # No separate reading/display here, so say == show == raw.
+    summary="$(jq -cn --arg s "$raw" '{say: $s}')"
     log "summarize unavailable -> raw notification"
   else
     # Assistant turns can be huge/noisy; do not read raw. Drop.
@@ -84,12 +90,30 @@ if [ -z "$readings" ]; then
   fi
 fi
 
-# --- play (gena / volume 50 / start cue) via tts_say.sh ------------------
-[ -x "$TTS_NOTIFY_SAY" ] || { log "tts_say.sh not found: $TTS_NOTIFY_SAY"; exit 0; }
-printf '%s\n' "$readings" \
-  | TTS_PRESET="$TTS_NOTIFY_PRESET" \
-    TTS_VOLUME="$TTS_NOTIFY_VOLUME" \
-    TTS_CUE="$TTS_NOTIFY_CUE" \
-    "$TTS_NOTIFY_SAY" >/dev/null 2>&1
+# --- broadcast via hailer broker (POST /hail) ------------------------------
+# Map each NDJSON sentence onto a hailer segment: show -> text (display / ntfy
+# push body), say -> speech (the reading TTS synthesizes). targets is omitted
+# so the broker fans out to every enabled channel; volume is the broker's.
+segments="$(printf '%s\n' "$summary" \
+  | jq -c 'select(type=="object") | {text: (.show // .say), speech: .say}' \
+  | jq -cs 'map(select(.speech != null and .speech != ""))')"
+if [ -z "$segments" ] || [ "$segments" = "[]" ]; then
+  log "no segments to broadcast -> drop"; exit 0
+fi
 
-log "spoke ($SOURCE): $(printf '%s' "$readings" | tr '\n' ' ' | cut -c1-80)"
+case "${TTS_NOTIFY_CUE,,}" in true|1|yes|on) cue=true ;; *) cue=false ;; esac
+body="$(jq -cn \
+  --argjson segs "$segments" \
+  --arg preset "$TTS_NOTIFY_PRESET" \
+  --argjson cue "$cue" \
+  '{segments: $segs, preset: $preset, cue: $cue}')"
+
+if ! curl -sS -m 30 -X POST "$HAIL_URL/hail" \
+     -H "Content-Type: application/json" \
+     --data-binary "$body" >/dev/null 2>&1; then
+  log "hail post failed: $HAIL_URL/hail"; exit 0
+fi
+
+shown="$(printf '%s\n' "$summary" | jq -r '.show // .say // empty' 2>/dev/null \
+  | tr '\n' ' ' | cut -c1-80)"
+log "hailed ($SOURCE): $shown"
