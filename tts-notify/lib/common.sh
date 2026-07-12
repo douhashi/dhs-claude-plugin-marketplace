@@ -23,6 +23,13 @@ fi
 # `hail` CLI so one config serves both. Volume is owned by the broker channel
 # (hail volume / admin UI), not stamped here. cue is a boolean; preset selects
 # the voice (fenrys|gena|sophie).
+#
+# Remote broker (behind a Cloudflare tunnel + Access): set HAIL_URL to the tunnel
+# hostname and provide a Cloudflare Access *service token*. The hook is a machine
+# client, so it cannot do the interactive Access login — without the token pair the
+# request is redirected to a login page and nothing is ever spoken.
+# CF_ACCESS_CLIENT_ID / CF_ACCESS_CLIENT_SECRET intentionally have no defaults:
+# they are only sent when both are present (loopback setups stay header-free).
 : "${HAIL_URL:=http://127.0.0.1:8080}"
 : "${TTS_NOTIFY_PRESET:=gena}"
 : "${TTS_NOTIFY_CUE:=true}"
