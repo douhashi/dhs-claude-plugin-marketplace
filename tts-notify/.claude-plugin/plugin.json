@@ -1,6 +1,6 @@
 {
   "name": "tts-notify",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Claude の Stop / Notification を OpenRouter で短く要約し、hailer の broker (POST /hail) 経由で音声読み上げ＋通知するフックプラグイン",
   "repository": "https://github.com/douhashi/dhs-claude-plugin-marketplace",
   "license": "MIT",

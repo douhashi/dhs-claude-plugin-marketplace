@@ -18,7 +18,7 @@ tts-notify/
 ├── .claude-plugin/plugin.json   # マニフェスト（hooks: ./hooks/hooks.json）
 ├── hooks/
 │   ├── hooks.json               # Stop/Notification → dispatch.sh
-│   └── dispatch.sh              # 薄い共通ディスパッチャ（即 setsid デタッチ→即 return）
+│   └── dispatch.sh              # 薄い共通ディスパッチャ（新セッションへデタッチ→即 return）
 ├── bin/worker.sh                # デタッチ実行: 抽出→要約→hailer /hail へ POST
 └── lib/
     ├── common.sh                # 設定ロード/ログ/パス（共通処理を集約）
@@ -28,14 +28,16 @@ tts-notify/
 ```
 
 2 イベントは **単一 `dispatch.sh`**（`--source` 引数で差分）に集約。dispatch は
-イベント JSON を stash して `setsid` で `worker.sh` を即デタッチし即 return する
-ため、Claude Code を一切ブロックしない。失敗は常に静かな no-op（exit 0）。
+イベント JSON を stash して `worker.sh` を**新しいセッション**へデタッチし即 return
+するため、Claude Code を一切ブロックしない（`setsid` が無い macOS では python3 で
+`setsid(2)` を呼ぶ）。フックチェーンは壊さない（exit 0）が、worker の起動に失敗した
+場合は理由を `worker.log` に残す。
 
 ## 動作
 
 1. `dispatch.sh <source>` … stdin のイベント JSON を一時保存し worker をデタッチ起動
 2. `worker.sh` …
-   - **単一フライト**: `flock -n`。要約〜`/hail` POST の最中に来た新イベントは
+   - **単一フライト**: atomic な `mkdir` ロック。要約〜`/hail` POST の最中に来た新イベントは
      **ドロップ**（先がち・キューなし・取り戻しなし。意図的に単純化）。POST は即
      返るため、実再生の順序制御は broker 側の責務
    - notification は `.message` を判定し、入力待ちアイドル通知はドロップ。
@@ -65,6 +67,8 @@ mkdir -p ~/.config/tts-notify
 umask 077
 cat > ~/.config/tts-notify/env <<'EOF'
 OPENROUTER_API_KEY=sk-or-...
+# 要約モデルを変えたいときだけ（既定 google/gemini-3.1-flash-lite）
+# OPENROUTER_MODEL=openai/gpt-5-mini
 EOF
 chmod 600 ~/.config/tts-notify/env
 ```
@@ -124,7 +128,7 @@ EOF
 | 変数 | 既定 | 説明 |
 |---|---|---|
 | `OPENROUTER_API_KEY` | （無し） | OpenRouter キー。未設定で要約 degrade |
-| `OPENROUTER_MODEL` | `openai/gpt-5-mini` | 要約モデル |
+| `OPENROUTER_MODEL` | `google/gemini-3.1-flash-lite` | 要約モデル（hailer の discord-relay と既定を揃えてある） |
 | `OPENROUTER_URL` | `https://openrouter.ai/api/v1/chat/completions` | エンドポイント |
 | `HAIL_URL` | `http://127.0.0.1:8080` | hailer broker のベース URL（`hail` CLI と共通） |
 | `CF_ACCESS_CLIENT_ID` | （無し） | Cloudflare Access の service token。リモート broker のときのみ |

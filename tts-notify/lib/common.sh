@@ -14,8 +14,9 @@ if [ -f "$TTS_NOTIFY_CONFIG" ]; then
   set +a
 fi
 
-# OpenRouter (defaults mirror the reference coordinator).
-: "${OPENROUTER_MODEL:=openai/gpt-5-mini}"
+# OpenRouter. The default model is kept in sync with hailer's discord-relay so both
+# producers speak with the same voice/cost profile (override per host in the env file).
+: "${OPENROUTER_MODEL:=google/gemini-3.1-flash-lite}"
 : "${OPENROUTER_URL:=https://openrouter.ai/api/v1/chat/completions}"
 # OPENROUTER_API_KEY intentionally has no default (empty => graceful degrade).
 
