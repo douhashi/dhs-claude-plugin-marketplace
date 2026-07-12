@@ -85,6 +85,30 @@ cd ~/ghq/github.com/douhashi/hailer && docker compose up -d
 broker 側を操作する（このプラグインからは設定しない）。broker が別ホスト/別ポート
 の場合は `HAIL_URL` を設定する（既定 `http://127.0.0.1:8080`、`hail` CLI と共通）。
 
+#### リモート broker（Cloudflare tunnel + Access 経由）
+
+broker を別マシンに置き、Cloudflare tunnel + Access で公開している場合、このフックは
+**機械クライアント**なので Access の対話ログインを処理できない。**Service Token**
+（`CF-Access-Client-Id` / `CF-Access-Client-Secret`）が要る。
+
+```sh
+cat >> ~/.config/tts-notify/env <<'EOF'
+HAIL_URL=https://<admin-host>
+CF_ACCESS_CLIENT_ID=<...>.access
+CF_ACCESS_CLIENT_SECRET=<...>
+EOF
+```
+
+- token 対が**両方揃っているときだけ**ヘッダを送る（loopback 運用は従来どおり）。
+- token の発行と Access ポリシー（Action = **Service Auth**）の設定は
+  [hailer の deploy/cloudflared/README.md](https://github.com/douhashi/hailer/blob/main/deploy/cloudflared/README.md) を参照。
+- **再生（声）はサーバではなくクライアントで鳴る**。このフックは publish するだけなので、
+  声を聞くマシンで `hail listen` を常駐させておくこと（通知は ntfy がスマホへ push する）。
+
+> Access に弾かれると Cloudflare は **302 → ログイン画面（200 HTML）** を返す。curl の
+> リダイレクト追跡を有効にすると「成功」に化けて無言で声が出なくなるため、worker は
+> **content-type が HTML なら Cloudflare の応答**と判定して `worker.log` に理由を残す。
+
 ### 3. インストール
 
 ```sh
@@ -103,6 +127,8 @@ broker 側を操作する（このプラグインからは設定しない）。b
 | `OPENROUTER_MODEL` | `openai/gpt-5-mini` | 要約モデル |
 | `OPENROUTER_URL` | `https://openrouter.ai/api/v1/chat/completions` | エンドポイント |
 | `HAIL_URL` | `http://127.0.0.1:8080` | hailer broker のベース URL（`hail` CLI と共通） |
+| `CF_ACCESS_CLIENT_ID` | （無し） | Cloudflare Access の service token。リモート broker のときのみ |
+| `CF_ACCESS_CLIENT_SECRET` | （無し） | 同上。**両方揃ったときだけ**ヘッダを送る |
 | `TTS_NOTIFY_PRESET` | `gena` | 声プリセット（`fenrys`/`gena`/`sophie`） |
 | `TTS_NOTIFY_CUE` | `true` | 先頭で開始音を鳴らすか（`true`/`false`） |
 | `TTS_NOTIFY_TRANSCRIPT_WAIT` | `5` | transcript フラッシュ待ち秒 |

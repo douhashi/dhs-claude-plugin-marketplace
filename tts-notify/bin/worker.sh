@@ -108,10 +108,36 @@ body="$(jq -cn \
   --argjson cue "$cue" \
   '{segments: $segs, preset: $preset, cue: $cue}')"
 
-if ! curl -sS -m 30 -X POST "$HAIL_URL/hail" \
+# Cloudflare Access の service token（リモート broker のときだけ設定される）。
+# 両方揃っているときだけ送る（片方では Access を通れないので、中途半端な送信はしない）。
+access_headers=()
+if [ -n "${CF_ACCESS_CLIENT_ID:-}" ] && [ -n "${CF_ACCESS_CLIENT_SECRET:-}" ]; then
+  access_headers=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID"
+                  -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
+fi
+
+# ステータスと content-type を取る。`-f` は付けない（本文を捨てずに理由を残すため）。
+# `-L` も付けない: Access のブロックは 302 -> ログイン画面(200 HTML) なので、追跡すると
+# 「成功」に化けて無言で声が出なくなる（HTML を content-type で検知する）。
+resp="$(curl -sS -m 30 -X POST "$HAIL_URL/hail" \
      -H "Content-Type: application/json" \
-     --data-binary "$body" >/dev/null 2>&1; then
-  log "hail post failed: $HAIL_URL/hail"; exit 0
+     "${access_headers[@]}" \
+     --data-binary "$body" \
+     -o /dev/null -w '%{http_code} %{content_type}' 2>/dev/null)" || {
+  log "hail post failed (unreachable): $HAIL_URL/hail"; exit 0
+}
+http_code="${resp%% *}"
+content_type="${resp#* }"
+
+case "$content_type" in
+  # broker は JSON しか返さない。HTML が返ったら Cloudflare の応答（Access のログイン画面
+  # または origin 不達のエラーページ）であり、broker には届いていない。
+  *text/html*)
+    log "hail blocked by Cloudflare (http=$http_code): CF_ACCESS_CLIENT_ID/SECRET と Access ポリシー(Service Auth)を確認"
+    exit 0 ;;
+esac
+if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+  log "hail post failed (http=$http_code): $HAIL_URL/hail"; exit 0
 fi
 
 shown="$(printf '%s\n' "$summary" | jq -r '.show // .say // empty' 2>/dev/null \
