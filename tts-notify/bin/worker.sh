@@ -34,8 +34,21 @@ event="$(cat "$EVENT_FILE")"
 [ -n "$event" ] || exit 0
 
 # --- single-flight: drop if something is already in flight (先がち) ---------
-exec 9>"$TTS_NOTIFY_CACHE/play.lock"
-flock -n 9 || { log "busy -> drop"; exit 0; }
+# `flock` is Linux (util-linux) and does NOT exist on macOS. Using it there made
+# every run take the failure branch and log "busy -> drop" — the plugin looked
+# alive but never spoke. `mkdir` is atomic on POSIX, so use it as the lock.
+LOCK="$TTS_NOTIFY_CACHE/play.lock.d"
+if ! mkdir "$LOCK" 2>/dev/null; then
+  # 保持者が死んで取り残されたロックは、一定時間で奪う（恒久的に無言になるのを防ぐ）。
+  if [ -n "$(find "$LOCK" -maxdepth 0 -mmin +2 2>/dev/null)" ]; then
+    rmdir "$LOCK" 2>/dev/null
+    mkdir "$LOCK" 2>/dev/null || { log "busy -> drop"; exit 0; }
+    log "stale lock taken over"
+  else
+    log "busy -> drop"; exit 0
+  fi
+fi
+trap 'rmdir "$LOCK" 2>/dev/null; rm -f "$EVENT_FILE"' EXIT
 
 # --- gather source text ----------------------------------------------------
 if [ "$SOURCE" = "notification" ]; then
@@ -101,7 +114,10 @@ if [ -z "$segments" ] || [ "$segments" = "[]" ]; then
   log "no segments to broadcast -> drop"; exit 0
 fi
 
-case "${TTS_NOTIFY_CUE,,}" in true|1|yes|on) cue=true ;; *) cue=false ;; esac
+# `${var,,}` は bash 4 の構文。macOS の bash は 3.2 なので bad substitution になり、
+# cue が空 -> jq --argjson が壊れた body を作り -> broker が 422 を返す（実際に踏んだ）。
+cue_raw="$(printf '%s' "${TTS_NOTIFY_CUE:-}" | tr '[:upper:]' '[:lower:]')"
+case "$cue_raw" in true|1|yes|on) cue=true ;; *) cue=false ;; esac
 body="$(jq -cn \
   --argjson segs "$segments" \
   --arg preset "$TTS_NOTIFY_PRESET" \
