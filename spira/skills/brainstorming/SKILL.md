@@ -4,7 +4,7 @@ description: "テーマについて深く議論し、要求を定義する。bra
 argument-hint: "<テーマ>"
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch, Skill
+allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, Skill
 ---
 
 テーマ「$ARGUMENTS」について、ブレインストーミングを行います。
@@ -24,15 +24,20 @@ allowed-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch, Skill
 
 ## 禁則事項
 
-- **1 回の応答が 400 字を超えることは禁止**（論点テーブルの再掲と、Phase 7 の結論提示を除く）
+- **Phase 1〜6 で 1 回の応答が 400 字を超えることは禁止**（論点テーブルの再掲を除く）。Phase 7 以降は各スキルの上限に従う
 - 独自の省略形・造語・比喩で語ることは禁止。用語はコードベースとドキュメントに実在する語だけを使う
 - 2 つ以上の論点を同時に議論することは禁止
 - 1 回の応答で 2 つ以上の質問をすることは禁止
 - 箇条書きの入れ子は禁止（1 階層まで）
 - 調べた内容をそのまま列挙して報告することは禁止。論点の形にしてから出す
-- このスキル自身がファイルを作成・書き換えることは禁止（更新は `spira:update-doc` に委譲する）
-- このスキル自身が GitHub Issue を作成することは禁止（起票は `spira:create-issue` に委譲する）
+- **Phase 6 までの間にファイルを作成・書き換えることは禁止**。議論の途中経過をファイルに落とさない
+- **Phase 7 に入る前に GitHub Issue を作成することは禁止**
 - ユーザーの確認なしに Phase 7 以降へ進むことは禁止
+
+Phase 7・Phase 8 の作業は `spira:update-doc` / `spira:create-issue` に委譲する。
+両スキルは**同じセッションに指示が読み込まれる**（サブエージェントではない）ため、
+呼び出したあとは、読み込まれた手順と禁則事項に従って自分でファイル編集や `gh` コマンドを実行する。
+呼び出しただけで完了したことにしない。
 
 ## 議論の進め方
 
@@ -93,7 +98,8 @@ allowed-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch, Skill
 1. `templates/summary.md` を Read し、議論の結論をユーザーに提示する
 2. 「この内容でドキュメントを更新してよいか」を確認する。**承認が取れるまで先に進まない**
 3. 承認されたら Skill ツールで `spira:update-doc` を呼び出す。引数には更新対象ファイルと反映内容を渡す
-4. update-doc が PR をマージするまで待ち、マージ結果をユーザーに報告する
+4. **読み込まれた update-doc の手順を最後まで実行する**。ブランチ作成 → 編集 → PR 作成 → CI 監視 → マージまで自分で行う
+5. マージ結果をユーザーに報告する
 
 ユーザーがドキュメント更新を不要と判断した場合、または「更新対象ドキュメント」が空の場合は、この Phase を飛ばして Phase 8 に進む。
 
@@ -101,7 +107,8 @@ allowed-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch, Skill
 
 1. 議論の結論を Issue 化するかどうかをユーザーに確認する（1 文で聞く）
 2. 承認されたら Skill ツールで `spira:create-issue` を呼び出す
-3. ユーザーが不要と判断したら、ここで終了する
+3. **読み込まれた create-issue の手順を最後まで実行する**。一覧表の提示 → 承認 → 起票 → 報告まで自分で行う
+4. ユーザーが不要と判断したら、ここで終了する
 
 **候補の提示と起票の承認は `spira:create-issue` が行う。** このスキルで候補を先に列挙しない。
 
@@ -115,4 +122,5 @@ allowed-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch, Skill
 | 1 論点の提示・議論 | [templates/dialogue.md](templates/dialogue.md) | 400 字／応答 |
 | 議論の結論 | [templates/summary.md](templates/summary.md) | 800 字 |
 
-いずれもテキストとしてユーザーに提示するのみで、ファイルへの書き出しは行わない。
+上記 3 つの出力はテキストとしてユーザーに提示するのみで、ファイルへの書き出しは行わない。
+Phase 7 以降のドキュメント編集は、これとは別に `spira:update-doc` の手順に従って実行する。
