@@ -25,7 +25,11 @@ dhs-claude-plugin-marketplace/
 │   │   └── plugin.json
 │   ├── skills/
 │   │   ├── brainstorming/
-│   │   │   └── SKILL.md
+│   │   │   ├── SKILL.md
+│   │   │   └── templates/     # スキル固有の出力テンプレート
+│   │   │       ├── discussion-points.md
+│   │   │       ├── dialogue.md
+│   │   │       └── summary.md
 │   │   ├── create-issue/
 │   │   │   └── SKILL.md
 │   │   ├── decide/
@@ -76,6 +80,9 @@ dhs-claude-plugin-marketplace/
 - 読み取り専用のスキルは `allowed-tools` で制限する
 - 大きなスキルは `SKILL.md` を 500 行以下に保ち、サポートファイルに分離する
 - `description` にはユーザーが自然に使うキーワードを含める
+- 出力の書式・分量の定義は SKILL.md 本文に直書きせず、テンプレートファイルに分離する
+  - 複数スキル／エージェントで共有する書式（Issue 本文・コメント）は `spira/templates/` に置き、`${CLAUDE_PLUGIN_ROOT}/templates/<name>.md` で参照する
+  - 単一スキル専用の書式は `spira/skills/<skill>/templates/` に置き、相対 markdown リンクで参照する
 
 ## エージェント設計方針
 
