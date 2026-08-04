@@ -102,6 +102,17 @@ Changed files: !`gh pr diff --name-only`
 | `$ARGUMENTS` | 全引数 |
 | `$ARGUMENTS[N]` / `$N` | N番目の引数（0ベース） |
 | `${CLAUDE_SESSION_ID}` | 現在のセッション ID |
+| `${CLAUDE_PLUGIN_ROOT}` | プラグインディレクトリの絶対パス（スキル・エージェント本文のどこでも展開される） |
+
+## 補助ファイルの参照
+
+**`@path/to/file.md` によるインポートは SKILL.md では使えない**（`@` は CLAUDE.md の機能）。
+補助ファイルは以下のいずれかで参照し、Claude に Read させる。
+
+- 相対 markdown リンク: `詳細は [reference.md](reference.md) を参照`
+- プラグイン内の共有ファイル: `${CLAUDE_PLUGIN_ROOT}/templates/foo.md` を Read する
+
+内容をプロンプトに埋め込みたい場合のみ `` !`cat path` `` の動的コンテキスト注入を使う。
 
 ## ベストプラクティス
 
