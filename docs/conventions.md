@@ -31,7 +31,9 @@ dhs-claude-plugin-marketplace/
 │   │   │       ├── dialogue.md
 │   │   │       └── summary.md
 │   │   ├── create-issue/
-│   │   │   └── SKILL.md
+│   │   │   ├── SKILL.md
+│   │   │   └── templates/
+│   │   │       └── issue-plan.md
 │   │   ├── decide/
 │   │   │   └── SKILL.md
 │   │   ├── do/

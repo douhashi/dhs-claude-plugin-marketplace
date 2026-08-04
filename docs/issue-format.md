@@ -28,6 +28,17 @@ spira が GitHub Issue に書き込む本文・コメントは、書式と記述
 上限一覧の正本は `spira/templates/_rules.md`。本表は概要であり、値を変える場合は
 `_rules.md` と該当テンプレートの両方を更新する。
 
+## 起票前の承認
+
+Issue の起票は取り消しにくいため、create-issue スキルは本文を書く前に
+**作成予定 Issue の一覧表**を提示して承認を得る。書式は
+`spira/skills/create-issue/templates/issue-plan.md`（`#` / タイトル / 目的 / 完了条件、最大 7 行）。
+
+- 承認前に `gh issue create` を実行しない
+- 承認段階で本文の全文は提示しない。ユーザーが求めた Issue の分だけ `issue-body.md` に沿って提示する
+- 承認は表全体に対して行う。承認されたら全行を起票し、行を選んで一部だけ起票しない
+- 粒度・分割・統合などの調整が入ったら、表を作り直して再提示し、改めて承認を得る
+
 ## 参照方法
 
 `${CLAUDE_PLUGIN_ROOT}` は skill と agent の本文いずれでも、出現箇所を問わず展開される
