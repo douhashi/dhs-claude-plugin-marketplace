@@ -49,6 +49,15 @@ dhs-claude-plugin-marketplace/
 │   │   └── setup.md
 │   ├── hooks/
 │   │   └── hooks.json
+│   ├── templates/             # Issue 本文・コメントのテンプレート（SSoT）
+│   │   ├── _rules.md
+│   │   ├── issue-body.md
+│   │   ├── implementation-plan.md
+│   │   ├── plan-revision.md
+│   │   ├── design-decision.md
+│   │   ├── implementation-result.md
+│   │   ├── qa-result.md
+│   │   └── completion-report.md
 │   ├── scripts/
 │   │   └── ...
 │   └── README.md
@@ -56,6 +65,7 @@ dhs-claude-plugin-marketplace/
 │   ├── plugin-spec.md
 │   ├── skills-spec.md
 │   ├── agents-spec.md
+│   ├── issue-format.md
 │   └── conventions.md
 └── CLAUDE.md
 ```
@@ -72,6 +82,13 @@ dhs-claude-plugin-marketplace/
 - 1 エージェント = 1 責務
 - 読み取り専用タスクには `tools` でファイル編集を除外する
 - 複雑な検証にはフックを活用する
+
+## Issue テンプレート
+
+- Issue 本文・コメントの書式と字数上限は `spira/templates/` 配下の markdown ファイルが単一ソース
+- スキル・エージェントの本文に書式を直書きしない。`${CLAUDE_PLUGIN_ROOT}/templates/<name>.md` を参照させる
+- 投稿は `--body-file` を使い、直前に `wc -m` で上限を確認する
+- 詳細は @docs/issue-format.md
 
 ## スクリプト
 

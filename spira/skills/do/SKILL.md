@@ -45,6 +45,31 @@ Bash ツールで Issue の内容を取得する。**コマンドは必ず分け
 1. `gh issue view ISSUE_URL`
 2. `gh issue view ISSUE_URL --comments`
 
+### テンプレートの参照
+
+Issue に書き込む全てのコメントは、書式と記述量の上限がテンプレートファイルで定義されている。
+オーケストレータが直接記録するコメントは、**書く前に該当テンプレートを Read すること。**
+
+| 見出し | テンプレート |
+|:--|:--|
+| `## PR 作成` / `## 完了報告` / `## CI 修正打ち切り` | `${CLAUDE_PLUGIN_ROOT}/templates/completion-report.md` |
+
+共通ルール `${CLAUDE_PLUGIN_ROOT}/templates/_rules.md` も併せて読むこと。
+エージェントが記録するコメント（`## 実装計画`・`## 設計判断`・`## 実装内容`・`## QA 結果` 等）のテンプレートは
+各エージェントが自身で参照するため、オーケストレータは**見出しだけを渡せばよい**。
+
+投稿前に必ず `wc -m` で字数を確認し、上限を超えていれば削ってから投稿する。
+
+```
+mkdir -p .tmp
+cat > .tmp/spira-comment.md <<'EOF'
+（テンプレートに沿った本文）
+EOF
+
+wc -m .tmp/spira-comment.md
+gh issue comment ISSUE_URL --body-file .tmp/spira-comment.md
+```
+
 ### Issue へのコメント記録
 
 各 Phase の結果は、起動した **エージェント自身** が `gh issue comment` で記録する。
@@ -142,7 +167,7 @@ Agent ツール呼び出し:
 
 PO エージェントの判断を受け取ったら:
 1. 判断結果のサマリをユーザーに提示する
-2. 判断結果を反映した実装計画の修正が必要であれば、planner エージェントを再度起動し、見出し `## 実装計画（修正版）` で再記録させる
+2. 判断結果を反映した実装計画の修正が必要であれば、planner エージェントを再度起動し、見出し `## 計画の修正` で**差分のみ**を記録させる（実装計画の全文再掲は禁止。`## 実装計画` コメントはそのまま残す）
 3. Phase 1.9 に進む
 
 ### Phase 1.9: planned ラベル付与
@@ -155,7 +180,7 @@ gh issue edit ISSUE_URL --add-label planned
 
 ### Phase 2: 実装（implementer or setup エージェント）
 
-Issue コメントに記録されている実装計画（見出し: `## 実装計画`、修正版があれば `## 実装計画（修正版）`）を取得し、タスクの種類を判定してください。
+Issue コメントに記録されている実装計画（見出し: `## 実装計画`、および `## 計画の修正` があればその差分）を取得し、タスクの種類を判定してください。
 
 **判定基準**:
 - **環境構築タスク**: ライブラリのインストール、環境マネージャ（mise 等）の設定、フレームワークの初期化、CI の設定など、開発環境のセットアップが主目的の場合 → `setup` エージェントを使用
@@ -169,7 +194,7 @@ Issue コメントに記録されている実装計画（見出し: `## 実装�
 **ワークツリー `REPOSITORY-impl-ISSUE_NO` 内で作業すること。**
 
 プロンプトには以下を含めてください:
-- Issue コメントから取得した実装計画の全文
+- Issue コメントから取得した実装計画の全文（`## 計画の修正` があればその差分も併せて渡す）
 - 計画に忠実に環境を構築すること
 - ワークツリー内で作業すること
 - `ISSUE_URL` と見出し `## 実装内容` を渡し、結果を **setup エージェント自身が** `gh issue comment` で記録すること
@@ -180,11 +205,11 @@ Issue コメントに記録されている実装計画（見出し: `## 実装�
 **ワークツリー `REPOSITORY-impl-ISSUE_NO` 内で作業すること。**
 
 プロンプトには以下を含めてください:
-- Issue コメントから取得した実装計画の全文
+- Issue コメントから取得した実装計画の全文（`## 計画の修正` があればその差分も併せて渡す）
 - 計画に忠実に実装すること
 - ワークツリー内で作業すること
-- 計画の「検証必須事項」のうち implementer 担当項目は、すべて検証を実施し `### 検証実施結果` セクションに証拠とともに報告すること（証拠ファイルは `.tmp/spira-evidence/` 配下に保存）
-- PR 提出前に **自己レビュー** を実施し、`### 自己レビュー結果` セクションに記載すること
+- 計画の「検証必須事項」のうち implementer 担当項目は、すべて検証を実施し `### 検証結果` セクションに証拠とともに報告すること（証拠ファイルは `.tmp/spira-evidence/` 配下に保存）
+- PR 提出前に **自己レビュー** を実施し、`### 自己レビュー` セクションに指摘があった観点のみ記載すること
 - `ISSUE_URL` と見出し `## 実装内容` を渡し、結果を **implementer エージェント自身が** `gh issue comment` で記録すること
 
 #### 共通: 結果の確認
@@ -205,7 +230,7 @@ implementer が挙げた設計判断の論点を **すべて 1 つのプロン�
 
 PO エージェントの判断を受け取ったら:
 1. 判断結果のサマリをユーザーに提示する
-2. 暫定実装と判断が異なる論点があれば、Phase 2 で使用したのと同じエージェントを再度起動し、判断結果に基づいて修正させる。見出し `## 設計判断に基づく修正` で再記録させる
+2. 暫定実装と判断が異なる論点があれば、Phase 2 で使用したのと同じエージェントを再度起動し、判断結果に基づいて修正させる。見出し `## 設計判断に基づく修正` で**修正差分のみ**を記録させる（実装内容の再掲は禁止）
 
 ### Phase 3: PR 作成
 
@@ -231,13 +256,11 @@ PO エージェントの判断を受け取ったら:
    )"
    ```
 4. PR の URL を Issue にコメントとして記録する（見出し: `## PR 作成`）。これはオーケストレータが直接記録する。
+   `${CLAUDE_PLUGIN_ROOT}/templates/completion-report.md` の `## PR 作成` 節に従い、200 字以内で記録する。
    ```
-   gh issue comment ISSUE_URL --body "$(cat <<'EOF'
-   ## PR 作成
+   gh issue comment ISSUE_URL --body "## PR 作成
 
-   PR URL: <作成された PR の URL>
-   EOF
-   )"
+PR: <作成された PR の URL>"
    ```
 
 ### Phase 4: QA・CI 修正ループ
@@ -271,39 +294,48 @@ PO エージェントの判断を受け取ったら:
 
 **2 回修正しても CI が通らない場合**: 修正を打ち切り、以下を実行して終了する。
 
-1. 元 Issue に打ち切りコメントを記録（オーケストレータが直接記録）
+1. 元 Issue に打ち切りコメントを記録（オーケストレータが直接記録）。
+   `${CLAUDE_PLUGIN_ROOT}/templates/completion-report.md` の `## CI 修正打ち切り` 節に従い、300 字以内で記録する。
    ```
-   gh issue comment ISSUE_URL --body "$(cat <<'EOF'
-   ## CI 修正打ち切り
-
-   2 回の修正試行で CI を通すことができませんでした。フォローアップ Issue を起票しました: <新規 Issue URL>
+   mkdir -p .tmp
+   cat > .tmp/spira-comment.md <<'EOF'
+   （テンプレートに沿った本文）
    EOF
-   )"
+
+   wc -m .tmp/spira-comment.md          # 300 字以内であることを確認する
+   gh issue comment ISSUE_URL --body-file .tmp/spira-comment.md
    ```
 2. `escalated` ラベル付きのフォローアップ Issue を起票する。
+   本文は `${CLAUDE_PLUGIN_ROOT}/templates/completion-report.md` の「エスカレーション Issue の本文」節に従い、**500 字以内**とする。
    ```
+   mkdir -p .tmp
+   cat > .tmp/spira-issue.md <<'EOF'
+   （テンプレートに沿った本文）
+   EOF
+
+   wc -m .tmp/spira-issue.md          # 500 字以内であることを確認する
    gh issue create --repo OWNER/REPOSITORY \
      --title "[escalated] CI failure follow-up for #ISSUE_NO" \
      --label escalated \
-     --body "$(cat <<'EOF'
-   元 Issue: ISSUE_URL
-   元 PR: <PR URL>
-
-   ## 試行サマリ
-   （試行 1 と 2 の修正内容と失敗内容を要約）
-
-   ## 最終失敗内容
-   （最後の CI 失敗のエラー内容）
-   EOF
-   )"
+     --body-file .tmp/spira-issue.md
    ```
 3. ユーザーに状況を報告して終了する（Phase 5 は実行しない）。元 Issue はオープンのままとする。
 
 ### Phase 5: 完了報告
 
-以下を Issue にコメントとして記録してください（見出し: `## 完了報告`）。これはオーケストレータが直接記録する。
-- 変更したファイルの一覧
-- 変更内容の概要
-- PR URL とマージ結果
+`${CLAUDE_PLUGIN_ROOT}/templates/completion-report.md` の `## 完了報告` 節を Read し、それに従って
+Issue にコメントを記録してください（見出し: `## 完了報告`・**500 字以内**）。これはオーケストレータが直接記録する。
+
+```
+mkdir -p .tmp
+cat > .tmp/spira-comment.md <<'EOF'
+（テンプレートに沿った本文）
+EOF
+
+wc -m .tmp/spira-comment.md          # 500 字以内であることを確認する
+gh issue comment ISSUE_URL --body-file .tmp/spira-comment.md
+```
+
+実装内容の再掲は禁止。詳細は `## 実装内容` コメントと PR の diff にある。
 
 最後に、ユーザーへの最終報告として Issue URL と PR URL を含む簡潔なサマリーを出力してください。

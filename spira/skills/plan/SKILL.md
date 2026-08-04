@@ -48,6 +48,18 @@ Bash ツールで Issue の内容を取得する。**コマンドは必ず分け
 1. `gh issue view ISSUE_URL`
 2. `gh issue view ISSUE_URL --comments`
 
+### テンプレートの参照
+
+Issue に書き込むコメントは、書式と記述量の上限がテンプレートファイルで定義されている。
+本スキルではコメントを記録するのは全てエージェントであり、各エージェントが自身でテンプレートを参照する。
+オーケストレータは**見出しだけを渡せばよい**。
+
+| 見出し | 書き手 | テンプレート |
+|:--|:--|:--|
+| `## 実装計画` | planner | `${CLAUDE_PLUGIN_ROOT}/templates/implementation-plan.md` |
+| `## 設計判断` | po | `${CLAUDE_PLUGIN_ROOT}/templates/design-decision.md` |
+| `## 計画の修正` | planner | `${CLAUDE_PLUGIN_ROOT}/templates/plan-revision.md` |
+
 ### Issue へのコメント記録
 
 各 Phase の結果は、起動した **エージェント自身** が `gh issue comment` で記録する。
@@ -114,7 +126,7 @@ Agent ツール呼び出し:
 
 PO エージェントの判断を受け取ったら:
 1. 判断結果のサマリをユーザーに提示する
-2. 判断結果を反映した実装計画の修正が必要であれば、planner エージェントを再度起動し、見出し `## 実装計画（修正版）` で再記録させる
+2. 判断結果を反映した実装計画の修正が必要であれば、planner エージェントを再度起動し、見出し `## 計画の修正` で**差分のみ**を記録させる（実装計画の全文再掲は禁止。`## 実装計画` コメントはそのまま残す）
 3. Phase 2 に進む
 
 ### Phase 2: ラベル付与

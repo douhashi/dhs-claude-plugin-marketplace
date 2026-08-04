@@ -13,6 +13,7 @@ dhs-claude-plugin-marketplace/
 │   │   └── plugin.json
 │   ├── skills/
 │   ├── agents/
+│   ├── templates/            # Issue 本文・コメントのテンプレート
 │   └── README.md
 ├── tts-notify/               # プラグイン: 通知の要約読み上げ（フック）
 │   ├── .claude-plugin/
@@ -65,11 +66,13 @@ Claude の Stop / Notification を OpenRouter で短く要約し、hailer の br
 - @docs/skill-format.md : スキルのセクション構造フォーマット定義
 - @docs/agent-format.md : エージェントのセクション構造フォーマット定義
 - @docs/conventions.md : このプロジェクトの規約
+- @docs/issue-format.md : Issue 本文・コメントの書式と記述量の制約
 
 ## 開発指針
 
 - **コードとドキュメントの同期**: スキル・エージェント・フック等を追加・変更・削除した場合は、対応する `docs/` 配下のドキュメントも必ず同時に更新する。コードだけ変更してドキュメントを放置しない。
 - **計画時のドキュメント更新**: 実装計画を立てる際は、影響するドキュメントの更新タスクを必ず計画に含める。
+- **Issue 記述はテンプレートに従う**: Issue 本文・コメントの書式と字数上限は `spira/templates/` が単一ソース。スキル・エージェント本文に書式を直書きしない。
 
 ## 開発
 
