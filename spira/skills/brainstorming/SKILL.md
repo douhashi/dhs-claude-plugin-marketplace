@@ -99,9 +99,11 @@ allowed-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch, Skill
 
 ### Phase 8: Issue 化の提案
 
-1. 起票すべき Issue の候補を**タイトルだけ**の箇条書きで提示する（最大 7 件）
-2. ユーザーが承認した候補について、Skill ツールで `spira:create-issue` を呼び出す
+1. 議論の結論を Issue 化するかどうかをユーザーに確認する（1 文で聞く）
+2. 承認されたら Skill ツールで `spira:create-issue` を呼び出す
 3. ユーザーが不要と判断したら、ここで終了する
+
+**候補の提示と起票の承認は `spira:create-issue` が行う。** このスキルで候補を先に列挙しない。
 
 ## アウトプット定義
 
