@@ -34,6 +34,9 @@ Issue の起票は取り消しにくいため、create-issue スキルは本文�
 **作成予定 Issue の一覧表**を提示して承認を得る。書式は
 `spira/skills/create-issue/templates/issue-plan.md`（`#` / タイトル / 目的 / 完了条件、最大 7 行）。
 
+Issue のタイトルは Conventional Commits スタイル（`<type>(<scope>): <説明>`）で書く。
+`type` と使い分けの定義も `issue-plan.md` が単一ソースであり、スキル本文には書かない。
+
 - 承認前に `gh issue create` を実行しない
 - 承認段階で本文の全文は提示しない。ユーザーが求めた Issue の分だけ `issue-body.md` に沿って提示する
 - 承認は表全体に対して行う。承認されたら全行を起票し、行を選んで一部だけ起票しない

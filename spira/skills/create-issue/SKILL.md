@@ -24,6 +24,7 @@ allowed-tools: Read, Grep, Glob, Bash
 
 - **ユーザーの承認前に `gh issue create` を実行することは禁止**
 - 表の一部の行だけを起票することは禁止。承認は表全体に対して行い、調整が入ったら表を作り直して再提示する
+- Conventional Commits スタイルから外れたタイトルでの起票は禁止（`<type>(<scope>): <説明>`）
 - 独自の省略形・造語・比喩で語ることは禁止。用語はコードベース／ドキュメントに実在する語だけを使う
 - 承認を求める段階で本文の全文を提示することは禁止（ユーザーが求めた Issue の分だけ提示する）
 - 作成予定 Issue 一覧の表の外に、承認を求める 1 文を超える説明を書くことは禁止
@@ -74,8 +75,8 @@ allowed-tools: Read, Grep, Glob, Bash
 
 ### Phase 4: Issue 作成
 
-承認された表の**全行**を起票する。本文を一時ファイルに書き出し、
-**投稿前に `wc -m` で字数を確認**してから `gh issue create` で作成する。
+承認された表の**全行**を起票する。タイトルは表に出したものをそのまま使う。
+本文を一時ファイルに書き出し、**投稿前に `wc -m` で字数を確認**してから `gh issue create` で作成する。
 
 ```
 mkdir -p .tmp
@@ -84,7 +85,7 @@ cat > .tmp/spira-issue.md <<'EOF'
 EOF
 
 wc -m .tmp/spira-issue.md          # 1,500 字以内であることを確認する
-gh issue create --title "TITLE" --body-file .tmp/spira-issue.md
+gh issue create --title "feat(spira): 論点テーブルに状態列を追加する" --body-file .tmp/spira-issue.md
 ```
 
 上限を超えていた場合は、**作成せずに本文を削ってから再度確認する**。削る優先順位は `${CLAUDE_PLUGIN_ROOT}/templates/_rules.md` に従う。
@@ -103,5 +104,5 @@ gh issue create --title "TITLE" --body-file .tmp/spira-issue.md
 作成した Issue を 1 行 1 件で提示する。本文の再掲はしない。
 
 ```
-#12 論点テーブルに状態列を追加 — https://github.com/owner/repo/issues/12
+#12 feat(spira): 論点テーブルに状態列を追加する — https://github.com/owner/repo/issues/12
 ```
