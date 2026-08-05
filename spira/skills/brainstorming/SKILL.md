@@ -40,7 +40,7 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, Skill
 - **Phase 7 に入る前に GitHub Issue を作成することは禁止**
 - ユーザーの確認なしに Phase 7 以降へ進むことは禁止
 
-Phase 7・Phase 8 の作業は `spira:update-doc` / `spira:create-issue` に委譲する。
+Phase 7・Phase 8 の作業は `spira:create-issue` / `spira:update-doc` に委譲する。
 両スキルは**同じセッションに指示が読み込まれる**（サブエージェントではない）ため、
 呼び出したあとは、読み込まれた手順と禁則事項に従って自分でファイル編集や `gh` コマンドを実行する。
 呼び出しただけで完了したことにしない。
@@ -104,24 +104,30 @@ Phase 7・Phase 8 の作業は `spira:update-doc` / `spira:create-issue` に委�
 
 `未着手` と `議論中` が無くなったら Phase 7 へ進む。
 
-### Phase 7: ドキュメント更新
+### Phase 7: Issue 化
+
+ドキュメントより先に Issue を起票する。ロードマップなど Issue 番号を参照する記述があり、
+起票しないと番号が確定しないためである。
 
 1. `templates/summary.md` を Read し、議論の結論をユーザーに提示する
+2. 議論の結論を Issue 化するかどうかをユーザーに確認する（1 文で聞く）
+3. 承認されたら Skill ツールで `spira:create-issue` を呼び出す
+4. **読み込まれた create-issue の手順を最後まで実行する**。一覧表の提示 → 承認 → 起票 → 報告まで自分で行う
+5. 起票した Issue の**番号と URL を控える**。Phase 8 でドキュメントに書き込む
+
+**候補の提示と起票の承認は `spira:create-issue` が行う。** このスキルで候補を先に列挙しない。
+ユーザーが Issue 化を不要と判断した場合は、この Phase を飛ばして Phase 8 に進む。
+
+### Phase 8: ドキュメント更新
+
+1. `templates/summary.md` の「更新対象ドキュメント」に、Phase 7 で起票した Issue 番号を差し込む
 2. 「この内容でドキュメントを更新してよいか」を確認する。**承認が取れるまで先に進まない**
 3. 承認されたら Skill ツールで `spira:update-doc` を呼び出す。引数には更新対象ファイルと反映内容を渡す
 4. **読み込まれた update-doc の手順を最後まで実行する**。ブランチ作成 → 編集 → PR 作成 → CI 監視 → マージまで自分で行う
 5. マージ結果をユーザーに報告する
 
-ユーザーがドキュメント更新を不要と判断した場合、または「更新対象ドキュメント」が空の場合は、この Phase を飛ばして Phase 8 に進む。
-
-### Phase 8: Issue 化の提案
-
-1. 議論の結論を Issue 化するかどうかをユーザーに確認する（1 文で聞く）
-2. 承認されたら Skill ツールで `spira:create-issue` を呼び出す
-3. **読み込まれた create-issue の手順を最後まで実行する**。一覧表の提示 → 承認 → 起票 → 報告まで自分で行う
-4. ユーザーが不要と判断したら、ここで終了する
-
-**候補の提示と起票の承認は `spira:create-issue` が行う。** このスキルで候補を先に列挙しない。
+ユーザーがドキュメント更新を不要と判断した場合、または「更新対象ドキュメント」が空の場合は、ここで終了する。
+Phase 7 を飛ばした場合は、Issue 番号を含めずに更新する。
 
 ## アウトプット定義
 
@@ -134,4 +140,4 @@ Phase 7・Phase 8 の作業は `spira:update-doc` / `spira:create-issue` に委�
 | 議論の結論 | [templates/summary.md](templates/summary.md) | 800 字 |
 
 上記 3 つの出力はテキストとしてユーザーに提示するのみで、ファイルへの書き出しは行わない。
-Phase 7 以降のドキュメント編集は、これとは別に `spira:update-doc` の手順に従って実行する。
+Phase 8 のドキュメント編集は、これとは別に `spira:update-doc` の手順に従って実行する。
