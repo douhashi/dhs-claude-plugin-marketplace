@@ -176,9 +176,10 @@ spira/
 │   ├── po.md              # 設計判断エージェント
 │   ├── qa.md              # QA・CI 監視エージェント
 │   └── setup.md           # 環境構築エージェント
-├── templates/             # Issue 本文・コメントのテンプレート
+├── templates/             # Issue 本文・コメント・コミット/PR のテンプレート
 │   ├── _rules.md          # 共通ルール・字数上限一覧・投稿手順
 │   ├── issue-body.md
+│   ├── commit-and-pr.md   # コミットメッセージ・PR タイトル・PR 本文
 │   ├── implementation-plan.md
 │   ├── plan-revision.md
 │   ├── design-decision.md
