@@ -50,9 +50,10 @@ Bash ツールで Issue の内容を取得する。**コマンドは必ず分け
 Issue に書き込む全てのコメントは、書式と記述量の上限がテンプレートファイルで定義されている。
 オーケストレータが直接記録するコメントは、**書く前に該当テンプレートを Read すること。**
 
-| 見出し | テンプレート |
+| 出力 | テンプレート |
 |:--|:--|
 | `## PR 作成` / `## 完了報告` / `## CI 修正打ち切り` | `${CLAUDE_PLUGIN_ROOT}/templates/completion-report.md` |
+| コミットメッセージ / PR タイトル / PR 本文 | `${CLAUDE_PLUGIN_ROOT}/templates/commit-and-pr.md` |
 
 共通ルール `${CLAUDE_PLUGIN_ROOT}/templates/_rules.md` も併せて読むこと。
 エージェントが記録するコメント（`## 実装計画`・`## 設計判断`・`## 実装内容`・`## QA 結果` 等）のテンプレートは
@@ -235,19 +236,21 @@ PO エージェントの判断を受け取ったら:
 ### Phase 3: PR 作成
 
 実装完了後、ワークツリーのブランチから PR を作成してください。
+コミットメッセージ・PR タイトル・PR 本文の書式は
+`${CLAUDE_PLUGIN_ROOT}/templates/commit-and-pr.md` を Read して従うこと。
 
 1. ワークツリー内で変更をコミットする（未コミットの変更がある場合）
    ```
    git add -A
-   git commit -m "Implement #ISSUE_NO"
+   git commit -m "TITLE"          # 元 Issue のタイトルをそのまま使う
    ```
 2. リモートにプッシュする
    ```
    git push -u origin HEAD
    ```
-3. PR を作成する
+3. PR を作成する（タイトルはコミットメッセージと同じ文字列）
    ```
-   gh pr create --head impl-ISSUE_NO --title "Implement #ISSUE_NO" --body "$(cat <<'EOF'
+   gh pr create --head impl-ISSUE_NO --title "TITLE" --body "$(cat <<'EOF'
    Closes #ISSUE_NO
 
    ## 変更内容
@@ -287,7 +290,7 @@ PR: <作成された PR の URL>"
 2. ワークツリー内で変更をコミット・プッシュする
    ```
    git add -A
-   git commit -m "Fix CI failure for #ISSUE_NO (attempt N)"
+   git commit -m "fix(SCOPE): #ISSUE_NO の CI 失敗を修正する (N回目)"
    git push
    ```
 3. 4a に戻り、再度 qa エージェントで CI チェックを監視する
@@ -306,7 +309,9 @@ PR: <作成された PR の URL>"
    gh issue comment ISSUE_URL --body-file .tmp/spira-comment.md
    ```
 2. `escalated` ラベル付きのフォローアップ Issue を起票する。
-   本文は `${CLAUDE_PLUGIN_ROOT}/templates/completion-report.md` の「エスカレーション Issue の本文」節に従い、**500 字以内**とする。
+   タイトルは `${CLAUDE_PLUGIN_ROOT}/templates/completion-report.md` の「エスカレーション Issue のタイトル」節に従い、
+   Conventional Commits スタイル（`fix(<scope>): #ISSUE_NO の CI 失敗を解消する`）で書く。
+   本文は同ファイルの「エスカレーション Issue の本文」節に従い、**500 字以内**とする。
    ```
    mkdir -p .tmp
    cat > .tmp/spira-issue.md <<'EOF'
@@ -315,7 +320,7 @@ PR: <作成された PR の URL>"
 
    wc -m .tmp/spira-issue.md          # 500 字以内であることを確認する
    gh issue create --repo OWNER/REPOSITORY \
-     --title "[escalated] CI failure follow-up for #ISSUE_NO" \
+     --title "fix(SCOPE): #ISSUE_NO の CI 失敗を解消する" \
      --label escalated \
      --body-file .tmp/spira-issue.md
    ```

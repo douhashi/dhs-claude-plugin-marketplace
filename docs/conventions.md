@@ -55,9 +55,10 @@ dhs-claude-plugin-marketplace/
 │   │   └── setup.md
 │   ├── hooks/
 │   │   └── hooks.json
-│   ├── templates/             # Issue 本文・コメントのテンプレート（SSoT）
+│   ├── templates/             # Issue 本文・コメント・コミット/PR のテンプレート（SSoT）
 │   │   ├── _rules.md
 │   │   ├── issue-body.md
+│   │   ├── commit-and-pr.md
 │   │   ├── implementation-plan.md
 │   │   ├── plan-revision.md
 │   │   ├── design-decision.md
@@ -108,7 +109,11 @@ dhs-claude-plugin-marketplace/
 
 ## コミットメッセージ
 
-変更の目的を簡潔に記述する。
+Conventional Commits スタイル（`<type>(<scope>): <説明>`）で書く。
+
+- `type` の一覧と使い分けは `spira/skills/create-issue/templates/issue-plan.md` の「タイトルの書式」節が単一ソース
+- implement / do が作るコミット・PR の書式は `spira/templates/commit-and-pr.md` が単一ソース
+- 実装コミットと PR タイトルは、元 Issue のタイトルをそのまま使う
 
 ## テスト
 

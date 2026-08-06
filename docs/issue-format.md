@@ -37,6 +37,10 @@ Issue の起票は取り消しにくいため、create-issue スキルは本文�
 Issue のタイトルは Conventional Commits スタイル（`<type>(<scope>): <説明>`）で書く。
 `type` と使い分けの定義も `issue-plan.md` が単一ソースであり、スキル本文には書かない。
 
+implement / do が CI 修正打ち切り時に起票するエスカレーション Issue も同じ書式に従う。
+こちらのタイトルは `spira/templates/completion-report.md` の「エスカレーション Issue のタイトル」節が
+単一ソースで、`fix(<scope>): #<元 Issue 番号> の CI 失敗を解消する` に固定する。
+
 - 承認前に `gh issue create` を実行しない
 - 承認段階で本文の全文は提示しない。ユーザーが求めた Issue の分だけ `issue-body.md` に沿って提示する
 - 承認は表全体に対して行う。承認されたら全行を起票し、行を選んで一部だけ起票しない
