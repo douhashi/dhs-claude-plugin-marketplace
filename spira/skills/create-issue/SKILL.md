@@ -49,7 +49,7 @@ allowed-tools: Read, Grep, Glob, Bash
 
 | 出力 | テンプレート | 上限 |
 |:--|:--|--:|
-| 作成予定 Issue 一覧 | [templates/issue-plan.md](templates/issue-plan.md) | 7 行 |
+| 作成予定 Issue 一覧 | [templates/issue-plan.md](templates/issue-plan.md) | — |
 | Issue 本文 | `${CLAUDE_PLUGIN_ROOT}/templates/issue-body.md` | 1,500 字 |
 | 共通ルール | `${CLAUDE_PLUGIN_ROOT}/templates/_rules.md` | — |
 

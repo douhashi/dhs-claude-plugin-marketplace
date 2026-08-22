@@ -29,7 +29,7 @@ PR <PR URL> をマージし（`<merge commit sha>`）、本 Issue をクロー�
 ```markdown
 ## CI 修正打ち切り
 
-2 回の修正試行で CI を通せませんでした。フォローアップ Issue: <新規 Issue URL>
+3 回の修正試行で CI を通せませんでした。フォローアップ Issue: <新規 Issue URL>
 
 - 最終失敗: （失敗したチェック名とエラーの要点を 1-2 文）
 ```

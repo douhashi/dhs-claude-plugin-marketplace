@@ -32,7 +32,7 @@ spira が GitHub Issue に書き込む本文・コメントは、書式と記述
 
 Issue の起票は取り消しにくいため、create-issue スキルは本文を書く前に
 **作成予定 Issue の一覧表**を提示して承認を得る。書式は
-`spira/skills/create-issue/templates/issue-plan.md`（`#` / タイトル / 目的 / 完了条件、最大 7 行）。
+`spira/skills/create-issue/templates/issue-plan.md`（`#` / タイトル / 目的 / 完了条件）。
 
 Issue のタイトルは Conventional Commits スタイル（`<type>(<scope>): <説明>`）で書く。
 `type` と使い分けの定義も `issue-plan.md` が単一ソースであり、スキル本文には書かない。

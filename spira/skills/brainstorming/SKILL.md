@@ -135,7 +135,7 @@ Phase 7 を飛ばした場合は、Issue 番号を含めずに更新する。
 
 | 出力 | テンプレート | 上限 |
 |:--|:--|--:|
-| 論点テーブル | [templates/discussion-points.md](templates/discussion-points.md) | 7 行 |
+| 論点テーブル | [templates/discussion-points.md](templates/discussion-points.md) | — |
 | 1 論点の提示・議論 | [templates/dialogue.md](templates/dialogue.md) | 600 字／応答 |
 | 議論の結論 | [templates/summary.md](templates/summary.md) | 800 字 |
 
