@@ -4,19 +4,23 @@
 # runs AFTER the hook already returned (Claude is never blocked).
 #
 # Pipeline: parse event -> gather text (transcript for stop, message for
-# notification) -> OpenRouter summarize (ported prompts, validated by
-# lib/validate.py into NDJSON {say, show}) -> broadcast via hailer's broker
-# (POST /hail). Each sentence becomes a segment: `show` -> text (ntfy push body),
-# `say` (reading) -> speech (synthesized by TTS). The broker fans out to every
-# enabled channel and owns volume; playback happens asynchronously over there.
+# notification) -> POST the RAW text to hailer's broker (/announce).
 #
-# Notification: idle "waiting for input" messages are dropped; only
-# action-required notifications (e.g. tool permission prompts) are spoken.
+# **このワーカーは要約しない。** 生テキストと task 名を broker へ渡すだけで、
+# 口調(preset の persona)・変換ルール(task)・モデル・要約失敗時の degrade は
+# すべて broker の責務。ここに残るのは Claude Code 固有の仕事だけ:
+#   - transcript の抽出とフラッシュ待ち
+#   - 入力待ちアイドル通知の除外
+#   - 単一フライト制御
+#
+# 以前はここで OpenRouter を呼んでいたが、鍵とプロンプトを作業機ごとに配る形に
+# なり、機種変で鍵が失われて無言になった。要約をサーバに寄せてその配布をやめた。
 #
 # Concurrency (kept deliberately simple per request): a single non-blocking
-# flock held across gather + summarize + the /hail POST. If a worker is already
-# in that window, new events are DROPPED — first-wins, no queue, no catch-up.
-# (The POST returns immediately; ordering of actual playback is the broker's.)
+# lock held across gather + the /announce POST. If a worker is already in that
+# window, new events are DROPPED — first-wins, no queue, no catch-up.
+# (The POST returns immediately with 202; ordering of actual playback is the
+# broker's.)
 #
 # Args: $1 = source (stop|notification)  $2 = event JSON file
 #
@@ -51,6 +55,7 @@ fi
 trap 'rmdir "$LOCK" 2>/dev/null; rm -f "$EVENT_FILE"' EXIT
 
 # --- gather source text ----------------------------------------------------
+# task 名は broker の tasks/<name>.md と 1:1 で対応する。
 if [ "$SOURCE" = "notification" ]; then
   raw="$(printf '%s' "$event" | jq -r '.message // empty' 2>/dev/null)"
   [ -n "$raw" ] || { log "empty notification -> drop"; exit 0; }
@@ -60,7 +65,7 @@ if [ "$SOURCE" = "notification" ]; then
     *"waiting for your input"*|*"appears to be idle"*|*"入力を待"*)
       log "idle notification -> drop"; exit 0 ;;
   esac
-  mode="notification"
+  task="claude-notification"
   src_text="$raw"
 else
   tp="$(printf '%s' "$event" | jq -r '.transcript_path // empty' 2>/dev/null)"
@@ -74,7 +79,7 @@ else
   done
   [ -n "$asst" ] || { log "no assistant text -> drop"; exit 0; }
   user="$(printf '%s' "$ctx" | jq -r '.user // empty' 2>/dev/null)"
-  mode="stop"
+  task="claude-stop"
   if [ -n "$user" ]; then
     src_text="## ユーザの依頼
 $user
@@ -86,43 +91,23 @@ $asst"
   fi
 fi
 
-# --- summarize -------------------------------------------------------------
-# summary is NDJSON: one {"say": reading, "show": text} object per sentence.
-summary="$(printf '%s' "$src_text" | "$ROOT/lib/summarize.sh" "$mode")"
+[ -n "${src_text//[[:space:]]/}" ] || { log "empty text -> drop"; exit 0; }
 
-if [ -z "$summary" ]; then
-  if [ "$SOURCE" = "notification" ]; then
-    # Notifications are already short: speak the raw message (graceful degrade).
-    # No separate reading/display here, so say == show == raw.
-    summary="$(jq -cn --arg s "$raw" '{say: $s}')"
-    log "summarize unavailable -> raw notification"
-  else
-    # Assistant turns can be huge/noisy; do not read raw. Drop.
-    log "summarize unavailable -> drop ($SOURCE)"
-    exit 0
-  fi
-fi
-
-# --- broadcast via hailer broker (POST /hail) ------------------------------
-# Map each NDJSON sentence onto a hailer segment: show -> text (display / ntfy
-# push body), say -> speech (the reading TTS synthesizes). targets is omitted
-# so the broker fans out to every enabled channel; volume is the broker's.
-segments="$(printf '%s\n' "$summary" \
-  | jq -c 'select(type=="object") | {text: (.show // .say), speech: .say}' \
-  | jq -cs 'map(select(.speech != null and .speech != ""))')"
-if [ -z "$segments" ] || [ "$segments" = "[]" ]; then
-  log "no segments to broadcast -> drop"; exit 0
-fi
-
+# --- POST the raw text to the broker (/announce) ---------------------------
 # `${var,,}` は bash 4 の構文。macOS の bash は 3.2 なので bad substitution になり、
 # cue が空 -> jq --argjson が壊れた body を作り -> broker が 422 を返す（実際に踏んだ）。
 cue_raw="$(printf '%s' "${TTS_NOTIFY_CUE:-}" | tr '[:upper:]' '[:lower:]')"
 case "$cue_raw" in true|1|yes|on) cue=true ;; *) cue=false ;; esac
-body="$(jq -cn \
-  --argjson segs "$segments" \
-  --arg preset "$TTS_NOTIFY_PRESET" \
-  --argjson cue "$cue" \
-  '{segments: $segs, preset: $preset, cue: $cue}')"
+
+# preset 未設定なら送らない（broker の HAILER_DEFAULT_PRESET に委ねる）。
+if [ -n "${TTS_NOTIFY_PRESET:-}" ]; then
+  body="$(jq -cn --arg text "$src_text" --arg task "$task" \
+       --arg preset "$TTS_NOTIFY_PRESET" --argjson cue "$cue" \
+       '{text: $text, task: $task, preset: $preset, cue: $cue}')"
+else
+  body="$(jq -cn --arg text "$src_text" --arg task "$task" --argjson cue "$cue" \
+       '{text: $text, task: $task, cue: $cue}')"
+fi
 
 # Cloudflare Access の service token（リモート broker のときだけ設定される）。
 # 両方揃っているときだけ送る（片方では Access を通れないので、中途半端な送信はしない）。
@@ -135,12 +120,12 @@ fi
 # ステータスと content-type を取る。`-f` は付けない（本文を捨てずに理由を残すため）。
 # `-L` も付けない: Access のブロックは 302 -> ログイン画面(200 HTML) なので、追跡すると
 # 「成功」に化けて無言で声が出なくなる（HTML を content-type で検知する）。
-resp="$(curl -sS -m 30 -X POST "$HAIL_URL/hail" \
+resp="$(curl -sS -m 30 -X POST "$HAIL_URL/announce" \
      -H "Content-Type: application/json" \
      "${access_headers[@]}" \
      --data-binary "$body" \
      -o /dev/null -w '%{http_code} %{content_type}' 2>/dev/null)" || {
-  log "hail post failed (unreachable): $HAIL_URL/hail"; exit 0
+  log "announce post failed (unreachable): $HAIL_URL/announce"; exit 0
 }
 http_code="${resp%% *}"
 content_type="${resp#* }"
@@ -149,13 +134,12 @@ case "$content_type" in
   # broker は JSON しか返さない。HTML が返ったら Cloudflare の応答（Access のログイン画面
   # または origin 不達のエラーページ）であり、broker には届いていない。
   *text/html*)
-    log "hail blocked by Cloudflare (http=$http_code): CF_ACCESS_CLIENT_ID/SECRET と Access ポリシー(Service Auth)を確認"
+    log "announce blocked by Cloudflare (http=$http_code): CF_ACCESS_CLIENT_ID/SECRET と Access ポリシー(Service Auth)を確認"
     exit 0 ;;
 esac
 if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
-  log "hail post failed (http=$http_code): $HAIL_URL/hail"; exit 0
+  # 400 は preset/task の指定ミス（broker が同期で弾く）。ここに出たら設定の問題。
+  log "announce post failed (http=$http_code): $HAIL_URL/announce"; exit 0
 fi
 
-shown="$(printf '%s\n' "$summary" | jq -r '.show // .say // empty' 2>/dev/null \
-  | tr '\n' ' ' | cut -c1-80)"
-log "hailed ($SOURCE): $shown"
+log "announced ($SOURCE) task=$task chars=${#src_text}"

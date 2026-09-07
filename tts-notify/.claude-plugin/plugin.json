@@ -1,14 +1,14 @@
 {
   "name": "tts-notify",
-  "version": "0.3.0",
-  "description": "Claude の Stop / Notification を OpenRouter で短く要約し、hailer の broker (POST /hail) 経由で音声読み上げ＋通知するフックプラグイン",
+  "version": "0.4.0",
+  "description": "Claude の Stop / Notification を hailer の broker (POST /announce) へ渡し、音声読み上げ＋通知するフックプラグイン。要約・口調・声はすべて broker 側の責務",
   "repository": "https://github.com/douhashi/dhs-claude-plugin-marketplace",
   "license": "MIT",
   "keywords": [
     "hooks",
     "tts",
     "notification",
-    "openrouter",
+    "hailer",
     "voice"
   ]
 }

@@ -3,8 +3,14 @@
 # tts-notify shared config / helpers. Sourced by bin/worker.sh.
 #
 # Config precedence: existing env > ~/.config/tts-notify/env > defaults.
-# The secret (OPENROUTER_API_KEY) lives ONLY in the env file (chmod 600,
-# outside any git repo) — never in this plugin.
+#
+# このプラグインは **秘密を持たない**。要約は hailer broker (POST /announce) の
+# 責務なので、OpenRouter の鍵もモデルも口調(persona)もここには無い。
+# 残る秘匿値は broker が Cloudflare Access 配下にある場合の service token だけ。
+#
+# 以前は OPENROUTER_API_KEY をこのファイル経由で各作業機に配っていたが、
+# 機種変で env ごと失われて「エラーも出さずに無言になる」事故を起こした。
+# 鍵を producer に置かないのはその再発防止でもある。
 
 TTS_NOTIFY_CONFIG="${TTS_NOTIFY_CONFIG:-$HOME/.config/tts-notify/env}"
 if [ -f "$TTS_NOTIFY_CONFIG" ]; then
@@ -14,16 +20,7 @@ if [ -f "$TTS_NOTIFY_CONFIG" ]; then
   set +a
 fi
 
-# OpenRouter. The default model is kept in sync with hailer's discord-relay so both
-# producers speak with the same voice/cost profile (override per host in the env file).
-: "${OPENROUTER_MODEL:=google/gemini-3.1-flash-lite}"
-: "${OPENROUTER_URL:=https://openrouter.ai/api/v1/chat/completions}"
-# OPENROUTER_API_KEY intentionally has no default (empty => graceful degrade).
-
-# Playback/notify via hailer's broker (POST /hail). HAIL_URL is shared with the
-# `hail` CLI so one config serves both. Volume is owned by the broker channel
-# (hail volume / admin UI), not stamped here. cue is a boolean; preset selects
-# the voice (fenrys|gena|sophie).
+# hailer broker。`hail` CLI と同じ変数を使うので 1 つの設定で両方に効く。
 #
 # Remote broker (behind a Cloudflare tunnel + Access): set HAIL_URL to the tunnel
 # hostname and provide a Cloudflare Access *service token*. The hook is a machine
@@ -32,7 +29,10 @@ fi
 # CF_ACCESS_CLIENT_ID / CF_ACCESS_CLIENT_SECRET intentionally have no defaults:
 # they are only sent when both are present (loopback setups stay header-free).
 : "${HAIL_URL:=http://127.0.0.1:8080}"
-: "${TTS_NOTIFY_PRESET:=gena}"
+
+# 声と口調を同時に決める preset 名（broker の presets/<name>.md と
+# tts-synth の presets/<name>.wav に対応）。空なら broker の既定に委ねる。
+: "${TTS_NOTIFY_PRESET:=}"
 : "${TTS_NOTIFY_CUE:=true}"
 
 # Bounded poll (sec) for the assistant turn to be flushed to the transcript.
