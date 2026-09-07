@@ -1,15 +1,36 @@
 # tts-notify
 
-Claude Code の **Stop / Notification** を OpenRouter で短く
-要約し、[hailer](https://github.com/douhashi/hailer) の broker（`POST /hail`）
-経由で音声読み上げ＋モバイル通知するフックプラグイン。
+Claude Code の **Stop / Notification** を [hailer](https://github.com/douhashi/hailer) の
+broker（`POST /announce`）へ渡し、音声読み上げ＋モバイル通知するフックプラグイン。
 
 Notification は「ツール使用許可要求」など**ユーザーのアクションが要る通知だけ**を
 読み上げ、入力待ちアイドル通知（`waiting for your input` 等）はドロップする。
 
-旧 `~/.claude/hooks/tts-on-*.sh` ＋ 常駐コーディネータ（:16101）構成の置き換え。
-読み上げ／通知の配送は hailer broker が担うため、このプラグイン自体は
-**常駐サービス不要**（デタッチ worker 方式）。
+## 責務
+
+**このプラグインは要約しない。秘密も持たない。**
+
+生テキストと task 名を broker へ渡すだけで、以下はすべて broker 側の責務:
+
+| 決めるもの | どこにあるか |
+|---|---|
+| 口調（persona） | broker の `presets/<preset>.md` |
+| 声（voice） | tts-synth の `presets/<preset>.wav` |
+| 変換ルール・文数 | broker の `tasks/<task>.md` と `tasks.json` |
+| 要約モデル・OpenRouter 鍵 | broker の env（`OPENROUTER_MODEL` / `OPENROUTER_API_KEY`） |
+| 要約失敗時の degrade | broker の task 定義（`fallback: raw \| drop`） |
+| 音量・mute | broker の channel（`hail volume` / `hail mute`） |
+
+> 以前はこのプラグインが OpenRouter を直接叩いて要約していた。その形だと鍵と
+> プロンプトを作業機ごとに配ることになり、**機種変で `~/.config/tts-notify/env` が
+> 失われて 4 日間無言になった**（要約失敗は graceful degrade するのでエラーが出ない）。
+> 要約を broker に寄せて、producer から鍵を無くしたのはその再発防止でもある。
+
+ここに残るのは Claude Code 固有の仕事だけ:
+
+- transcript の抽出とフラッシュ待ち（`lib/extract.py`）
+- 入力待ちアイドル通知の除外
+- 単一フライト制御
 
 ## 構成
 
@@ -19,17 +40,15 @@ tts-notify/
 ├── hooks/
 │   ├── hooks.json               # Stop/Notification → dispatch.sh
 │   └── dispatch.sh              # 薄い共通ディスパッチャ（新セッションへデタッチ→即 return）
-├── bin/worker.sh                # デタッチ実行: 抽出→要約→hailer /hail へ POST
+├── bin/worker.sh                # デタッチ実行: 抽出 → broker /announce へ POST
 └── lib/
-    ├── common.sh                # 設定ロード/ログ/パス（共通処理を集約）
-    ├── extract.py               # transcript JSONL 抽出（stdlib のみ）
-    ├── summarize.sh             # OpenRouter 要約（NDJSON {say, show} を出力）
-    └── validate.py              # 要約応答の検証/正規化（stdlib のみ・弾いた理由をログ）
+    ├── common.sh                # 設定ロード/ログ/パス
+    └── extract.py               # transcript JSONL 抽出（stdlib のみ）
 ```
 
-2 イベントは **単一 `dispatch.sh`**（`--source` 引数で差分）に集約。dispatch は
-イベント JSON を stash して `worker.sh` を**新しいセッション**へデタッチし即 return
-するため、Claude Code を一切ブロックしない（`setsid` が無い macOS では python3 で
+2 イベントは **単一 `dispatch.sh`**（引数で差分）に集約。dispatch はイベント JSON を
+stash して `worker.sh` を**新しいセッション**へデタッチし即 return するため、
+Claude Code を一切ブロックしない（`setsid` が無い macOS では python3 で
 `setsid(2)` を呼ぶ）。フックチェーンは壊さない（exit 0）が、worker の起動に失敗した
 場合は理由を `worker.log` に残す。
 
@@ -37,113 +56,82 @@ tts-notify/
 
 1. `dispatch.sh <source>` … stdin のイベント JSON を一時保存し worker をデタッチ起動
 2. `worker.sh` …
-   - **単一フライト**: atomic な `mkdir` ロック。要約〜`/hail` POST の最中に来た新イベントは
-     **ドロップ**（先がち・キューなし・取り戻しなし。意図的に単純化）。POST は即
-     返るため、実再生の順序制御は broker 側の責務
-   - notification は `.message` を判定し、入力待ちアイドル通知はドロップ。
-     許可要求など要アクション通知のみ要約対象
-   - テキスト取得: notification は `.message`、stop は
-     transcript から最新 assistant 本文＋直前 user（最大 `TTS_NOTIFY_TRANSCRIPT_WAIT`
-     秒バウンドでフラッシュ待ち）
-   - OpenRouter で要約（`stop`=1〜2 文 / `notification`=1 文、`text`+`reading`
-     構造化出力。プロンプト・スキーマは irodori-tts-docker coordinator から忠実移植）。
-     応答は `validate.py`（stdlib）で検証・正規化し、弾いた文は理由を `worker.log` へ
-   - 各文を hailer の segment に変換し `POST $HAIL_URL/hail` へ送る。
-     `show`（自然な日本語表記）→ `text`（ntfy push 本文）、`say`（英単語→カタカナ版）
-     → `speech`（TTS が合成する読み）。`targets` は省略し broker の enabled 全
-     チャネルへファンアウト（音量は broker channel が権威）
-3. 鍵欠如/要約失敗時の graceful degrade:
-   - notification → 生メッセージをそのまま送る（`{"say": 生文}`、text も生文）
-   - stop → ドロップ（assistant 本文は長大になりうるため生読みしない）
+   - **単一フライト**: atomic な `mkdir` ロック。POST 中に来た新イベントは**ドロップ**
+     （先がち・キューなし・取り戻しなし）
+   - notification は `.message` を判定し、入力待ちアイドル通知はドロップ →
+     task `claude-notification`
+   - stop は transcript から最新 assistant 本文＋直前 user を取り出す
+     （最大 `TTS_NOTIFY_TRANSCRIPT_WAIT` 秒バウンドでフラッシュ待ち）→ task `claude-stop`
+   - `POST $HAIL_URL/announce` に `{text, task, preset?, cue}` を送る。
+     broker は **202 で即返し**、要約と配送はバックグラウンドで行う
+
+broker 側が preset/task を解決できない場合は同期で **400** が返るので、設定ミスは
+`worker.log` にはっきり出る（無言で消えない）。
 
 ## セットアップ
 
-### 1. 秘密（OpenRouter API キー）
+### 1. broker
 
-プラグイン外・リポ外の `~/.config/tts-notify/env`（chmod 600）に置く:
+[hailer](https://github.com/douhashi/hailer) の broker を起動しておく。疎通確認は
+`hail status`。broker が別ホスト/別ポートなら `HAIL_URL` を設定する
+（既定 `http://127.0.0.1:8080`、`hail` CLI と共通）。
+
+#### リモート broker（Cloudflare tunnel + Access 経由）
+
+このフックは**機械クライアント**なので Access の対話ログインを処理できない。
+**Service Token** が要る。
 
 ```sh
 mkdir -p ~/.config/tts-notify
 umask 077
 cat > ~/.config/tts-notify/env <<'EOF'
-OPENROUTER_API_KEY=sk-or-...
-# 要約モデルを変えたいときだけ（既定 google/gemini-3.1-flash-lite）
-# OPENROUTER_MODEL=openai/gpt-5-mini
+HAIL_URL=https://<admin-host>
+CF_ACCESS_CLIENT_ID=<...>.access
+CF_ACCESS_CLIENT_SECRET=<...>
+# 声と口調を同時に決める。省略すると broker の HAILER_DEFAULT_PRESET に従う
+TTS_NOTIFY_PRESET=sophie
 EOF
 chmod 600 ~/.config/tts-notify/env
 ```
 
-キーが無くても壊れない（要約スキップで degrade）。OpenRouter 側で spend 上限推奨。
-
-### 2. TTS / 通知バックエンド（hailer）
-
-[hailer](https://github.com/douhashi/hailer) の broker を起動しておく
-（読み上げ・モバイル通知の配送はすべて broker が担当）:
-
-```sh
-cd ~/ghq/github.com/douhashi/hailer && docker compose up -d
-```
-
-疎通確認は `hail status`（または `curl -s "$HAIL_URL/health"`）。チャネルの
-有効/無効・音量は `hail channels` / `hail mute <ch>` / `hail volume <0-100>` で
-broker 側を操作する（このプラグインからは設定しない）。broker が別ホスト/別ポート
-の場合は `HAIL_URL` を設定する（既定 `http://127.0.0.1:8080`、`hail` CLI と共通）。
-
-#### リモート broker（Cloudflare tunnel + Access 経由）
-
-broker を別マシンに置き、Cloudflare tunnel + Access で公開している場合、このフックは
-**機械クライアント**なので Access の対話ログインを処理できない。**Service Token**
-（`CF-Access-Client-Id` / `CF-Access-Client-Secret`）が要る。
-
-```sh
-cat >> ~/.config/tts-notify/env <<'EOF'
-HAIL_URL=https://<admin-host>
-CF_ACCESS_CLIENT_ID=<...>.access
-CF_ACCESS_CLIENT_SECRET=<...>
-EOF
-```
-
 - token 対が**両方揃っているときだけ**ヘッダを送る（loopback 運用は従来どおり）。
-- token の発行と Access ポリシー（Action = **Service Auth**）の設定は
-  [hailer の deploy/cloudflared/README.md](https://github.com/douhashi/hailer/blob/main/deploy/cloudflared/README.md) を参照。
-- **再生（声）はサーバではなくクライアントで鳴る**。このフックは publish するだけなので、
-  声を聞くマシンで `hail listen` を常駐させておくこと（通知は ntfy がスマホへ push する）。
+- **再生（声）はサーバではなくクライアントで鳴る**。声を聞くマシンで `hail listen` を
+  常駐させておくこと（通知は ntfy がスマホへ push する）。
 
 > Access に弾かれると Cloudflare は **302 → ログイン画面（200 HTML）** を返す。curl の
 > リダイレクト追跡を有効にすると「成功」に化けて無言で声が出なくなるため、worker は
 > **content-type が HTML なら Cloudflare の応答**と判定して `worker.log` に理由を残す。
 
-### 3. インストール
+### 2. インストール
 
 ```sh
 /plugin marketplace add /path/to/dhs-claude-plugin-marketplace
 /plugin install tts-notify@dhs-claude-plugin-marketplace
 ```
 
-旧構成（`~/.claude/settings.json` の `tts-on-*.sh` を指す Stop/Notification
-フック）は**重複発火するので削除**すること。
-
 ## 設定（`~/.config/tts-notify/env` または環境変数）
 
 | 変数 | 既定 | 説明 |
 |---|---|---|
-| `OPENROUTER_API_KEY` | （無し） | OpenRouter キー。未設定で要約 degrade |
-| `OPENROUTER_MODEL` | `google/gemini-3.1-flash-lite` | 要約モデル（hailer の discord-relay と既定を揃えてある） |
-| `OPENROUTER_URL` | `https://openrouter.ai/api/v1/chat/completions` | エンドポイント |
 | `HAIL_URL` | `http://127.0.0.1:8080` | hailer broker のベース URL（`hail` CLI と共通） |
 | `CF_ACCESS_CLIENT_ID` | （無し） | Cloudflare Access の service token。リモート broker のときのみ |
 | `CF_ACCESS_CLIENT_SECRET` | （無し） | 同上。**両方揃ったときだけ**ヘッダを送る |
-| `TTS_NOTIFY_PRESET` | `gena` | 声プリセット（`fenrys`/`gena`/`sophie`） |
+| `TTS_NOTIFY_PRESET` | （無し＝broker の既定） | 声と口調（`fenrys`/`gena`/`sophie`） |
 | `TTS_NOTIFY_CUE` | `true` | 先頭で開始音を鳴らすか（`true`/`false`） |
 | `TTS_NOTIFY_TRANSCRIPT_WAIT` | `5` | transcript フラッシュ待ち秒 |
 | `TTS_NOTIFY_CACHE` | `~/.cache/tts-notify` | ロック/ログ置き場（`worker.log`） |
 
+> **OpenRouter の設定はここには無い。** broker 側の env で持つ。
+
 ## デバッグ
 
-`~/.cache/tts-notify/worker.log` を見る（`spoke` / `busy -> drop` /
+`~/.cache/tts-notify/worker.log` を見る（`announced` / `busy -> drop` /
 `... -> drop` の理由が出る）。手動実行:
 
 ```sh
 echo '{"message":"テスト"}' > /tmp/e.json
 CLAUDE_PLUGIN_ROOT=$PWD/tts-notify tts-notify/bin/worker.sh notification /tmp/e.json
 ```
+
+要約結果そのものは broker のログに出る（`announced task=... preset=...`）。
+このプラグイン側のログは「投げたかどうか」までしか分からない。
