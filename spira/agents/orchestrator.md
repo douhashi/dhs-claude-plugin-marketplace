@@ -13,7 +13,7 @@ model: inherit
 - **正はファイルと GitHub**: 自分の記憶ではなく `state.md`・`lines/`・Issue の状態から判断する
 - **止まるべきときに止まる**: 人の手が要るブロッカーがあるとき、または自走を続けられないエスカレーションがあるときは、新しいラインを起動しない
 - **止まらなくてよいときは止まらない**: エスカレーションがあっても、他の Issue を進められるなら続ける
-- **報告は短く**: ユーザーが一目で状況を掴める量に絞る
+- **報告は変化が分かるように**: 状態の記号だけで済ませず、何がどう変わったかを Issue を読んで要約する。全体像は表で一目で掴めるようにする
 
 ## Role
 
@@ -77,7 +77,7 @@ gh issue list --repo REPO --label escalated --state open --json number,title \
 
 判定したら次を行い、ライン表の行を `—` に戻す。
 
-1. 結果表に 1 行追記する（同じ Issue の行が既にあれば更新する）
+1. 結果表に 1 行追記し（同じ Issue の行が既にあれば更新する）、対象 Issue 表の状態を結果の記号に更新する
 2. 出力を退避する: `mv "$LINES"/N.* "$LINES/archive/"` の前に、ファイル名へ日時を付ける（`N-<YYYYmmddHHMM>.log` など）
 3. ライン用 worktree を消す: `git -C ROOT worktree remove --force <worktree>`
 
@@ -192,6 +192,9 @@ git -C ROOT pull --ff-only --quiet
 
 ロードマップへの反映に失敗しても `取り込み` の Issue は着手対象に残る（`spira:pick` の番号順で拾われる）。
 
+`取り込み` の Issue は、対象 Issue 表にも追加する。ロードマップに入れた位置に対応する行の間に挿入し、`順` を振り直す
+（ロードマップが無い・反映できなかった場合は末尾に追加する）。状態は `⏳ 待機`、メモは `🆕 ループ中に取り込み`。
+
 ### 3. 停止要因の再確認
 
 ブロッカー表に `未解消` の行があれば、値が入ったかを確かめる。**値は出力しない。**
@@ -245,12 +248,21 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
      "$LINES" "N" </dev/null >/dev/null 2>&1 &
    echo $!
    ```
-5. ライン表の空き行に Issue・タイトル・PID（`echo $!` の値）・worktree・開始時刻を書く
+5. ライン表の空き行に Issue・タイトル・PID（`echo $!` の値）・worktree・開始時刻を書き、対象 Issue 表の状態を `📝 計画` にする
 
 ### 5. 状態の更新
 
 `state.md` のイテレーションを 1 増やし、最終更新を現在時刻にして、手順 1〜4 の変更を書き込む。
 トリアージの結果は、ロードマップ PR を作る前に表へ書いておく（途中で失敗しても判定が残るようにする）。
+
+対象 Issue 表の状態は、書き込む前に次で揃える。
+
+| 対象 | 状態 |
+|:--|:--|
+| 走行中 | 手順 1 で推定した `📝 計画` / `🛠 実装` / `🧪 CI` |
+| ラインを通さずクローズされていた | `✅ 完了`（メモ `外部でクローズ`） |
+| 依存先の Issue が Open | `⏸ 依存待ち`（メモに依存先） |
+| 上記以外で未着手 | `⏳ 待機` |
 
 ### 6. NEXT の決定
 
@@ -266,6 +278,17 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
 ## 出力フォーマット
 
 `${CLAUDE_PLUGIN_ROOT}/skills/autopilot/templates/progress-report.md` の、NEXT に対応する節の雛形どおりに書く。
+
+「今回の出来事」は、出来事ごとに**対象 Issue の内容を実際に読んでから**主題とサマリーを書く（テンプレートの「読むもの」を参照）。
+タイトルや状態の変化だけから推測して書くことは禁止。
+
+```bash
+gh issue view N --repo REPO --json title,body,comments \
+  --jq '{title, body, comments: [.comments[].body | select(test("^## (完了報告|実装内容|CI 失敗|人手対応待ち)"))]}'
+gh pr view <PR 番号> --repo REPO --json title,files --jq '{title, files: [.files[].path]}'
+```
+
+「ループ対象の全体像」は、手順 5 で更新した対象 Issue 表から作る。
 `halt` のときは `${CLAUDE_PLUGIN_ROOT}/skills/autopilot/templates/blocker-guide.md` を併せて Read し、止まった理由に応じた節を続ける。
 
 | 止まった理由 | 節 | 載せる内容 |
