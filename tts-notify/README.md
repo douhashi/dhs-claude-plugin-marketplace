@@ -28,9 +28,18 @@ Notification は「ツール使用許可要求」など**ユーザーのアク�
 
 ここに残るのは Claude Code 固有の仕事だけ:
 
-- transcript の抽出とフラッシュ待ち（`lib/extract.py`）
+- transcript から**今ターンの最終本文**を取り出す（`lib/extract.py`）
 - 入力待ちアイドル通知の除外
 - 単一フライト制御
+
+> Claude Code は transcript を**遅延フラッシュ**する。Stop hook が走る時点では、その
+> ターンの最終本文はまだファイルに無い（実測: hook 完了の約 150ms 後に、最終 text
+> レコードと `stop_hook_summary` が同じフラッシュで現れる）。そのため素朴に「ファイル
+> 末尾の assistant 本文」を採ると**前ターンの本文**が返る。実際そうなっていて、
+> `worker.log` と transcript を突き合わせると**読み上げは常に 1 つ前のメッセージ**
+> だった（8/8）。フラッシュ待ちループは持っていたが「本文が取れたら break」という
+> 条件だったので、前ターンの本文が必ずヒットして初回で抜けていた（= 一度も待って
+> いなかった）。今は `extract.py` が「今ターンのものか」を判定し、確定するまで待つ。
 
 ## 構成
 
@@ -60,8 +69,10 @@ Claude Code を一切ブロックしない（`setsid` が無い macOS では pyt
      （先がち・キューなし・取り戻しなし）
    - notification は `.message` を判定し、入力待ちアイドル通知はドロップ →
      task `claude-notification`
-   - stop は transcript から最新 assistant 本文＋直前 user を取り出す
-     （最大 `TTS_NOTIFY_TRANSCRIPT_WAIT` 秒バウンドでフラッシュ待ち）→ task `claude-stop`
+   - stop は transcript から**今ターンの**最終 assistant 本文＋そのターンの起点 user を
+     取り出す（最大 `TTS_NOTIFY_TRANSCRIPT_WAIT` 秒バウンドでフラッシュ待ち）→
+     task `claude-stop`。確定しないまま時間切れなら**ドロップ**する（前ターンを読み
+     直すより黙るほうが正しい）
    - `POST $HAIL_URL/announce` に `{text, task, preset?, cue}` を送る。
      broker は **202 で即返し**、要約と配送はバックグラウンドで行う
 
@@ -118,7 +129,7 @@ chmod 600 ~/.config/tts-notify/env
 | `CF_ACCESS_CLIENT_SECRET` | （無し） | 同上。**両方揃ったときだけ**ヘッダを送る |
 | `TTS_NOTIFY_PRESET` | （無し＝broker の既定） | 声と口調（`fenrys`/`gena`/`sophie`） |
 | `TTS_NOTIFY_CUE` | `true` | 先頭で開始音を鳴らすか（`true`/`false`） |
-| `TTS_NOTIFY_TRANSCRIPT_WAIT` | `5` | transcript フラッシュ待ち秒 |
+| `TTS_NOTIFY_TRANSCRIPT_WAIT` | `5` | transcript フラッシュ待ち秒（実測遅延は約 150ms。`0` にすると待たないのでほぼ確実に取り逃す） |
 | `TTS_NOTIFY_CACHE` | `~/.cache/tts-notify` | ロック/ログ置き場（`worker.log`） |
 
 > **OpenRouter の設定はここには無い。** broker 側の env で持つ。
@@ -131,6 +142,21 @@ chmod 600 ~/.config/tts-notify/env
 ```sh
 echo '{"message":"テスト"}' > /tmp/e.json
 CLAUDE_PLUGIN_ROOT=$PWD/tts-notify tts-notify/bin/worker.sh notification /tmp/e.json
+```
+
+stop 側は第 3 引数に **hook 発火の epoch 秒**を取る（通常は `dispatch.sh` が渡す）。
+手で叩くときは、その transcript の最終ターンが終わった時刻を渡す:
+
+```sh
+echo '{"transcript_path":"'"$HOME"'/.claude/projects/<proj>/<session>.jsonl"}' > /tmp/e.json
+CLAUDE_PLUGIN_ROOT=$PWD/tts-notify tts-notify/bin/worker.sh stop /tmp/e.json "$(date +%s)"
+```
+
+抽出だけを確かめたいなら `lib/extract.py` を直接叩く（`{}` は「今ターンの本文はまだ
+確定していない」の意味）:
+
+```sh
+python3 tts-notify/lib/extract.py <transcript.jsonl> --fired-at "$(date +%s)" --wait 5
 ```
 
 要約結果そのものは broker のログに出る（`announced task=... preset=...`）。

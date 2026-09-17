@@ -36,6 +36,8 @@ fi
 : "${TTS_NOTIFY_CUE:=true}"
 
 # Bounded poll (sec) for the assistant turn to be flushed to the transcript.
+# 実測のフラッシュ遅延は約 150ms なので 5 秒は十分に余裕がある。ここを 0 にすると
+# 待たずに 1 回だけ試すので、ほぼ確実に取り逃して無言になる。
 : "${TTS_NOTIFY_TRANSCRIPT_WAIT:=5}"
 
 : "${TTS_NOTIFY_CACHE:=$HOME/.cache/tts-notify}"

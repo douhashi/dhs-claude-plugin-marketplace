@@ -48,17 +48,17 @@ dhs-claude-plugin-marketplace/
 
 ### tts-notify
 
-Claude の Stop / Notification を OpenRouter で短く要約し、hailer の broker
-（`POST /hail`）経由で音声読み上げ＋モバイル通知するフックプラグイン。
+Claude の Stop / Notification を hailer の broker（`POST /announce`）へ渡し、
+音声読み上げ＋モバイル通知するフックプラグイン。
 
 - **薄い共通ディスパッチャ**: 2 イベントを単一 `dispatch.sh` に集約、`setsid`
   でデタッチして即 return（Claude を非ブロッキング）。常駐サービス不要
-- **要約**: OpenRouter 構造化出力（プロンプト/スキーマは irodori-tts-docker
-  coordinator から忠実移植）。応答は `lib/validate.py`（stdlib）で検証・正規化し
-  弾いた理由をログ。鍵は `~/.config/tts-notify/env`（リポ外・600）
-- **配送**: 要約を hailer segment（`show`→text / `say`→speech）に変換し
-  broker へ POST。読み上げ・通知の配送と音量は broker が担う（`HAIL_URL` で接続先）
-- **単一フライト**: `flock -n` で要約〜POST 中の新イベントはドロップ（先がち）
+- **要約しない・秘密を持たない**: 生テキストと task 名を broker へ渡すだけ。口調
+  （persona）・声・変換ルール・要約モデル・鍵・失敗時の degrade はすべて broker の責務
+- **今ターンの本文の特定**: transcript は遅延フラッシュされ、hook 発火時点では最終
+  本文がまだファイルに無い。`lib/extract.py` が「今ターンのものか」を判定し、確定
+  するまでバウンド付きで待つ（素朴に末尾を採ると常に 1 つ前のメッセージを読む）
+- **単一フライト**: atomic な `mkdir` ロックで、抽出〜POST 中の新イベントはドロップ（先がち）
 - 詳細は `tts-notify/README.md`
 
 ## ドキュメント

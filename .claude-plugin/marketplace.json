@@ -12,7 +12,7 @@
     {
       "name": "tts-notify",
       "source": "./tts-notify",
-      "description": "Claude の Stop / SubagentStop / Notification を OpenRouter で要約しローカル TTS で読み上げるフックプラグイン"
+      "description": "Claude の Stop / Notification を hailer の broker (POST /announce) へ渡し、音声読み上げ＋通知するフックプラグイン"
     }
   ]
 }
