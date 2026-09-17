@@ -5,10 +5,11 @@ Claude Code プラグインとして、自律的な開発サイクル（計画 �
 ## 特徴
 
 - **開発サイクル自動化**: GitHub Issue を入力に、計画・実装・PR 作成・CI 監視・マージまでを一貫して自動実行
-- **エージェント分業**: planner / implementer / po / qa / setup の 5 エージェントが役割を分担
+- **エージェント分業**: planner / implementer / po / qa / setup / orchestrator の 6 エージェントが役割を分担
 - **Issue 駆動**: 全プロセスの結果が GitHub Issue にコメントとして記録される
 - **ブレインストーミング**: 論点を洗い出し、1 つずつ対話で決着させ、Issue 化とドキュメント更新まで繋ぐ対話型スキル
 - **次タスク抽出**: `escalated` ラベルを優先しつつ、対応すべき Issue を 1 件選び出す
+- **自走開発**: `spira:pick` → `spira:do` を最大 3 ラインで並列に回し、人の手が必要になったら止まる
 
 ## セットアップ
 
@@ -138,6 +139,8 @@ git リポジトリでない場合やリモート・`gh` 認証が無い場合�
 現在のリポジトリで、次に対応すべき Open な Issue を 1 件抽出します。
 副作用なし（Issue・ラベルへの書き込みは行わない）。
 
+`--exclude 21,24` で指定した Issue を候補から外せます（`spira:orchestrator` が走行中の Issue を外すために使います）。
+
 優先順:
 
 1. `escalated` ラベル付きの Open Issue（番号が若い順）
@@ -153,6 +156,60 @@ git リポジトリでない場合やリモート・`gh` 認証が無い場合�
 URL: <url>
 ```
 
+### `/spira:autopilot [--env <Infisical 環境名>]`
+
+開発を自走で回す準備（キックオフ）をします。自身は開発しません。
+
+1. **最新化** — デフォルトブランチを `git pull`
+2. **確認** — ロードマップと Open Issue から着手見込みと依存を把握
+3. **前提条件の検査** — 欠けていたら案内して終了
+   - gh 認証・claude CLI・origin
+   - Infisical（CLI・`.infisical.json`・ログイン）。未設定ならセットアップを促して終了
+   - 人の手による準備物（`.env.example`・ドキュメント・Issue 本文から変数名を集める）。
+     Infisical に無ければ値 `__SPIRA_PLACEHOLDER__` で作成し、埋める手順を案内して終了
+4. **書き出し** — `.tmp/spira-autopilot/context.md`（ルール・進め方）と `state.md`（状態）
+5. **案内** — `/clear` 後に実行するプロンプトを提示
+
+```bash
+/spira:autopilot
+# → /clear してから:
+# .tmp/spira-autopilot/context.md を読み、「メインセッションの進め方」に従って自走開発のイテレーションを進めてください。
+```
+
+#### ループの仕組み
+
+メインセッションは `spira:orchestrator` を呼んで報告を表示し、ラインの完了を待つだけを繰り返します。
+状態はすべて `.tmp/spira-autopilot/` にあるため、`/clear` しても続きから再開できます。
+
+| 担当 | やること |
+|:--|:--|
+| メインセッション | orchestrator の起動 → 報告の表示 → 待機（`NEXT: wait / halt / done`） |
+| `spira:orchestrator` | 終わったラインの回収 → 見つかった Issue の判定とロードマップ PR → ブロッカーの再確認 → `spira:pick --exclude` で選んで依存を確認 → ライン起動 → 進捗を表で報告 |
+| ライン | 専用 worktree で `claude -p` を起動し `spira:do` を最後まで実行 |
+
+- 同時に走るラインは最大 3 本。依存が未完了の Issue は見送る
+- ラインは人と対話できないため `--permission-mode bypassPermissions` で起動する
+- 人の手による設定が必要になったラインは、Infisical にプレースホルダを作り Issue に `## 人手対応待ち` を残して止まる。
+  orchestrator は新しいラインを起動せず、走行中のラインが終わったら埋める手順を案内してループを終了する
+- ループ中に見つかった Issue（ループ開始後に作られた Open Issue）は orchestrator が判定する
+  - 取り込むのは**システムを壊す不具合だけ**（ビルド・CI・主要機能・データ・セキュリティを壊す、ラインの完了を妨げる）。拡張と、壊さない不具合は見送る
+  - 取り込む Issue はロードマップの未完了行のなるべく上に追加し、ロードマップ PR を作成→CI 通過後にマージする
+- `escalated` Issue は、ループ開始前からあるものも含めて自走では扱わない（`spira:pick --exclude` で外す）
+- escalated Issue がループ中に見つかっても、**自走を続けられないときだけ**ループを止める
+  - 続けられない: 原因がデフォルトブランチ側にありどのラインでも同じ失敗が起きる／同じ原因の失敗が複数の Issue で起きている／未完了の Issue がすべてそれに依存している
+  - 続けられないと判定したら新しいラインを起動せず、走行中のラインが終わってから手順を案内して終了する。escalated Issue がクローズされれば続きから再開できる
+
+出力の書式は `skills/autopilot/templates/` で定義しています。
+
+| 出力 | テンプレート |
+|:--|:--|
+| ループのコンテキスト | `context.md` |
+| ループの状態 | `state.md` |
+| キックオフ報告 | `kickoff-report.md` |
+| 進捗レポート | `progress-report.md` |
+| 人の手が必要なときの案内 | `blocker-guide.md` |
+| ロードマップ追加 PR | `roadmap-pr.md` |
+
 ## プロジェクト構成
 
 ```
@@ -160,6 +217,9 @@ spira/
 ├── .claude-plugin/
 │   └── plugin.json        # プラグインマニフェスト
 ├── skills/
+│   ├── autopilot/         # 自走開発のキックオフ
+│   │   ├── SKILL.md
+│   │   └── templates/     # コンテキスト・状態・報告・案内のテンプレート
 │   ├── brainstorming/     # ブレインストーミング
 │   │   ├── SKILL.md
 │   │   └── templates/     # 論点テーブル・対話・結論のテンプレート
@@ -175,6 +235,7 @@ spira/
 ├── agents/
 │   ├── planner.md         # 計画エージェント
 │   ├── implementer.md     # 実装エージェント
+│   ├── orchestrator.md    # 自走開発のオーケストレータ
 │   ├── po.md              # 設計判断エージェント
 │   ├── qa.md              # QA・CI 監視エージェント
 │   └── setup.md           # 環境構築エージェント
@@ -187,6 +248,7 @@ spira/
 │   ├── design-decision.md
 │   ├── implementation-result.md
 │   ├── qa-result.md
+│   ├── blocked.md         # 人手対応待ち
 │   └── completion-report.md
 └── README.md
 ```
@@ -206,6 +268,7 @@ spira が Issue に書き込む本文・コメントは、`templates/` 配下の
 | `## 設計判断に基づく修正` / `## CI 修正 (N回目)` | 500 字 |
 | `## QA 結果` / `## CI 失敗 (N回目)` | 300 字 |
 | `## 完了報告` | 500 字 |
+| `## 人手対応待ち` | 300 字 |
 
 PO 判断の反映や CI 修正は**差分のみ**を記録し、実装計画・実装内容の全文再掲は行いません。
 上限を変更する場合は `templates/_rules.md` と各テンプレートを更新してください。
@@ -219,6 +282,7 @@ PO 判断の反映や CI 修正は**差分のみ**を記録し、実装計画・
 | **po** | 設計判断（複数論点を集約して 1 回でまとめて判断） |
 | **qa** | CI ステータス監視、全チェック通過後の自動マージ |
 | **setup** | 開発環境の構築（ライブラリ、環境マネージャ、フレームワーク、CI） |
+| **orchestrator** | 自走開発のイテレーションを 1 回進め、ラインの状況を表で報告 |
 
 ## ラベル
 

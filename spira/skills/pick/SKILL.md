@@ -1,6 +1,7 @@
 ---
 name: pick
 description: "対応すべき GitHub Issue を 1 件抽出する。escalated ラベル付きを優先する。pick, 次のIssue, 次のタスク"
+argument-hint: "[--exclude <Issue 番号,...>]"
 user-invocable: true
 allowed-tools: Bash
 ---
@@ -20,11 +21,11 @@ allowed-tools: Bash
 ## 禁則事項
 
 - Issue・ラベル・コメントへの書き込みは禁止
-- 抽出条件を独自に拡張することは禁止（assignee 等の追加フィルタを掛けない）
+- 抽出条件を独自に拡張することは禁止（assignee 等の追加フィルタを掛けない。`--exclude` 以外で候補を外さない）
 
 ## 入力の解析
 
-引数は受け取りません。実行されたディレクトリの Git リポジトリから `OWNER/REPOSITORY` を取得します。
+実行されたディレクトリの Git リポジトリから `OWNER/REPOSITORY` を取得します。
 
 ```
 gh repo view --json nameWithOwner --jq .nameWithOwner
@@ -32,11 +33,18 @@ gh repo view --json nameWithOwner --jq .nameWithOwner
 
 取得した値を `REPO` に格納します（例: `octocat/hello-world`）。
 
+| 引数 | 既定値 | 用途 |
+|:--|:--|:--|
+| `--exclude <番号,...>` | なし | 候補から外す Issue 番号（カンマ区切り）。`spira:orchestrator` が走行中の Issue を外すために使う |
+
+`--exclude` の番号を `EXCLUDE` に JSON 配列で格納します（例: `[21,24]`、指定なしは `[]`）。
+全優先度で `EXCLUDE` に含まれる Issue は無いものとして扱います。
+
 ## 共通オペレーション
 
 ### Issue 抽出コマンド
 
-`gh search issues` を使い、以下の条件で取得します。JSON で取得し、`number`・`title`・`url` を抽出します。
+`gh search issues` を使い、以下の条件で取得します。JSON で取得し、`EXCLUDE` に含まれない最初の 1 件の `number`・`title`・`url` を抽出します。
 
 | 優先度 | フィルタ | ソート |
 |---|---|---|
@@ -45,7 +53,8 @@ gh repo view --json nameWithOwner --jq .nameWithOwner
 | 3 | `is:issue is:open repo:REPO` | `sort:created-asc`（番号が若い順） |
 
 ```
-gh search issues --limit 1 --json number,title,url \
+gh search issues --limit 100 --json number,title,url \
+  --jq '[.[] | select(.number as $n | EXCLUDE | index($n) | not)] | first // empty' \
   -- "is:issue is:open repo:REPO label:escalated sort:created-asc"
 ```
 
@@ -66,7 +75,7 @@ find docs -name roadmap.md -type f 2>/dev/null | head -1
 
 - `- [x]` の行は完了済みなので読み飛ばす
 - `→ #<番号>` を持たない行（未起票）は読み飛ばす
-- 取り出した番号のうち、**Open な Issue として実在する最初の 1 件**を選ぶ
+- 取り出した番号のうち、`EXCLUDE` に含まれず、**Open な Issue として実在する最初の 1 件**を選ぶ
 
 `[dep <ID>]` は解釈しません。ロードマップは着手順に並んでいるため、上から見れば順序は満たされます。
 
@@ -75,7 +84,8 @@ find docs -name roadmap.md -type f 2>/dev/null | head -1
 1. **リポジトリ識別**: `gh repo view --json nameWithOwner --jq .nameWithOwner` で `REPO` を取得する
 2. **escalated 優先抽出**: 以下を実行し、結果が空でなければ「優先度: escalated」として手順 4 に進む
    ```
-   gh search issues --limit 1 --json number,title,url \
+   gh search issues --limit 100 --json number,title,url \
+     --jq '[.[] | select(.number as $n | EXCLUDE | index($n) | not)] | first // empty' \
      -- "is:issue is:open repo:REPO label:escalated sort:created-asc"
    ```
 3. **ロードマップ抽出**: escalated が 0 件の場合、`docs/` 配下の `roadmap.md` を探す。
@@ -88,7 +98,8 @@ find docs -name roadmap.md -type f 2>/dev/null | head -1
    ロードマップが無い場合、または未完了行に Open な Issue が 1 件も無い場合は手順 4 に進む。
 4. **通常抽出**: 以下を実行する
    ```
-   gh search issues --limit 1 --json number,title,url \
+   gh search issues --limit 100 --json number,title,url \
+     --jq '[.[] | select(.number as $n | EXCLUDE | index($n) | not)] | first // empty' \
      -- "is:issue is:open repo:REPO sort:created-asc"
    ```
    結果が空でなければ「優先度: normal」として手順 5 に進む。

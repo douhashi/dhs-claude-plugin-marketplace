@@ -19,6 +19,7 @@ spira が GitHub Issue に書き込む本文・コメントすべてに適用す
 | `## CI 修正打ち切り` | — | 300 字 |
 | `## 完了報告` | [completion-report.md](./completion-report.md) | 500 字 |
 | エスカレーション Issue 本文 | [completion-report.md](./completion-report.md) | 500 字 |
+| `## 人手対応待ち` | [blocked.md](./blocked.md) | 300 字 |
 
 字数は見出しを含む markdown 全体の文字数（`wc -m`）で数える。
 

@@ -24,6 +24,7 @@ spira が GitHub Issue に書き込む本文・コメントは、書式と記述
 | `implementation-result.md`（差分版） | `## 設計判断に基づく修正` / `## CI 修正 (N回目)` | 500 字 |
 | `qa-result.md` | `## QA 結果` / `## CI 失敗 (N回目)` | 300 字 |
 | `completion-report.md` | `## PR 作成` / `## 完了報告` / `## CI 修正打ち切り` / エスカレーション Issue 本文 | 200 / 500 / 300 / 500 字 |
+| `blocked.md` | `## 人手対応待ち` | 300 字 |
 
 上限一覧の正本は `spira/templates/_rules.md`。本表は概要であり、値を変える場合は
 `_rules.md` と該当テンプレートの両方を更新する。
@@ -70,6 +71,7 @@ SKILL.md で `@path` によるインポートは使えない（`@` は CLAUDE.md
 | `## QA 結果` / `## CI 失敗 (N回目)` | qa | エージェント自身 |
 | Issue 本文 | create-issue スキル | スキル自身 |
 | `## PR 作成` / `## 完了報告` / `## CI 修正打ち切り` / エスカレーション Issue 本文 | implement / do スキル | スキル自身 |
+| `## 人手対応待ち` | autopilot のライン（`claude -p`） | ライン自身（`context.md` の「ライン規約」から参照） |
 
 オーケストレータがエージェントに渡すのは**見出しだけ**でよい。テンプレートの解決はエージェントが行う。
 
