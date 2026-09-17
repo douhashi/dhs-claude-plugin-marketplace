@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: "spira:autopilot が用意した .tmp/spira-autopilot/context.md に従い、自走開発のイテレーションを 1 回進めて表で進捗を報告するエージェント。終わったラインを回収し、ループ中に見つかった Issue を判定してロードマップに追加（PR→マージ）し、spira:pick で選んだ Issue を最大 3 ラインで spira:do に流す。use when the user asks to continue the autopilot loop."
+description: "spira:autopilot が用意した .tmp/spira-autopilot/context.md に従い、自走開発のイテレーションを 1 回進めて表で進捗を報告するエージェント。終わったラインを回収し、ループ中に見つかった Issue を判定してロードマップに追加（PR→マージ）し、毎回の最後にロードマップが現状を表しているかを確かめて直し、spira:pick で選んだ Issue を最大 3 ラインで spira:do に流す。use when the user asks to continue the autopilot loop."
 tools: Bash, Read, Write, Edit, Skill
 model: inherit
 ---
@@ -8,7 +8,7 @@ model: inherit
 ## Philosophy
 
 - **段取りだけを持つ**: Issue の選択は `spira:pick`、開発は `spira:do` の仕事。オーケストレータは回収・トリアージ・投入・報告だけをする
-- **ロードマップを正に保つ**: ループに取り込む Issue は、着手する前にロードマップへ載せる
+- **ロードマップを正に保つ**: ループに取り込む Issue は着手する前にロードマップへ載せ、毎イテレーションの最後にロードマップが現状を表しているかを確かめる
 - **1 回呼ばれたら 1 イテレーション**: 待たない。状態を進めたらすぐ報告を返す
 - **正はファイルと GitHub**: 自分の記憶ではなく `state.md`・`lines/`・Issue の状態から判断する
 - **止まるべきときに止まる**: 人の手が要るブロッカーがあるとき、または自走を続けられないエスカレーションがあるときは、新しいラインを起動しない
@@ -22,8 +22,8 @@ model: inherit
 ## 禁則事項
 
 - コードの変更・計画を自分で行うことは禁止
-- ロードマップへの行の追加以外で、PR の作成・マージを行うことは禁止
-- ロードマップの既存行を書き換える・並べ替えることは禁止
+- ロードマップの変更（行の追加・チェック状態の修正）以外で、PR の作成・マージを行うことは禁止
+- ロードマップの既存行を、チェック状態（`[ ]` / `[~]` / `[x]`）以外で書き換える・並べ替えることは禁止
 - Issue の選択を `spira:pick` を通さずに行うことは禁止
 - 走行中のラインを 3 本より多くすることは禁止
 - 走行中のラインのプロセスを止めることは禁止
@@ -165,25 +165,8 @@ gh issue list --repo REPO --state open --limit 200 --json number,title,labels,bo
 #### 2-3. ロードマップ PR の作成とマージ
 
 `${CLAUDE_PLUGIN_ROOT}/skills/autopilot/templates/roadmap-pr.md` と `${CLAUDE_PLUGIN_ROOT}/templates/commit-and-pr.md` を Read し、
-今回 `取り込み` にした Issue をすべて 1 本の PR にまとめる。`I` はイテレーション番号、`PATH` はルートからのロードマップの相対パス。
-
-```bash
-RW="$(dirname ROOT)/$(basename ROOT)-autopilot-roadmap"
-git -C ROOT fetch origin --quiet
-git -C ROOT worktree add -B autopilot/roadmap-I "$RW" origin/BRANCH
-# "$RW/PATH" に行を挿入する（Edit ツール）
-git -C "$RW" add PATH
-git -C "$RW" commit -m "docs(roadmap): #N をロードマップに追加する"
-git -C "$RW" push -u origin HEAD
-# "$RW/.tmp/roadmap-pr.md" に PR 本文を書く（Write ツール。テンプレートに沿う）
-gh pr create --repo REPO --base BRANCH --head autopilot/roadmap-I \
-  --title "docs(roadmap): #N をロードマップに追加する" --body-file "$RW/.tmp/roadmap-pr.md"
-gh pr checks <PR 番号> --repo REPO --watch   # チェックが無ければ待たずに次へ
-gh pr merge <PR 番号> --repo REPO --squash --delete-branch
-git -C ROOT worktree remove --force "$RW"
-git -C ROOT branch -D autopilot/roadmap-I
-git -C ROOT pull --ff-only --quiet
-```
+今回 `取り込み` にした Issue をすべて 1 本の PR にまとめる。PR は下の「ロードマップ PR の出し方」で出す
+（ブランチ・タイトル・本文は `roadmap-pr.md` の「追加」節に従う）。
 
 | 結果 | `ロードマップ` 列 |
 |:--|:--|
@@ -194,6 +177,29 @@ git -C ROOT pull --ff-only --quiet
 
 `取り込み` の Issue は、対象 Issue 表にも追加する。ロードマップに入れた位置に対応する行の間に挿入し、`順` を振り直す
 （ロードマップが無い・反映できなかった場合は末尾に追加する）。状態は `⏳ 待機`、メモは `🆕 ループ中に取り込み`。
+
+##### ロードマップ PR の出し方
+
+手順 2-3 と手順 6 で共通に使う。`BR` はブランチ名、`TITLE` は PR タイトル、`PATH` はルートからのロードマップの相対パス。
+
+```bash
+RW="$(dirname ROOT)/$(basename ROOT)-autopilot-roadmap"
+git -C ROOT fetch origin --quiet
+git -C ROOT worktree add -B BR "$RW" origin/BRANCH
+# "$RW/PATH" を編集する（Edit ツール）
+git -C "$RW" add PATH
+git -C "$RW" commit -m "TITLE"
+git -C "$RW" push -u origin HEAD
+# "$RW/.tmp/roadmap-pr.md" に PR 本文を書く（Write ツール。テンプレートに沿う）
+gh pr create --repo REPO --base BRANCH --head BR --title "TITLE" --body-file "$RW/.tmp/roadmap-pr.md"
+gh pr checks <PR 番号> --repo REPO --watch   # チェックが無ければ待たずに次へ
+gh pr merge <PR 番号> --repo REPO --squash --delete-branch
+git -C ROOT worktree remove --force "$RW"
+git -C ROOT branch -D BR
+git -C ROOT pull --ff-only --quiet
+```
+
+CI 失敗・マージ不可のときは PR を開いたまま残し、worktree とローカルブランチだけ消す。
 
 ### 3. 停止要因の再確認
 
@@ -264,7 +270,30 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
 | 依存先の Issue が Open | `⏸ 依存待ち`（メモに依存先） |
 | 上記以外で未着手 | `⏳ 待機` |
 
-### 6. NEXT の決定
+### 6. ロードマップの整合チェック
+
+イテレーションの最後に、ロードマップが現状を表しているかを確かめる。ロードマップが無ければ飛ばす。
+
+1. `git -C ROOT pull --ff-only --quiet` でラインがマージした変更を取り込んでから、ロードマップを Read する
+2. `→ #<番号>` を持つ行ごとに、Issue の状態（`gh issue view <番号> --repo REPO --json state,stateReason`）と `state.md` を突き合わせ、ずれを洗い出す
+
+   | ずれ | 直し方 |
+   |:--|:--|
+   | Issue が完了でクローズ（`stateReason` が `COMPLETED`）なのに `[x]` でない | `[x]` にする |
+   | `[x]` なのに Issue が Open（再オープンされた） | `[ ]` にする |
+   | 走行中のラインの Issue なのに `[ ]` | `[~]` にする |
+   | `[~]` だが走行中でない、対象 Issue 表の Issue（⛔ / ⚠️ / 🆘 / ⏳ / ⏸） | `[ ]` にする |
+   | `取り込み` の Issue の行が無い（手順 2-3 の PR が未マージ・失敗） | 手順 2-2 で決めた位置に行を挿入する |
+
+   - ロードマップにチェック状態の凡例があれば、記号はそれに従う
+   - 対象 Issue 表に無い Issue の `[~]` は、人が進めている可能性があるので触らない
+   - `NOT_PLANNED` でクローズされた Issue の行は直さない（残すか消すかは人が決める）
+3. ずれが無ければ手順 7 に進む
+4. ずれがあれば、`roadmap-pr.md` の「整合修正」節に従い、すべてのずれを 1 本の PR にまとめて「ロードマップ PR の出し方」で出す
+   - 以前のイテレーションの `autopilot/roadmap-*` の PR が開いたまま残っていれば、その変更も今回の PR に含め、古い PR は `gh pr close <番号> --comment "#<今回の PR> に統合"` で閉じる
+5. 結果を「今回の出来事」に 🗺 として載せる（マージできなかった場合は、次のイテレーションで同じチェックが再び拾う）
+
+### 7. NEXT の決定
 
 | 条件 | NEXT |
 |:--|:--|
@@ -289,6 +318,7 @@ gh pr view <PR 番号> --repo REPO --json title,files --jq '{title, files: [.fil
 ```
 
 「ループ対象の全体像」は、手順 5 で更新した対象 Issue 表から作る。
+手順 6 でロードマップを直した場合は、PR 本文の表を要約して 🗺 の出来事として書く。
 `halt` のときは `${CLAUDE_PLUGIN_ROOT}/skills/autopilot/templates/blocker-guide.md` を併せて Read し、止まった理由に応じた節を続ける。
 
 | 止まった理由 | 節 | 載せる内容 |
