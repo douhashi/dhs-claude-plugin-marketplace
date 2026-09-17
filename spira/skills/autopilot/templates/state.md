@@ -38,6 +38,14 @@
 |:--|:--|:--|:--|:--|
 {{TARGET_ROWS}}
 
+## 対象外 Issue
+
+キックオフで「今回のループでは扱わない」と決めた Open Issue。`spira:pick` の除外に使う。
+
+| Issue | タイトル | 理由 |
+|:--|:--|:--|
+{{EXCLUDED_ROWS}}
+
 ## ライン
 
 | ライン | Issue | タイトル | PID | worktree | 開始 |

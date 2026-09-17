@@ -166,8 +166,8 @@ gh issue list --repo REPO --state open --limit 200 --json number,title,labels,bo
 #### 2-3. ロードマップ PR の作成とマージ
 
 `${CLAUDE_PLUGIN_ROOT}/skills/autopilot/templates/roadmap-pr.md` と `${CLAUDE_PLUGIN_ROOT}/templates/commit-and-pr.md` を Read し、
-今回 `取り込み` にした Issue をすべて 1 本の PR にまとめる。PR は下の「ロードマップ PR の出し方」で出す
-（ブランチ・タイトル・本文は `roadmap-pr.md` の「追加」節に従う）。
+今回 `取り込み` にした Issue をすべて 1 本の PR にまとめる。PR は `roadmap-pr.md` の「PR の出し方」で出す
+（ブランチ・タイトル・本文は同ファイルの「追加」節に従う）。
 
 | 結果 | `ロードマップ` 列 |
 |:--|:--|
@@ -178,29 +178,6 @@ gh issue list --repo REPO --state open --limit 200 --json number,title,labels,bo
 
 `取り込み` の Issue は、対象 Issue 表にも追加する。ロードマップに入れた位置に対応する行の間に挿入し、`順` を振り直す
 （ロードマップが無い・反映できなかった場合は末尾に追加する）。状態は `⏳ 待機`、メモは `🆕 ループ中に取り込み`。
-
-##### ロードマップ PR の出し方
-
-手順 2-3 と手順 6 で共通に使う。`BR` はブランチ名、`TITLE` は PR タイトル、`PATH` はルートからのロードマップの相対パス。
-
-```bash
-RW="$(dirname ROOT)/$(basename ROOT)-autopilot-roadmap"
-git -C ROOT fetch origin --quiet
-git -C ROOT worktree add -B BR "$RW" origin/BRANCH
-# "$RW/PATH" を編集する（Edit ツール）
-git -C "$RW" add PATH
-git -C "$RW" commit -m "TITLE"
-git -C "$RW" push -u origin HEAD
-# "$RW/.tmp/roadmap-pr.md" に PR 本文を書く（Write ツール。テンプレートに沿う）
-gh pr create --repo REPO --base BRANCH --head BR --title "TITLE" --body-file "$RW/.tmp/roadmap-pr.md"
-gh pr checks <PR 番号> --repo REPO --watch   # チェックが無ければ待たずに次へ
-gh pr merge <PR 番号> --repo REPO --squash --delete-branch
-git -C ROOT worktree remove --force "$RW"
-git -C ROOT branch -D BR
-git -C ROOT pull --ff-only --quiet
-```
-
-CI 失敗・マージ不可のときは PR を開いたまま残し、worktree とローカルブランチだけ消す。
 
 ### 3. 停止要因の再確認
 
@@ -229,6 +206,7 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
    - 走行中のラインの Issue
    - 結果表で ✅ / 🆘 の Issue（⛔ はブロッカーが解消済みなので除外しない）
    - 結果表で ⚠️ かつ `再試行` が 2 以上の Issue
+   - 「対象外 Issue」表の Issue（キックオフで扱わないと決めたもの）
    - 「ループ中に見つかった Issue」表で `見送り` の Issue
    - Open な `escalated` Issue すべて（ループ開始前からあるものも含む）
 
@@ -295,7 +273,7 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
    - 対象 Issue 表に無い Issue の `[~]` は、人が進めている可能性があるので触らない
    - `NOT_PLANNED` でクローズされた Issue の行は直さない（残すか消すかは人が決める）
 3. ずれが無ければ手順 7 に進む
-4. ずれがあれば、`roadmap-pr.md` の「整合修正」節に従い、すべてのずれを 1 本の PR にまとめて「ロードマップ PR の出し方」で出す
+4. ずれがあれば、`roadmap-pr.md` の「整合修正」節に従い、すべてのずれを 1 本の PR にまとめて同ファイルの「PR の出し方」で出す
    - 以前のイテレーションの `autopilot/roadmap-*` の PR が開いたまま残っていれば、その変更も今回の PR に含め、古い PR は `gh pr close <番号> --comment "#<今回の PR> に統合"` で閉じる
 5. 結果を「今回の出来事」に 🗺 として載せる（マージできなかった場合は、次のイテレーションで同じチェックが再び拾う）
 
