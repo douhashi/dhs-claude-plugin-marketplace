@@ -167,8 +167,11 @@ URL: <url>
    - Infisical（CLI・`.infisical.json`・ログイン）。未設定ならセットアップを促して終了
    - 人の手による準備物（`.env.example`・ドキュメント・Issue 本文から変数名を集める）。
      Infisical に無ければ値 `__SPIRA_PLACEHOLDER__` で作成し、埋める手順を案内して終了
-4. **書き出し** — `.tmp/spira-autopilot/context.md`（ルール・進め方）と `state.md`（状態）
-5. **案内** — `/clear` 後に実行するプロンプトを提示
+4. **ロードマップの整理** — ロードマップに未記載の Open Issue があれば一覧で提示し、どれを載せるかをユーザーと決める。
+   載せると決まったものを PR にしてマージし、載せないと決まったものは今回のループの対象外として記録する
+   （ロードマップが無い場合は整理を飛ばし、着手順は番号順になる）
+5. **書き出し** — `.tmp/spira-autopilot/context.md`（ルール・進め方）と `state.md`（状態）
+6. **案内** — `/clear` 後に実行するプロンプトを提示
 
 ```bash
 /spira:autopilot
@@ -212,7 +215,8 @@ URL: <url>
 | キックオフ報告 | `kickoff-report.md` |
 | 進捗レポート | `progress-report.md` |
 | 人の手が必要なときの案内 | `blocker-guide.md` |
-| ロードマップ PR（追加・整合修正） | `roadmap-pr.md` |
+| 未記載 Issue の検討 | `roadmap-triage.md` |
+| ロードマップ PR（キックオフ整理・追加・整合修正） | `roadmap-pr.md` |
 
 ## プロジェクト構成
 
