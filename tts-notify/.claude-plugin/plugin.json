@@ -1,6 +1,6 @@
 {
   "name": "tts-notify",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Claude の Stop / Notification を hailer の broker (POST /announce) へ渡し、音声読み上げ＋通知するフックプラグイン。要約・口調・声はすべて broker 側の責務",
   "repository": "https://github.com/douhashi/dhs-claude-plugin-marketplace",
   "license": "MIT",

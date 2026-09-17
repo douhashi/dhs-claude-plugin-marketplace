@@ -15,6 +15,12 @@ ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 event="$(cat)"
 [ -n "$event" ] || exit 0
 
+# hook が発火した時刻。worker はこれを使って「transcript から拾った本文が今ターンの
+# ものか」を判定する（前ターンの本文を掴む事故の再発防止。詳細は lib/extract.py）。
+# ここで取るのが要点: worker はデタッチ後に走るので、worker 側で取ると遅れる。
+# `date +%s.%N` は GNU 拡張で macOS には無いため、秒精度に留める（許容幅で吸収する）。
+fired_at="$(date +%s)"
+
 # BSD mktemp (macOS) は **テンプレートの末尾が X** でないと失敗する。`XXXXXX.json` のように
 # 拡張子を足す書き方は GNU 拡張で、macOS では tmp が空になり dispatch がここで諦めていた
 # （= worker が一度も起動しない。しかも失敗は無言）。両方で通る形にする。
@@ -32,10 +38,10 @@ printf '%s' "$event" > "$tmp"
 # hook still "succeeded": no speech, no log, nothing to debug. python3 is already a
 # hard dependency of this plugin (lib/*.py), so use it to call setsid(2) portably.
 if command -v setsid >/dev/null 2>&1; then
-  setsid "$ROOT/bin/worker.sh" "$SOURCE" "$tmp" >/dev/null 2>&1 </dev/null &
+  setsid "$ROOT/bin/worker.sh" "$SOURCE" "$tmp" "$fired_at" >/dev/null 2>&1 </dev/null &
 else
   python3 -c 'import os,sys; os.setsid(); os.execv(sys.argv[1], sys.argv[1:])' \
-    "$ROOT/bin/worker.sh" "$SOURCE" "$tmp" >/dev/null 2>&1 </dev/null &
+    "$ROOT/bin/worker.sh" "$SOURCE" "$tmp" "$fired_at" >/dev/null 2>&1 </dev/null &
 fi
 spawned=$?
 

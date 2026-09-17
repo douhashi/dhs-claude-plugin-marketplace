@@ -22,12 +22,13 @@
 # (The POST returns immediately with 202; ordering of actual playback is the
 # broker's.)
 #
-# Args: $1 = source (stop|notification)  $2 = event JSON file
+# Args: $1 = source (stop|notification)  $2 = event JSON file  $3 = hook 発火 epoch 秒
 #
 set +e
 
 SOURCE="$1"
 EVENT_FILE="$2"
+FIRED_AT="$3"
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 # shellcheck disable=SC1091
 . "$ROOT/lib/common.sh"
@@ -70,14 +71,25 @@ if [ "$SOURCE" = "notification" ]; then
 else
   tp="$(printf '%s' "$event" | jq -r '.transcript_path // empty' 2>/dev/null)"
   [ -n "$tp" ] || { log "no transcript_path -> drop"; exit 0; }
-  asst="" ctx=""
-  for _ in $(seq 1 "$TTS_NOTIFY_TRANSCRIPT_WAIT"); do
-    ctx="$(python3 "$ROOT/lib/extract.py" "$tp" 2>/dev/null)"
-    asst="$(printf '%s' "$ctx" | jq -r '.assistant // empty' 2>/dev/null)"
-    [ -n "$asst" ] && break
-    sleep 1
-  done
-  [ -n "$asst" ] || { log "no assistant text -> drop"; exit 0; }
+  # transcript は遅延フラッシュされる。Stop hook が走る時点ではこのターンの最終本文が
+  # まだファイルに無い（実測: hook 完了の約 150ms 後に、最終 text レコードと
+  # stop_hook_summary が同じフラッシュで現れる）。extract.py が「今ターンのものだ」と
+  # 確定できるまで待ち、確定しなければ空を返す。
+  #
+  # 以前はここで 1 秒刻みのループを回して「本文が取れたら break」していた。しかし
+  # extract.py は常にファイル末尾の本文（= 前ターンの本文）を返すので、必ず初回で
+  # 抜けていた。待っているつもりで一度も待っておらず、読み上げは常に 1 つ前の
+  # メッセージだった（worker.log と transcript の突き合わせで 8/8 ずれを確認）。
+  # ポーリングを extract.py 側へ戻したのは sub-second sleep の可搬性のため
+  # （`sleep 0.2` は BSD sleep で切り捨てられ得る）。
+  fired_at_arg=()
+  [ -n "$FIRED_AT" ] && fired_at_arg=(--fired-at "$FIRED_AT")
+  ctx="$(python3 "$ROOT/lib/extract.py" "$tp" \
+       --wait "$TTS_NOTIFY_TRANSCRIPT_WAIT" "${fired_at_arg[@]}" 2>/dev/null)"
+  asst="$(printf '%s' "$ctx" | jq -r '.assistant // empty' 2>/dev/null)"
+  # 割り込み等でこのターンに本文が無い場合もここに来る。前ターンを読み直すより
+  # 黙るほうが正しい（以前はそれが「同じ内容を 2 回読む」として表に出ていた）。
+  [ -n "$asst" ] || { log "no assistant text for this turn -> drop"; exit 0; }
   user="$(printf '%s' "$ctx" | jq -r '.user // empty' 2>/dev/null)"
   task="claude-stop"
   if [ -n "$user" ]; then
