@@ -134,6 +134,7 @@ infisical secrets --env ENV --silent -o json \
    - `{{PLUGIN_ROOT}}` には `${CLAUDE_PLUGIN_ROOT}` の展開後の絶対パスを入れる
    - `{{CREATED_AT}}` には `date -u +%Y-%m-%dT%H:%M:%SZ` の値を入れる（GitHub の `createdAt` と比較するため UTC）
 3. [state.md](templates/state.md) を Read し、`{{...}}` を埋めて `$DIR/state.md` に書き出す
+   - `{{TARGET_ROWS}}` には Phase 2 の着手見込みのうち escalated 以外を、同じ順で 1 行ずつ入れる（状態は `⏳ 待機`、依存が未完了なら `⏸ 依存待ち` とし、メモに依存先を書く）
    （既に `$DIR/state.md` がある場合は、前回のループの記録として `$DIR/lines/archive/state-<日時>.md` に退避してから書き出す）
 4. `.tmp/` が `.gitignore` 等で無視されているか `git check-ignore -q .tmp/spira-autopilot/context.md` で確認し、
    無視されていなければその旨を報告に含める（`.gitignore` は編集しない）
