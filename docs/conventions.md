@@ -24,6 +24,9 @@ dhs-claude-plugin-marketplace/
 │   ├── .claude-plugin/
 │   │   └── plugin.json
 │   ├── skills/
+│   │   ├── autopilot/
+│   │   │   ├── SKILL.md
+│   │   │   └── templates/     # コンテキスト・状態・報告・案内のテンプレート
 │   │   ├── brainstorming/
 │   │   │   ├── SKILL.md
 │   │   │   └── templates/     # スキル固有の出力テンプレート
@@ -48,6 +51,7 @@ dhs-claude-plugin-marketplace/
 │   │   │   └── SKILL.md
 │   │   └── ...
 │   ├── agents/
+│   │   ├── orchestrator.md
 │   │   ├── planner.md
 │   │   ├── implementer.md
 │   │   ├── po.md
@@ -64,6 +68,7 @@ dhs-claude-plugin-marketplace/
 │   │   ├── design-decision.md
 │   │   ├── implementation-result.md
 │   │   ├── qa-result.md
+│   │   ├── blocked.md
 │   │   └── completion-report.md
 │   ├── scripts/
 │   │   └── ...
