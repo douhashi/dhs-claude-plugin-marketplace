@@ -36,7 +36,8 @@ dhs-claude-plugin-marketplace/
 │   │   ├── create-issue/
 │   │   │   ├── SKILL.md
 │   │   │   └── templates/
-│   │   │       └── issue-plan.md
+│   │   │       ├── issue-plan.md
+│   │   │       └── roadmap-placement.md
 │   │   ├── decide/
 │   │   │   └── SKILL.md
 │   │   ├── do/
@@ -69,6 +70,7 @@ dhs-claude-plugin-marketplace/
 │   │   ├── implementation-result.md
 │   │   ├── qa-result.md
 │   │   ├── blocked.md
+│   │   ├── roadmap-pr.md
 │   │   └── completion-report.md
 │   ├── scripts/
 │   │   └── ...
@@ -89,7 +91,7 @@ dhs-claude-plugin-marketplace/
 - 大きなスキルは `SKILL.md` を 500 行以下に保ち、サポートファイルに分離する
 - `description` にはユーザーが自然に使うキーワードを含める
 - 出力の書式・分量の定義は SKILL.md 本文に直書きせず、テンプレートファイルに分離する
-  - 複数スキル／エージェントで共有する書式（Issue 本文・コメント）は `spira/templates/` に置き、`${CLAUDE_PLUGIN_ROOT}/templates/<name>.md` で参照する
+  - 複数スキル／エージェントで共有する書式（Issue 本文・コメント・ロードマップ PR）は `spira/templates/` に置き、`${CLAUDE_PLUGIN_ROOT}/templates/<name>.md` で参照する
   - 単一スキル専用の書式は `spira/skills/<skill>/templates/` に置き、相対 markdown リンクで参照する
 
 ## エージェント設計方針

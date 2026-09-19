@@ -165,7 +165,7 @@ gh issue list --repo REPO --state open --limit 200 --json number,title,labels,bo
 
 #### 2-3. ロードマップ PR の作成とマージ
 
-`${CLAUDE_PLUGIN_ROOT}/skills/autopilot/templates/roadmap-pr.md` と `${CLAUDE_PLUGIN_ROOT}/templates/commit-and-pr.md` を Read し、
+`${CLAUDE_PLUGIN_ROOT}/templates/roadmap-pr.md` と `${CLAUDE_PLUGIN_ROOT}/templates/commit-and-pr.md` を Read し、
 今回 `取り込み` にした Issue をすべて 1 本の PR にまとめる。PR は `roadmap-pr.md` の「PR の出し方」で出す
 （ブランチ・タイトル・本文は同ファイルの「追加」節に従う）。
 

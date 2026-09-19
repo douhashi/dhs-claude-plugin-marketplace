@@ -140,7 +140,7 @@ infisical secrets --env ENV --silent -o json \
 3. **一覧を出して一緒に決める**: [roadmap-triage.md](templates/roadmap-triage.md) を Read し、
    未記載の Issue を一覧で提示して、どれをロードマップに載せるかをユーザーと決める。
    載せるものは追加位置も併せて決める。**決めるのはユーザー**であり、スキルは案を出して質問に答える
-4. **PR を作ってマージする**: `載せる` と決まった Issue を、[roadmap-pr.md](templates/roadmap-pr.md) の
+4. **PR を作ってマージする**: `載せる` と決まった Issue を、`${CLAUDE_PLUGIN_ROOT}/templates/roadmap-pr.md` の
    「キックオフ整理」節と「PR の出し方」に従って 1 本の PR にまとめる
    - `載せる` が 0 件なら PR は作らない
    - CI 失敗・マージ不可のときは、PR を開いたまま残し、その旨を Phase 6 の報告に書いて先に進む
