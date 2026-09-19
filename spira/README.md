@@ -73,13 +73,14 @@ git リポジトリでない場合やリモート・`gh` 認証が無い場合�
 
 ### `/spira:create-issue [owner/repo]`
 
-議論結果や指示に基づいて GitHub Issue を起票します。**承認前に起票しません。**
+議論結果や指示に基づいて GitHub Issue を起票し、ロードマップに追記します。**承認前に起票・PR 作成をしません。**
 
 1. **内容の整理** — 会話の文脈から関心事ごとに分割
 2. **提示と承認** — 作成予定 Issue を一覧表で提示し、承認を待つ
 3. **本文の作成** — `templates/issue-body.md` に沿って本文を書き、`wc -m` で 1,500 字以内を確認
 4. **起票** — 承認された表の全行を `gh issue create` で作成
-5. **報告** — 1 行 1 件で URL を提示
+5. **ロードマップへの追記** — `docs/` 配下の `roadmap.md` を読み、依存と前提関係から追加位置を決めて表で提示し、承認後に PR を作ってマージ（ロードマップが無ければ飛ばす）
+6. **報告** — 1 行 1 件で URL を提示し、ロードマップ PR の結果を添える
 
 承認段階で提示するのは次の表だけです。本文の全文は、ユーザーが求めた Issue の分だけ提示します。
 
@@ -216,7 +217,8 @@ URL: <url>
 | 進捗レポート | `progress-report.md` |
 | 人の手が必要なときの案内 | `blocker-guide.md` |
 | 未記載 Issue の検討 | `roadmap-triage.md` |
-| ロードマップ PR（キックオフ整理・追加・整合修正） | `roadmap-pr.md` |
+
+ロードマップ PR（キックオフ整理・追加・整合修正）の書式は、create-issue と共有するため `templates/roadmap-pr.md` にあります。
 
 ## プロジェクト構成
 
@@ -233,7 +235,7 @@ spira/
 │   │   └── templates/     # 論点テーブル・対話・結論のテンプレート
 │   ├── create-issue/      # Issue 起票
 │   │   ├── SKILL.md
-│   │   └── templates/     # 作成予定 Issue 一覧のテンプレート
+│   │   └── templates/     # 作成予定 Issue 一覧・ロードマップ追加位置のテンプレート
 │   ├── decide/            # 設計判断
 │   ├── do/                # 一気通貫サイクル
 │   ├── implement/         # 実装サイクル
@@ -257,6 +259,7 @@ spira/
 │   ├── implementation-result.md
 │   ├── qa-result.md
 │   ├── blocked.md         # 人手対応待ち
+│   ├── roadmap-pr.md      # ロードマップの行・追加位置・PR（autopilot / orchestrator / create-issue 共通）
 │   └── completion-report.md
 └── README.md
 ```
