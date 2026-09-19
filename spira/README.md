@@ -246,6 +246,9 @@ spira/
 │   ├── autopilot/         # 自走開発のキックオフ
 │   │   ├── SKILL.md
 │   │   └── templates/     # コンテキスト・状態・報告・案内のテンプレート
+│   ├── architect/         # アーキテクチャの構成決め（SKILL.md は未作成）
+│   │   ├── sets/          # 判断の材料（5 セットと配布先の判定）
+│   │   └── templates/     # 出力の書式（アーキテクチャセットの書式）
 │   ├── brainstorming/     # ブレインストーミング
 │   │   ├── SKILL.md
 │   │   └── templates/     # 論点テーブル・対話・結論のテンプレート

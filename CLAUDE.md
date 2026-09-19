@@ -14,6 +14,7 @@ dhs-claude-plugin-marketplace/
 │   ├── skills/
 │   │   └── <skill>/
 │   │       ├── SKILL.md
+│   │       ├── sets/         # そのスキルが判断に使う材料（任意。例: architect のアーキテクチャセット）
 │   │       └── templates/    # そのスキル専用の出力テンプレート（任意）
 │   ├── agents/
 │   ├── templates/            # Issue 本文・コメントのテンプレート（プラグイン共通）
