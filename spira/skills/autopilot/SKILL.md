@@ -84,7 +84,7 @@ infisical secrets --env ENV --silent -o json \
    ```
 3. 次の 3 つを把握する（Phase 4 の整理と Phase 6 の着手見込み表に使う）
    - `spira:pick` の優先順（ロードマップの未完了行 → 番号が若い順）で先頭から並べた Issue。`escalated` Issue は自走の対象外として分けておく
-   - 各 Issue の依存（ロードマップの `[dep <ID>]`、本文の `depends on #N` / `blocked by #N` / `#N の完了後`）
+   - 各 Issue の依存（ロードマップの `[dep #N]`、本文の `depends on #N` / `blocked by #N` / `#N の完了後`）
    - `escalated` 以外の Open Issue が 0 件なら「対応すべき Issue がありません」と伝えて終了する
 
 ### Phase 3: 前提条件の検査
