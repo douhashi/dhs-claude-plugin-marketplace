@@ -37,6 +37,7 @@ dhs-claude-plugin-marketplace/
 自律的な開発サイクルを支援するツール群を提供する Claude Code プラグイン。
 
 - **ブレインストーミング**: 論点を洗い出し、1 つずつ対話で決着させ、Issue 化とドキュメント更新まで繋ぐスキル（`spira:brainstorming`）
+- **構成決め**: 同梱のアーキテクチャセットを叩き台に、要件の根拠と調査の出典を添えて構成と配布先を提案し、承認後に `spira:update-doc` で `docs/architecture.md` に残してから `spira:create-issue` で構成の立ち上げ Issue を起票するスキル（`spira:architect`）
 - **Issue 作成**: 作成予定 Issue を一覧表で提示し、承認を得てから起票し、ロードマップの適切な位置に追記して PR→マージまで行うスキル（`spira:create-issue`）
 - **フィードバック**: フィードバックの内容を確認・調査し、起票が必要なら `spira:create-issue` で Issue を起票してロードマップを更新するスキル（`spira:feedback`）
 - **ドキュメント更新**: ドキュメントを更新し、PR 作成から CI 通過後のマージまで行うスキル（`spira:update-doc`）
