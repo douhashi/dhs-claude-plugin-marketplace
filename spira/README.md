@@ -99,6 +99,20 @@ git リポジトリでない場合やリモート・`gh` 認証が無い場合�
 /spira:create-issue douhashi/dhs-claude-plugin-marketplace
 ```
 
+### `/spira:feedback <フィードバック内容>`
+
+フィードバックの内容を確認・調査し、必要な Issue を起票します。**調査せずに起票しません。**
+
+1. **最新化** — `main` に移動して `git pull`
+2. **内容の確認** — フィードバックを観点ごとに分け、種別（不具合・改善要望・質問・その他）を整理
+3. **調査** — コード・ドキュメント・既存 Issue・ロードマップで裏を取り、観点ごとに対応（起票・既存 Issue・対応済み・仕様どおり・判断保留）を決める
+4. **調査結果の提示** — 観点・調査結果・対応の表と根拠（`path:line`・Issue 番号）を提示
+5. **起票とロードマップ更新** — `起票` の観点があれば `spira:create-issue` を呼び出し、承認 → 起票 → ロードマップへの追記（PR → マージ）まで行う
+
+```bash
+/spira:feedback create-issue の後にロードマップが更新されず、着手順がずれる
+```
+
 ### `/spira:plan <Issue URL>`
 
 指定した GitHub Issue について実装計画を作成します。`planned` ラベルが付与済みの場合はスキップします。
@@ -237,6 +251,9 @@ spira/
 │   │   ├── SKILL.md
 │   │   └── templates/     # 作成予定 Issue 一覧・ロードマップ追加位置のテンプレート
 │   ├── decide/            # 設計判断
+│   ├── feedback/          # フィードバックの調査・起票
+│   │   ├── SKILL.md
+│   │   └── templates/     # 調査結果のテンプレート
 │   ├── do/                # 一気通貫サイクル
 │   ├── implement/         # 実装サイクル
 │   ├── pick/              # 次タスク抽出
