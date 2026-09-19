@@ -69,13 +69,7 @@ d={{ROOT}}/.tmp/spira-autopilot/lines; s=$(date +%s); until ls "$d"/*.exit >/dev
 - シークレットが必要なコマンドは `infisical run --env {{ENV}} -- <コマンド>` で実行する
 - シークレットの値を出力・コミット・Issue コメントに書かない
 - **人の手による設定が必要と判明したら**、次の 3 つを行ってすぐに終了する（PR は作らない）
-  1. 変数ごとに存在を確認し、無ければプレースホルダで作る（既存の値は上書きしない）
-
-     ```bash
-     infisical secrets --env {{ENV}} --silent -o json \
-       | jq -e --arg n NAME 'any(.[]; (.key // .secretKey) == $n)' >/dev/null \
-       || infisical secrets set NAME=__SPIRA_PLACEHOLDER__ --env {{ENV}} --silent >/dev/null
-     ```
+  1. `{{PLUGIN_ROOT}}/templates/blocked.md` の「プレースホルダの作成」に従い、環境 `{{ENV}}` に変数ごとのプレースホルダを作る（setup が作成済みでも行う。既存の値は上書きしない）
   2. `{{ROOT}}/.tmp/spira-autopilot/lines/<Issue 番号>.blocked.md` に次の表を書く
 
      ```markdown
@@ -83,4 +77,5 @@ d={{ROOT}}/.tmp/spira-autopilot/lines; s=$(date +%s); until ls "$d"/*.exit >/dev
      |:--|:--|:--|
      | `NAME` | （何に使うか 1 文） | （取得できる画面・URL・担当者） |
      ```
-  3. `{{PLUGIN_ROOT}}/templates/blocked.md` を Read し、Issue に `## 人手対応待ち` をコメントする
+  3. `{{PLUGIN_ROOT}}/templates/blocked.md` を Read し、Issue に `## 人手対応待ち` をコメントする（setup が記録済みなら重ねてコメントしない）
+- `spira:do` が setup の人手対応待ちで終わった場合も、人の手による設定が必要と判明したものとして上の 3 つを行う

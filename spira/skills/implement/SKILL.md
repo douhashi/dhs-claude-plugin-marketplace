@@ -159,7 +159,14 @@ Agent ツール呼び出し:
 
 エージェントの結果を受け取ったら:
 1. 変更内容のサマリをユーザーに提示する
-2. 「設計判断が必要な論点」が「なし」でなければ Phase 2.5 に進む。「なし」であれば Phase 3 に進む
+2. setup の返答の 1 行目が `人手対応待ち` であれば、Phase 2.5 以降（PR 作成・CI 監視・escalated 付与）に進まず、次を行って終了する
+   - ワークツリーとブランチを削除する（再実行時に `git worktree add -b` が成功するようにするため）
+     ```
+     git worktree remove --force ../REPOSITORY-impl-ISSUE_NO
+     git branch -D impl-ISSUE_NO
+     ```
+   - Issue の `## 人手対応待ち` を示し、値を設定した後に同じ Issue で再実行すれば再開できるとユーザーに報告する
+3. 「設計判断が必要な論点」が「なし」でなければ Phase 2.5 に進む。「なし」であれば Phase 3 に進む
 
 ### Phase 2.5: 設計判断（PO エージェント）
 
