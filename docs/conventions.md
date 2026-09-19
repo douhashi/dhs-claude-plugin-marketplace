@@ -28,6 +28,7 @@ dhs-claude-plugin-marketplace/
 │   │   │   ├── SKILL.md
 │   │   │   └── templates/     # コンテキスト・状態・報告・案内のテンプレート
 │   │   ├── architect/
+│   │   │   ├── SKILL.md
 │   │   │   ├── sets/          # 判断の材料（アーキテクチャセット・配布先の判定）
 │   │   │   │   ├── _deploy.md
 │   │   │   │   ├── web.md
@@ -36,7 +37,9 @@ dhs-claude-plugin-marketplace/
 │   │   │   │   ├── desktop.md
 │   │   │   │   └── mobile.md
 │   │   │   └── templates/     # 出力の書式
-│   │   │       └── architecture-set.md
+│   │   │       ├── architecture-set.md
+│   │   │       ├── proposal.md
+│   │   │       └── architecture-doc.md
 │   │   ├── brainstorming/
 │   │   │   ├── SKILL.md
 │   │   │   └── templates/     # スキル固有の出力テンプレート

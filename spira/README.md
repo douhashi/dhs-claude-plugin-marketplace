@@ -113,6 +113,36 @@ git リポジトリでない場合やリモート・`gh` 認証が無い場合�
 /spira:feedback create-issue の後にロードマップが更新されず、着手順がずれる
 ```
 
+### `/spira:architect [追加したい要素]`
+
+同梱のアーキテクチャセット（`skills/architect/sets/`）を叩き台に、プロジェクトの構成と配布先を提案します。
+**承認前に文書化・起票をしません。** 対象は新規と構成要素の追加だけで、置き換え（モノリスの分割・DB の乗り換え等）は案内して終了します。
+
+1. **最新化** — `main` に移動して `git pull`
+2. **モードの判定** — `docs/architecture.md` と既存コードから新規・追加を決める。追加では既存コードと既存の `docs/architecture.md` を正とする
+3. **コンセプトの確認** — 目的と機能を記述した文書が無ければ、先に文書にするよう案内して終了
+4. **要件の推定** — 機能記述から要件項目を推定して根拠を引用し、推定できない点だけ質問する（4 つ以上なら案内して終了）
+5. **候補の選定** — セットと配布先の判定（`_deploy.md`）を読み、推奨スタック例を要件と照合する。複数セットにまたがるなら共通レイヤー（認証・DB・API 仕様）を 1 か所で決める
+6. **調査** — 提案に載せる要素だけ、メンテ継続・後継の有無・現行メジャー版を出典 URL と確認日付きで確かめ、種類ごとに近年の代替を 1 回検索する（Cloudflare なら Workers 固有 API の現行仕様も）
+7. **提案と承認** — 要件の照合・構成・調査結果・代替の比較を提示し、承認を待つ
+8. **文書化** — `spira:update-doc` で `docs/architecture.md` を作り、プロジェクトの `CLAUDE.md` に `@docs/architecture.md` を追加してマージまで行う
+9. **起票** — `spira:create-issue` で構成の立ち上げ Issue（環境構築と要素ごとの最小の組み込み）を起票する。環境構築の受け入れ基準には `mise install` と `mise run setup` で環境が整うことを含める
+10. **セットの更新候補の整理** — 調査で古いと分かったセットの記述をまとめる（セットは書き換えない）
+11. **完了報告** — PR・Issue の URL とセットの更新候補を報告
+
+```bash
+/spira:architect
+/spira:architect 長時間ジョブのワーカー
+```
+
+出力の書式は `skills/architect/templates/` で定義しています。
+
+| 出力 | テンプレート |
+|:--|:--|
+| 構成の提案 | `proposal.md` |
+| `docs/architecture.md` | `architecture-doc.md` |
+| アーキテクチャセット（同梱セットの書式） | `architecture-set.md` |
+
 ### `/spira:plan <Issue URL>`
 
 指定した GitHub Issue について実装計画を作成します。`planned` ラベルが付与済みの場合はスキップします。
@@ -246,9 +276,10 @@ spira/
 │   ├── autopilot/         # 自走開発のキックオフ
 │   │   ├── SKILL.md
 │   │   └── templates/     # コンテキスト・状態・報告・案内のテンプレート
-│   ├── architect/         # アーキテクチャの構成決め（SKILL.md は未作成）
+│   ├── architect/         # アーキテクチャの構成決め
+│   │   ├── SKILL.md
 │   │   ├── sets/          # 判断の材料（5 セットと配布先の判定）
-│   │   └── templates/     # 出力の書式（アーキテクチャセットの書式）
+│   │   └── templates/     # アーキテクチャセット・構成の提案・docs/architecture.md の書式
 │   ├── brainstorming/     # ブレインストーミング
 │   │   ├── SKILL.md
 │   │   └── templates/     # 論点テーブル・対話・結論のテンプレート
