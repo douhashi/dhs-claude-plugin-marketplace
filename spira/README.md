@@ -182,7 +182,8 @@ URL: <url>
    - Infisical（CLI・`.infisical.json`・ログイン）。未設定ならセットアップを促して終了
    - 人の手による準備物（`.env.example`・ドキュメント・Issue 本文から変数名を集める）。
      Infisical に無ければ値 `__SPIRA_PLACEHOLDER__` で作成し、埋める手順を案内して終了
-4. **ロードマップの整理** — ロードマップに未記載の Open Issue があれば一覧で提示し、どれを載せるかをユーザーと決める。
+4. **ロードマップの整理** — まず Issue の状態とずれたチェック状態・完了行の置き場所を直す PR を作ってマージする。
+   次に、ロードマップに未記載の Open Issue があれば一覧で提示し、どれを載せるかをユーザーと決める。
    載せると決まったものを PR にしてマージし、載せないと決まったものは今回のループの対象外として記録する
    （ロードマップが無い場合は整理を飛ばし、着手順は番号順になる）
 5. **書き出し** — `.tmp/spira-autopilot/context.md`（ルール・進め方）と `state.md`（状態）
@@ -232,7 +233,7 @@ URL: <url>
 | 人の手が必要なときの案内 | `blocker-guide.md` |
 | 未記載 Issue の検討 | `roadmap-triage.md` |
 
-ロードマップ PR（キックオフ整理・追加・整合修正）の書式は、create-issue と共有するため `templates/roadmap-pr.md` にあります。
+ロードマップ PR（キックオフ整合・キックオフ整理・追加・整合修正）の書式と、ずれの規則（整合の規則）は、create-issue と共有するため `templates/roadmap-pr.md` にあります。
 
 ## プロジェクト構成
 
@@ -276,7 +277,7 @@ spira/
 │   ├── implementation-result.md
 │   ├── qa-result.md
 │   ├── blocked.md         # 人手対応待ち
-│   ├── roadmap-pr.md      # ロードマップの行・追加位置・PR（autopilot / orchestrator / create-issue 共通）
+│   ├── roadmap-pr.md      # ロードマップの行・追加位置・整合の規則・PR（autopilot / orchestrator / create-issue 共通）
 │   └── completion-report.md
 └── README.md
 ```
