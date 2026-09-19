@@ -27,6 +27,16 @@ dhs-claude-plugin-marketplace/
 │   │   ├── autopilot/
 │   │   │   ├── SKILL.md
 │   │   │   └── templates/     # コンテキスト・状態・報告・案内のテンプレート
+│   │   ├── architect/
+│   │   │   ├── sets/          # 判断の材料（アーキテクチャセット・配布先の判定）
+│   │   │   │   ├── _deploy.md
+│   │   │   │   ├── web.md
+│   │   │   │   ├── api.md
+│   │   │   │   ├── cli.md
+│   │   │   │   ├── desktop.md
+│   │   │   │   └── mobile.md
+│   │   │   └── templates/     # 出力の書式
+│   │   │       └── architecture-set.md
 │   │   ├── brainstorming/
 │   │   │   ├── SKILL.md
 │   │   │   └── templates/     # スキル固有の出力テンプレート
@@ -97,6 +107,7 @@ dhs-claude-plugin-marketplace/
 - 出力の書式・分量の定義は SKILL.md 本文に直書きせず、テンプレートファイルに分離する
   - 複数スキル／エージェントで共有する書式（Issue 本文・コメント・ロードマップ PR）は `spira/templates/` に置き、`${CLAUDE_PLUGIN_ROOT}/templates/<name>.md` で参照する
   - 単一スキル専用の書式は `spira/skills/<skill>/templates/` に置き、相対 markdown リンクで参照する
+- スキルが判断に使う材料（例: architect のアーキテクチャセット）は `spira/skills/<skill>/sets/` に置き、出力の書式を置く `templates/` と分ける
 
 ## エージェント設計方針
 
