@@ -38,7 +38,7 @@ model: inherit
 
 ## 手順
 
-最初に次の 4 ファイルを Read する。`context.md` の値（ルート・リポジトリ・Infisical 環境など）を以降の `ROOT` / `REPO` / `ENV` / `BRANCH` として使う。
+最初に次の 4 ファイルを Read する。`context.md` の値（ルート・リポジトリ・シークレットの置き場所・Infisical 環境・シークレットのファイルなど）を以降の `ROOT` / `REPO` / `STORE` / `ENV` / `ENV_FILE` / `BRANCH` として使う。
 
 - 呼び出し時に渡された `context.md`
 - 同じディレクトリの `state.md`
@@ -188,11 +188,14 @@ PR に含めるのは次の Issue である。どちらも無ければ手順 3 �
 
 ### 3. 停止要因の再確認
 
-ブロッカー表に `未解消` の行があれば、値が入ったかを確かめる。**値は出力しない。**
+ブロッカー表に `未解消` の行があれば、`STORE` に応じて値が入ったかを確かめる。**値は出力しない。**
 
 ```bash
+# STORE=infisical
 infisical secrets --env ENV --silent -o json \
   | jq -r '.[] | select((.value // .secretValue) == "__SPIRA_PLACEHOLDER__") | (.key // .secretKey)'
+# STORE=dotenv
+grep -oE '^(export )?[A-Za-z_][A-Za-z0-9_]*=__SPIRA_PLACEHOLDER__$' ROOT/ENV_FILE | sed -E 's/^export //' | cut -d= -f1
 ```
 
 ここに名前が出なくなった変数は `解消` にする。
@@ -233,7 +236,8 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
    W="$(dirname ROOT)/$(basename ROOT)-autopilot-N"
    git -C ROOT fetch origin --quiet
    git -C ROOT worktree add --detach "$W" origin/BRANCH
-   git -C ROOT ls-files --error-unmatch .infisical.json >/dev/null 2>&1 || cp ROOT/.infisical.json "$W/"
+   git -C ROOT ls-files --error-unmatch .infisical.json >/dev/null 2>&1 || cp ROOT/.infisical.json "$W/"   # STORE=infisical のとき
+   [ -f ROOT/ENV_FILE ] && ln -s ROOT/ENV_FILE "$W/ENV_FILE"                                               # STORE=dotenv のとき
    cd "$W" && setsid nohup bash -c \
      'claude -p "$1" --permission-mode bypassPermissions > "$2/$3.log" 2>&1; echo $? > "$2/$3.exit"' \
      _ "ROOT/.tmp/spira-autopilot/context.md の「ライン規約」を Read して従ったうえで、spira:do スキルを引数 URL で実行し、最後まで進めてください。" \
@@ -305,7 +309,7 @@ gh pr view <PR 番号> --repo REPO --json title,files --jq '{title, files: [.fil
 
 | 止まった理由 | 節 | 載せる内容 |
 |:--|:--|:--|
-| `未解消` のブロッカー | 「環境変数の設定」 | `未解消` の変数だけ（用途・値の入手先は `archive/` 配下の `*.blocked.md` から取る） |
+| `未解消` のブロッカー | 「環境変数の設定」（`STORE` に合う版） | `未解消` の変数だけ（用途・値の入手先は `archive/` 配下の `*.blocked.md` から取る） |
 | `停止理由` | 「エスカレーション」 | `停止理由` の escalated Issue |
 
 両方あれば両方の節を続ける。

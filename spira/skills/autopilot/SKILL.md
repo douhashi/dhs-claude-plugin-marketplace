@@ -1,6 +1,6 @@
 ---
 name: autopilot
-description: "開発を自走で回す準備をする。前提条件（Infisical・環境変数）を検査し、/clear 後も継続できるループ開発のコンテキストを .tmp に書き出す。autopilot, 自走, ループ開発, 自動で回して"
+description: "開発を自走で回す準備をする。前提条件（必要な環境変数と、その置き場所の Infisical または .env）を検査し、/clear 後も継続できるループ開発のコンテキストを .tmp に書き出す。autopilot, 自走, ループ開発, 自動で回して"
 argument-hint: "[--env <Infisical 環境名>]"
 disable-model-invocation: true
 user-invocable: true
@@ -25,7 +25,10 @@ allowed-tools: Read, Grep, Glob, Write, Bash
 
 - Issue の選択・計画・実装・PR 作成を自分で行うことは禁止
 - シークレットの値を出力・ファイル・Issue に書くことは禁止（扱うのは変数名とプレースホルダか否かだけ）
-- 既に値が入っている Infisical のシークレットを上書きすることは禁止
+- 既に値が入っているシークレット（Infisical・`.env` とも）を上書きすることは禁止
+- 必要なシークレットが 0 件なのに Infisical を検査・案内することは禁止
+- ユーザーの選択を待たずに `.env` の代替へ切り替えることは禁止
+- git に無視されていないファイルにシークレットを書くことは禁止
 - 前提条件が欠けたまま `.tmp/spira-autopilot/context.md` を書き出すことは禁止
 - ループのプロンプトを案内する前に、自分でループを開始することは禁止
 - ユーザーが載せると決めていない Issue をロードマップに追加することは禁止
@@ -38,7 +41,7 @@ allowed-tools: Read, Grep, Glob, Write, Bash
 |:--|:--|:--|
 | `--env <名前>` | `.infisical.json` の `defaultEnvironment`、無ければ `dev` | シークレットを検査・作成する Infisical 環境 |
 
-以下の変数を確定させる。
+以下の変数を確定させる。`STORE` と `ENV_FILE` は Phase 3 で確定させる（「シークレットの置き場所」を参照）。
 
 ```
 ROOT=$(git rev-parse --show-toplevel)
@@ -49,6 +52,13 @@ DIR="$ROOT/.tmp/spira-autopilot"
 
 ## 共通オペレーション
 
+### シークレットの置き場所
+
+| `STORE` | 置き場所 | `ENV` | `ENV_FILE` |
+|:--|:--|:--|:--|
+| `infisical` | Infisical の環境 `ENV` | 入力の解析で決めた値 | `—` |
+| `dotenv` | git に無視されたファイル `ENV_FILE`（既定 `.env`） | `—` | ルートからの相対パス |
+
 ### プレースホルダ
 
 人が値を入れるべきシークレットは、値 `__SPIRA_PLACEHOLDER__` で作成する。
@@ -56,12 +66,27 @@ DIR="$ROOT/.tmp/spira-autopilot"
 
 ### シークレット名の一覧取得
 
-値を出力しないよう、必ず `jq` で名前とプレースホルダ判定だけを取り出す。
+値を出力しないよう、名前とプレースホルダ判定だけを取り出す。
 
-```
-infisical secrets --env ENV --silent -o json \
-  | jq -r '.[] | [(.key // .secretKey), ((.value // .secretValue) == "__SPIRA_PLACEHOLDER__")] | @tsv'
-```
+- `infisical`
+
+  ```
+  infisical secrets --env ENV --silent -o json \
+    | jq -r '.[] | [(.key // .secretKey), ((.value // .secretValue) == "__SPIRA_PLACEHOLDER__")] | @tsv'
+  ```
+- `dotenv`（ファイルが無ければ 0 件とする）
+
+  ```
+  sed -nE 's/^(export )?([A-Za-z_][A-Za-z0-9_]*)=(.*)$/\2\t\3/p' "$ROOT/ENV_FILE" \
+    | awk -F'\t' '{print $1 "\t" ($2 == "__SPIRA_PLACEHOLDER__" ? "true" : "false")}'
+  ```
+
+### プレースホルダの作成
+
+一覧に無い名前だけを作る。既存の値は上書きしない。
+
+- `infisical`: `infisical secrets set NAME=__SPIRA_PLACEHOLDER__ --env ENV --silent >/dev/null`
+- `dotenv`: `printf '%s=__SPIRA_PLACEHOLDER__\n' NAME >> "$ROOT/ENV_FILE"`
 
 ### 案内の出力
 
@@ -100,18 +125,7 @@ infisical secrets --env ENV --silent -o json \
 | claude CLI | `command -v claude` | インストールを案内して終了 |
 | origin | `git remote get-url origin` | リモート設定を案内して終了 |
 
-#### 3-2. Infisical
-
-| 検査 | コマンド |
-|:--|:--|
-| CLI | `command -v infisical` |
-| プロジェクト紐付け | `test -f "$ROOT/.infisical.json"` |
-| ログイン・環境 | `infisical secrets --env ENV --silent -o json >/dev/null` |
-
-1 つでも失敗したら、[blocker-guide.md](templates/blocker-guide.md) の「Infisical セットアップ」節に沿って
-セットアップ手順を案内し、**終了する**。
-
-#### 3-3. 人の手による準備物
+#### 3-2. 必要なシークレットの洗い出し
 
 次の情報源から、開発に必要な環境変数・API キーなどの名前を集める。
 
@@ -119,18 +133,41 @@ infisical secrets --env ENV --silent -o json \
 - `mise.toml` の `[env]`、`docker-compose*.yml` の `environment`
 - `README.md` と `docs/` 配下のセットアップ手順
 - Phase 2 で着手見込みとした Issue の本文（`UPPER_SNAKE_CASE` の変数名、「API キー」「トークン」「認証情報」の記述）
+- コードが既に参照しているのに上の情報源に書かれていない変数
 
-集めた名前を「シークレット名の一覧取得」の結果と突き合わせる。
+**0 件なら 3-3・3-4 を飛ばす**（Infisical も `.env` も検査しない）。置き場所は検査せずに次のとおり決める。
+ループ中に必要と判明したら、ラインがこの置き場所にプレースホルダを作って止まる。
 
-- **無い名前**: プレースホルダで作成する
+- `.infisical.json` がある: `STORE=infisical`
+- 無い: `STORE=dotenv`、`ENV_FILE=.env`
 
-  ```
-  infisical secrets set NAME=__SPIRA_PLACEHOLDER__ --env ENV --silent >/dev/null
-  ```
+#### 3-3. 置き場所の決定
+
+Infisical が使えるかを検査する。
+
+| 検査 | コマンド |
+|:--|:--|
+| CLI | `command -v infisical` |
+| プロジェクト紐付け | `test -f "$ROOT/.infisical.json"` |
+| ログイン・環境 | `infisical secrets --env ENV --silent -o json >/dev/null` |
+
+- すべて通れば `STORE=infisical` とする
+- 1 つでも失敗したら、[blocker-guide.md](templates/blocker-guide.md) の「置き場所の提案」節に沿って
+  Infisical のセットアップと `.env` での代替を提案し、**ユーザーの返答を待つ**
+  - Infisical を選んだ: 同ファイルの「Infisical セットアップ」節に沿って手順を案内し、**終了する**
+  - `.env` を選んだ: `STORE=dotenv`、`ENV_FILE` をユーザーが指定したファイル（既定 `.env`）とする
+- `STORE=dotenv` のときは `git -C "$ROOT" check-ignore -q ENV_FILE` で git に無視されていることを確かめる。
+  無視されていなければ、同ファイルの「`.env` の無視設定」節に沿って案内し、**終了する**（`.gitignore` は編集しない）
+
+#### 3-4. 未設定の検査
+
+3-2 で集めた名前を「シークレット名の一覧取得」の結果と突き合わせる。
+
+- **無い名前**: 「プレースホルダの作成」に従って作る
 - **プレースホルダのままの名前**: 未設定として扱う（作り直さない）
 
-未設定が 1 件でもあれば、[blocker-guide.md](templates/blocker-guide.md) の「環境変数の設定」節に沿って
-埋める手順を案内し、**終了する**。コードが既に参照しているのに情報源に書かれていない変数に気付いた場合も同様に扱う。
+未設定が 1 件でもあれば、[blocker-guide.md](templates/blocker-guide.md) の「環境変数の設定」節（`STORE` に合う版）に沿って
+埋める手順を案内し、**終了する**。
 
 ### Phase 4: ロードマップの整理
 
@@ -161,6 +198,7 @@ infisical secrets --env ENV --silent -o json \
 1. `mkdir -p "$DIR/lines/archive"` を実行する
 2. [context.md](templates/context.md) を Read し、`{{...}}` をすべて埋めて `$DIR/context.md` に書き出す
    - `{{PLUGIN_ROOT}}` には `${CLAUDE_PLUGIN_ROOT}` の展開後の絶対パスを入れる
+   - `{{STORE}}` / `{{ENV}}` / `{{ENV_FILE}}` には Phase 3 で確定させた値を入れる（使わない方は `—`）
    - `{{CREATED_AT}}` には `date -u +%Y-%m-%dT%H:%M:%SZ` の値を入れる（GitHub の `createdAt` と比較するため UTC）
 3. [state.md](templates/state.md) を Read し、`{{...}}` を埋めて `$DIR/state.md` に書き出す
    - `{{TARGET_ROWS}}` には Phase 4 の整合と整理を反映した着手順（escalated と対象外を除く）を、同じ順で 1 行ずつ入れる（状態は `⏳ 待機`、依存が未完了なら `⏸ 依存待ち` とし、メモに依存先を書く）

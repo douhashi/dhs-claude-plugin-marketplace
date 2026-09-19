@@ -20,7 +20,9 @@
 | 作業ディレクトリ | `{{ROOT}}/.tmp/spira-autopilot` |
 | 状態ファイル | `{{ROOT}}/.tmp/spira-autopilot/state.md` |
 | デフォルトブランチ | `{{BRANCH}}` |
+| シークレットの置き場所 | `{{STORE}}`（`infisical` / `dotenv`） |
 | Infisical 環境 | `{{ENV}}` |
+| シークレットのファイル | `{{ENV_FILE}}`（ルートからの相対パス） |
 | spira | `{{PLUGIN_ROOT}}` |
 | 最大ライン数 | 3 |
 | ラインの権限モード | `bypassPermissions`（人と対話できないため） |
@@ -31,7 +33,7 @@
 1. **可能な限り自走する**。ユーザーへの質問・確認で止まらない。判断が要る論点は `spira:do` の PO エージェントに任せる
 2. **Issue の選択は `spira:pick`、開発は `spira:do` に任せる**。ループ側で計画・実装をしない
 3. **ブロッカーの無い Issue だけを並列で進める**。同時に走るラインは最大 3 本
-4. **人の手による設定が必要になったら止める**。Infisical にプレースホルダで変数を作り、埋める手順を案内してループを終了する
+4. **人の手による設定が必要になったら止める**。シークレットの置き場所にプレースホルダで変数を作り、埋める手順を案内してループを終了する
 5. **状態はファイルに残す**。進捗は `state.md`、各ラインの出力は `lines/` にある
 6. **ループ中に見つかった Issue は orchestrator が判定する**。取り込むのは**システムを壊す不具合だけ**で、拡張や壊さない不具合は今回のループでは扱わない。取り込むものはロードマップの適切な位置に追加し、PR を作ってマージする
 7. **キックオフで対象外とした Issue は扱わない**（`state.md` の「対象外 Issue」表）。扱うようにするには、いったんループを終えて `/spira:autopilot` からやり直す
@@ -66,10 +68,14 @@ d={{ROOT}}/.tmp/spira-autopilot/lines; s=$(date +%s); until ls "$d"/*.exit >/dev
 各ラインの `claude -p` はこの節に従う。ラインは人と対話できない。
 
 - `spira:do` を渡された Issue URL で最後まで進める。途中でユーザーに質問しない
-- シークレットが必要なコマンドは `infisical run --env {{ENV}} -- <コマンド>` で実行する
+- シークレットが必要なコマンドは、置き場所に応じて次のように実行する
+  - `infisical`: `infisical run --env {{ENV}} -- <コマンド>`
+  - `dotenv`: プロジェクトの読み込み（mise の `_.file`・dotenv 等）に任せる。読み込まれないときは `set -a; . {{ROOT}}/{{ENV_FILE}}; set +a` の後に実行する
 - シークレットの値を出力・コミット・Issue コメントに書かない
 - **人の手による設定が必要と判明したら**、次の 3 つを行ってすぐに終了する（PR は作らない）
-  1. `{{PLUGIN_ROOT}}/templates/blocked.md` の「プレースホルダの作成」に従い、環境 `{{ENV}}` に変数ごとのプレースホルダを作る（setup が作成済みでも行う。既存の値は上書きしない）
+  1. 変数ごとのプレースホルダを作る（setup が作成済みでも行う。既存の値は上書きしない）
+     - `infisical`: `{{PLUGIN_ROOT}}/templates/blocked.md` の「プレースホルダの作成」に従い、環境 `{{ENV}}` に作る
+     - `dotenv`: `{{ROOT}}/{{ENV_FILE}}` に `NAME=` で始まる行が無い変数だけ、`printf '%s=__SPIRA_PLACEHOLDER__\n' NAME >> {{ROOT}}/{{ENV_FILE}}` で足す（worktree 内のファイルではなくルートのファイルに書く）
   2. `{{ROOT}}/.tmp/spira-autopilot/lines/<Issue 番号>.blocked.md` に次の表を書く
 
      ```markdown
@@ -77,5 +83,5 @@ d={{ROOT}}/.tmp/spira-autopilot/lines; s=$(date +%s); until ls "$d"/*.exit >/dev
      |:--|:--|:--|
      | `NAME` | （何に使うか 1 文） | （取得できる画面・URL・担当者） |
      ```
-  3. `{{PLUGIN_ROOT}}/templates/blocked.md` を Read し、Issue に `## 人手対応待ち` をコメントする（setup が記録済みなら重ねてコメントしない）
+  3. `{{PLUGIN_ROOT}}/templates/blocked.md` を Read し、Issue に `## 人手対応待ち` をコメントする（`infisical` は「Infisical がある場合」、`dotenv` は「Infisical が無い場合」の版。setup が記録済みなら重ねてコメントしない）
 - `spira:do` が setup の人手対応待ちで終わった場合も、人の手による設定が必要と判明したものとして上の 3 つを行う
