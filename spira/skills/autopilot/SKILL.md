@@ -15,7 +15,7 @@ allowed-tools: Read, Grep, Glob, Write, Bash
 - **人の準備物を先に潰す**: 走り出してから止まるより、走る前に止まるほうが安い
 - **セッションに記憶を持たせない**: ループに必要な情報はすべて `.tmp/spira-autopilot/` に書き出す
 - **開発は既存スキルに任せる**: Issue の選択は `spira:pick`、開発は `spira:do` が担う。autopilot は段取りだけを行う
-- **着手順を先に決めておく**: ロードマップに無い Issue は着手順が定まらない。走り出す前にロードマップへ載せる
+- **着手順を先に決めておく**: 現状とずれたロードマップや、ロードマップに無い Issue では着手順が定まらない。走り出す前にずれを直し、載せる
 
 ## Role
 
@@ -29,8 +29,8 @@ allowed-tools: Read, Grep, Glob, Write, Bash
 - 前提条件が欠けたまま `.tmp/spira-autopilot/context.md` を書き出すことは禁止
 - ループのプロンプトを案内する前に、自分でループを開始することは禁止
 - ユーザーが載せると決めていない Issue をロードマップに追加することは禁止
-- 未記載 Issue の一覧を出す前、またはユーザーの返答を待たずにロードマップの PR を作成・マージすることは禁止
-- ロードマップの未完了行どうしを並べ替えること、既存行の文言を書き換えることは禁止（行の追加だけを行う）
+- 未記載 Issue を載せる PR を、一覧を出す前、またはユーザーの返答を待たずに作成・マージすることは禁止
+- `roadmap-pr.md` の「整合の規則」に無いチェック状態の変更・行の移動と、未完了行どうしの並べ替え・既存行の文言の書き換えは禁止
 
 ## 入力の解析
 
@@ -86,6 +86,7 @@ infisical secrets --env ENV --silent -o json \
    - `spira:pick` の優先順（ロードマップの未完了行 → 番号が若い順）で先頭から並べた Issue。`escalated` Issue は自走の対象外として分けておく
    - 各 Issue の依存（ロードマップの `[dep #N]`、本文の `depends on #N` / `blocked by #N` / `#N の完了後`）
    - `escalated` 以外の Open Issue が 0 件なら「対応すべき Issue がありません」と伝えて終了する
+   - 優先順は、Phase 4 でずれを直した後のロードマップで改めて確定させる
 
 ### Phase 3: 前提条件の検査
 
@@ -133,18 +134,27 @@ infisical secrets --env ENV --silent -o json \
 
 ### Phase 4: ロードマップの整理
 
-ロードマップに載っていない Issue が自走の対象になると、着手順が番号順に落ちてしまう。走り出す前に載せる。
+現状とずれたロードマップや、ロードマップに載っていない Issue が自走の対象になると、着手順が狂う。走り出す前にずれを直し、載せる。
 
 1. Phase 2 で見つけたロードマップが無ければ、この Phase を飛ばす（Phase 6 の報告に「ロードマップが無いため番号順に進む」と書く）
-2. **未記載の Issue を洗い出す**: Phase 2 の Open Issue（`escalated` を除く）のうち、ロードマップに `→ #<番号>` の行が無いもの。無ければこの Phase を飛ばす
-3. **一覧を出して一緒に決める**: [roadmap-triage.md](templates/roadmap-triage.md) を Read し、
+2. **ずれを直す**: `→ #<番号>` を持つ各行の Issue の状態を取得し、`${CLAUDE_PLUGIN_ROOT}/templates/roadmap-pr.md` の
+   「整合の規則」に照らしてずれを洗い出す
+
+   ```
+   gh issue list --repo REPO --state all --limit 1000 --json number,state,stateReason
+   ```
+   - ずれがあれば、同ファイルの「整合修正」節（キックオフのブランチ）と「PR の出し方」に従い、すべてのずれを 1 本の PR にまとめる。ずれが 0 件なら PR は作らない
+   - CI 失敗・マージ不可のときは、PR を開いたまま残し、その旨を Phase 6 の報告に書いて先に進む
+   - 以降の手順は、ロードマップを Read し直し、整合後のロードマップを基にする
+3. **未記載の Issue を洗い出す**: Phase 2 の Open Issue（`escalated` を除く）のうち、ロードマップに `→ #<番号>` の行が無いもの。無ければ手順 4〜6 を飛ばす
+4. **一覧を出して一緒に決める**: [roadmap-triage.md](templates/roadmap-triage.md) を Read し、
    未記載の Issue を一覧で提示して、どれをロードマップに載せるかをユーザーと決める。
    載せるものは追加位置も併せて決める。**決めるのはユーザー**であり、スキルは案を出して質問に答える
-4. **PR を作ってマージする**: `載せる` と決まった Issue を、`${CLAUDE_PLUGIN_ROOT}/templates/roadmap-pr.md` の
+5. **PR を作ってマージする**: `載せる` と決まった Issue を、`${CLAUDE_PLUGIN_ROOT}/templates/roadmap-pr.md` の
    「キックオフ整理」節と「PR の出し方」に従って 1 本の PR にまとめる
    - `載せる` が 0 件なら PR は作らない
    - CI 失敗・マージ不可のときは、PR を開いたまま残し、その旨を Phase 6 の報告に書いて先に進む
-5. **対象外を記録する**: `載せない` と決まった Issue は、今回のループの対象外として Phase 5 で `state.md` に理由とともに書く
+6. **対象外を記録する**: `載せない` と決まった Issue は、今回のループの対象外として Phase 5 で `state.md` に理由とともに書く
 
 ### Phase 5: コンテキストの書き出し
 
@@ -153,7 +163,7 @@ infisical secrets --env ENV --silent -o json \
    - `{{PLUGIN_ROOT}}` には `${CLAUDE_PLUGIN_ROOT}` の展開後の絶対パスを入れる
    - `{{CREATED_AT}}` には `date -u +%Y-%m-%dT%H:%M:%SZ` の値を入れる（GitHub の `createdAt` と比較するため UTC）
 3. [state.md](templates/state.md) を Read し、`{{...}}` を埋めて `$DIR/state.md` に書き出す
-   - `{{TARGET_ROWS}}` には Phase 4 の整理を反映した着手順（escalated と対象外を除く）を、同じ順で 1 行ずつ入れる（状態は `⏳ 待機`、依存が未完了なら `⏸ 依存待ち` とし、メモに依存先を書く）
+   - `{{TARGET_ROWS}}` には Phase 4 の整合と整理を反映した着手順（escalated と対象外を除く）を、同じ順で 1 行ずつ入れる（状態は `⏳ 待機`、依存が未完了なら `⏸ 依存待ち` とし、メモに依存先を書く）
    - `{{EXCLUDED_ROWS}}` には Phase 4 で `載せない` と決まった Issue を、理由とともに 1 行ずつ入れる（0 件なら空のままにする）
    （既に `$DIR/state.md` がある場合は、前回のループの記録として `$DIR/lines/archive/state-<日時>.md` に退避してから書き出す）
 4. `.tmp/` が `.gitignore` 等で無視されているか `git check-ignore -q .tmp/spira-autopilot/context.md` で確認し、
