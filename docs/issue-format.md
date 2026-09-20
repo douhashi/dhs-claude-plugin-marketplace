@@ -35,6 +35,9 @@ Issue の起票は取り消しにくいため、create-issue スキルは本文�
 **作成予定 Issue の一覧表**を提示して承認を得る。書式は
 `spira/skills/create-issue/templates/issue-plan.md`（`#` / タイトル / 目的 / 完了条件）。
 
+起票の対象は、完了したときにコードベースの状態が変わる Issue に限る。判定基準と、
+外した項目を brainstorming に回す書式も `issue-plan.md`（「起票の可否」「起票しない項目の扱い」節）が単一ソース。
+
 Issue のタイトルは Conventional Commits スタイル（`<type>(<scope>): <説明>`）で書く。
 `type` と使い分けの定義も `issue-plan.md` が単一ソースであり、スキル本文には書かない。
 
