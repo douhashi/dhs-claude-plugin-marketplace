@@ -15,13 +15,30 @@ Claude Code プラグインとして、自律的な開発サイクル（計画 �
 
 ### インストール
 
-```bash
-# リポジトリのクローン
-git clone https://github.com/douhashi/spira.git
+マーケットプレイス [dhs-claude-plugin-marketplace](https://github.com/douhashi/dhs-claude-plugin-marketplace)
+経由で入れる。マーケットプレイスの登録は初回だけでよい。
 
-# プラグインとして読み込み
-claude --plugin-dir /path/to/spira
+Claude Code のセッション内から:
+
 ```
+/plugin marketplace add douhashi/dhs-claude-plugin-marketplace
+/plugin install spira@dhs-claude-plugin-marketplace
+```
+
+シェルから:
+
+```bash
+claude plugin marketplace add douhashi/dhs-claude-plugin-marketplace
+claude plugin install spira@dhs-claude-plugin-marketplace
+```
+
+インストール後に Claude Code を再起動すると、`/spira:` がコマンド補完に並ぶ。
+
+`.claude/settings.json` の `enabledPlugins` は、そのプラグインを**有効にするだけ**で、
+インストールまではしない（Claude Code v2.1.195 以降）。上のコマンドは省略できない。
+
+なお、このプラグインの開発中にローカルの作業ツリーを読み込ませる手順は
+[開発](#開発) の節にある。利用者向けのインストールには使わない。
 
 ## 使い方
 
@@ -369,6 +386,10 @@ spira は以下のラベルを自動作成・運用します。
 
 ### ローカルテスト
 
+インストール済みのプラグインとは別に、作業ツリーをそのまま読み込む。
+このリポジトリの `spira/` をカレントディレクトリにして実行する。
+**利用者向けのインストール手順ではない**（インストールは [セットアップ](#インストール) を参照）。
+
 ```bash
 claude --plugin-dir .
 ```
@@ -377,6 +398,14 @@ claude --plugin-dir .
 
 ```bash
 claude --debug --plugin-dir .
+```
+
+### インストール済みのプラグインに反映する
+
+ローカルマーケットプレイスは自動更新されないため、入れ直す。
+
+```bash
+../scripts/update.sh spira
 ```
 
 プラグインに変更を加えた場合は Claude Code を再起動して反映させてください。
