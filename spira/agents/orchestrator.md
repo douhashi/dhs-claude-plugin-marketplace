@@ -80,12 +80,13 @@ gh issue list --repo REPO --label escalated --state open --json number,title \
 判定したら次を行い、ライン表の行を `—` に戻す。
 
 1. 結果表に 1 行追記し（同じ Issue の行が既にあれば更新する）、対象 Issue 表の状態を結果の記号に更新する。
+   `SID` にはライン表の SID を写す（⚠️ の再試行で行を更新するときは、最新のラインの SID にする）。
    `費用`・`ターン`・`所要` はログの最後の result 行から取り、`$0.15`・`12`・`34 分` の形で書く（`所要` は `duration_ms` を分に切り捨てる。result 行が無ければ 3 つとも `—`）
 
    ```bash
    grep '"type":"result"' "$LINES/N.log" | tail -1 | jq -c '{total_cost_usd, num_turns, duration_ms}'
    ```
-2. 出力を退避する: `mv "$LINES"/N.* "$LINES/archive/"` の前に、ファイル名へ日時を付ける（`N-<YYYYmmddHHMM>.log` など）
+2. 出力を退避する: `mv "$LINES"/N.* "$LINES/archive/"` の前に、ファイル名へ日時を付ける（`N-<YYYYmmddHHMM>.log`・`N-<YYYYmmddHHMM>.sid` など。`N.sid` も対象）
 3. ライン用 worktree を消す: `git -C ROOT worktree remove --force <worktree>`
 
 **走っている場合**は、状態を Issue から推定する（レポートの状態列に使う）。
@@ -245,18 +246,23 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
    [ -f ROOT/ENV_FILE ] && ln -s ROOT/ENV_FILE "$W/ENV_FILE"                                               # STORE=dotenv のとき
    if command -v setsid >/dev/null 2>&1; then DETACH=(setsid)                                             # Linux（util-linux）
    else DETACH=(perl -MPOSIX=setsid -e 'setsid; exec @ARGV or die "exec: $!"'); fi                        # macOS には setsid が無い
+   SID=$( (uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid) | tr 'A-F' 'a-f')                     # 起動ごとに新規生成（macOS の uuidgen は大文字）
+   echo "$SID" > "$LINES/N.sid"
    cd "$W" && "${DETACH[@]}" nohup bash -c \
      'claude -p "$1" \
+        --session-id "$4" \
         --permission-mode bypassPermissions \
         --output-format stream-json \
         --verbose \
         > "$2/$3.log" 2>&1; echo $? > "$2/$3.exit"' \
      _ "ROOT/.tmp/spira-autopilot/context.md の「ライン規約」を Read して従ったうえで、spira:do スキルを引数 URL で実行し、最後まで進めてください。" \
-     "$LINES" "N" </dev/null >/dev/null 2>&1 &
+     "$LINES" "N" "$SID" </dev/null >/dev/null 2>&1 &
    echo $!
    ```
+   `--session-id` により、ラインの会話は `SID` で記録される。worktree を消した後も、autopilot と同じ `CLAUDE_CONFIG_DIR` で `cd ROOT && claude --resume <SID>` とすれば開いて事後調査できる。
+   SID は再試行を含めて**起動のたびに新しく作る**（同じ SID を別の worktree で使い回すと、会話の記録が重複する）
    `--output-format stream-json --verbose` により、ラインの経過（ツール呼び出し・発言・最後の result 行）がイベントごとに 1 行ずつ `N.log` へ書き出される
-5. ライン表の空き行に Issue・タイトル・PID（`echo $!` の値）・worktree・開始時刻を書き、対象 Issue 表の状態を `📝 計画` にする
+5. ライン表の空き行に Issue・タイトル・PID（`echo $!` の値）・SID・worktree・開始時刻を書き、対象 Issue 表の状態を `📝 計画` にする
 
 ### 5. 状態の更新
 

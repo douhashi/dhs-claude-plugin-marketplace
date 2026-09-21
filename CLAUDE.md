@@ -48,7 +48,7 @@ dhs-claude-plugin-marketplace/
 - **実装サイクル**: 計画済み Issue を入力に、実装・PR 作成・CI 監視を自律実行するスキル（`spira:implement`）
 - **一気通貫サイクル**: 計画から PR マージまでを単一フローで実行するスキル（`spira:do`）
 - **次タスク抽出**: 対応すべき Issue を 1 件抽出するスキル（`spira:pick`）
-- **自走開発**: 前提条件（必要な環境変数と、その置き場所の Infisical または `.env`。必要なシークレットが 0 件なら置き場所の検査は飛ばす）を検査し、ロードマップのずれを直す PR をマージし、ロードマップ未記載の Issue を一緒に整理してからループ開発のコンテキストを `.tmp` に書き出すスキル（`spira:autopilot`）と、それに従い `spira:pick` → `spira:do` を最大 3 ラインで回し、ループ中に見つかったシステムを壊す不具合のロードマップへの追加と、ループ終了時のロードマップの整合修正（PR→マージ）を行いながら表で進捗を報告するエージェント（`spira:orchestrator`）。ラインの経過は `lines/N.log` に stream-json で逐次書き出され、`spira/scripts/watch-lines.sh` で全ライン分を `[#N]` 付きの 1 行ずつ追える
+- **自走開発**: 前提条件（必要な環境変数と、その置き場所の Infisical または `.env`。必要なシークレットが 0 件なら置き場所の検査は飛ばす）を検査し、ロードマップのずれを直す PR をマージし、ロードマップ未記載の Issue を一緒に整理してからループ開発のコンテキストを `.tmp` に書き出すスキル（`spira:autopilot`）と、それに従い `spira:pick` → `spira:do` を最大 3 ラインで回し、ループ中に見つかったシステムを壊す不具合のロードマップへの追加と、ループ終了時のロードマップの整合修正（PR→マージ）を行いながら表で進捗を報告するエージェント（`spira:orchestrator`）。ラインの経過は `lines/N.log` に stream-json で逐次書き出され、`spira/scripts/watch-lines.sh` で全ライン分を `[#N]` 付きの 1 行ずつ追える。ラインは起動ごとに新規の `--session-id`（SID）で走り、SID は `lines/N.sid` と `state.md` に残るため、worktree 削除後も autopilot と同じ `CLAUDE_CONFIG_DIR` で `cd <ルート> && claude --resume <SID>` とすれば事後調査できる
 - **タスク管理**: `gh project` を操作するスキル群
 
 ### tts-notify
