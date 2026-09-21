@@ -90,7 +90,7 @@ dhs-claude-plugin-marketplace/
 │   │   ├── roadmap-pr.md
 │   │   └── completion-report.md
 │   ├── scripts/
-│   │   └── ...
+│   │   └── watch-lines.sh     # autopilot のライン（stream-json ログ）の経過を 1 行ずつ流す
 │   └── README.md
 ├── docs/
 │   ├── plugin-spec.md
