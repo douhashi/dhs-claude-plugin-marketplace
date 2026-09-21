@@ -242,7 +242,7 @@ URL: <url>
    載せると決まったものを PR にしてマージし、載せないと決まったものは今回のループの対象外として記録する
    （ロードマップが無い場合は整理を飛ばし、着手順は番号順になる）
 5. **書き出し** — `.tmp/spira-autopilot/context.md`（ルール・進め方）と `state.md`（状態）
-6. **案内** — `/clear` 後に実行するプロンプトを提示
+6. **案内** — `/clear` 後に実行するプロンプトと、ラインの経過を見る閲覧コマンドを提示
 
 ```bash
 /spira:autopilot
@@ -266,6 +266,14 @@ URL: <url>
   - 今回の出来事は、対象 Issue を読んで主題と最大 3 行のサマリー（何が、どう変わったか）を書く
   - ループ対象の全体像は、対象 Issue 全件を順番・状態・メモの表で毎回末尾に出す
 - ラインは人と対話できないため `--permission-mode bypassPermissions` で起動する
+- ラインは `--output-format stream-json --verbose` で起動し、経過（ツール呼び出し・発言・最後の result 行）を `.tmp/spira-autopilot/lines/N.log` へイベントごとに書き出す。
+  終わったラインの費用・ターン数・所要時間は、最後の result 行から `state.md` の結果表に残る
+- 走行中の全ラインの経過は、別の端末で `scripts/watch-lines.sh` を起動すると `[#N] HH:MM:SS 種別 要約` の 1 行ずつで流れる
+  （後から起動したラインも再起動なしで拾い、`archive/` へ退避されたログは追うのをやめる。Ctrl-C で終了。Linux / macOS 対応、`jq` 1.6 以降が必要）
+
+  ```bash
+  <spira>/scripts/watch-lines.sh <ルート>/.tmp/spira-autopilot/lines   # 引数を省くとカレントの .tmp/spira-autopilot/lines
+  ```
 - 人の手による設定が必要になったライン（setup が止まった場合を含む）は、シークレットの置き場所（Infisical または `.env`）にプレースホルダを作り Issue に `## 人手対応待ち` を残して止まる。
   orchestrator は新しいラインを起動せず、走行中のラインが終わったら埋める手順を案内してループを終了する
 - ループ中に見つかった Issue（ループ開始後に作られた Open Issue）は orchestrator が判定する
@@ -339,6 +347,8 @@ spira/
 │   ├── blocked.md         # 人手対応待ち
 │   ├── roadmap-pr.md      # ロードマップの行・追加位置・整合の規則・PR（autopilot / orchestrator / create-issue 共通）
 │   └── completion-report.md
+├── scripts/
+│   └── watch-lines.sh     # autopilot のラインの経過を全ライン分 1 行ずつ流す
 └── README.md
 ```
 

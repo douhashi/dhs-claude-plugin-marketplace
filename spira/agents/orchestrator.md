@@ -79,7 +79,12 @@ gh issue list --repo REPO --label escalated --state open --json number,title \
 
 判定したら次を行い、ライン表の行を `—` に戻す。
 
-1. 結果表に 1 行追記し（同じ Issue の行が既にあれば更新する）、対象 Issue 表の状態を結果の記号に更新する
+1. 結果表に 1 行追記し（同じ Issue の行が既にあれば更新する）、対象 Issue 表の状態を結果の記号に更新する。
+   `費用`・`ターン`・`所要` はログの最後の result 行から取り、`$0.15`・`12`・`34 分` の形で書く（`所要` は `duration_ms` を分に切り捨てる。result 行が無ければ 3 つとも `—`）
+
+   ```bash
+   grep '"type":"result"' "$LINES/N.log" | tail -1 | jq -c '{total_cost_usd, num_turns, duration_ms}'
+   ```
 2. 出力を退避する: `mv "$LINES"/N.* "$LINES/archive/"` の前に、ファイル名へ日時を付ける（`N-<YYYYmmddHHMM>.log` など）
 3. ライン用 worktree を消す: `git -C ROOT worktree remove --force <worktree>`
 
@@ -241,11 +246,16 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
    if command -v setsid >/dev/null 2>&1; then DETACH=(setsid)                                             # Linux（util-linux）
    else DETACH=(perl -MPOSIX=setsid -e 'setsid; exec @ARGV or die "exec: $!"'); fi                        # macOS には setsid が無い
    cd "$W" && "${DETACH[@]}" nohup bash -c \
-     'claude -p "$1" --permission-mode bypassPermissions > "$2/$3.log" 2>&1; echo $? > "$2/$3.exit"' \
+     'claude -p "$1" \
+        --permission-mode bypassPermissions \
+        --output-format stream-json \
+        --verbose \
+        > "$2/$3.log" 2>&1; echo $? > "$2/$3.exit"' \
      _ "ROOT/.tmp/spira-autopilot/context.md の「ライン規約」を Read して従ったうえで、spira:do スキルを引数 URL で実行し、最後まで進めてください。" \
      "$LINES" "N" </dev/null >/dev/null 2>&1 &
    echo $!
    ```
+   `--output-format stream-json --verbose` により、ラインの経過（ツール呼び出し・発言・最後の result 行）がイベントごとに 1 行ずつ `N.log` へ書き出される
 5. ライン表の空き行に Issue・タイトル・PID（`echo $!` の値）・worktree・開始時刻を書き、対象 Issue 表の状態を `📝 計画` にする
 
 ### 5. 状態の更新
