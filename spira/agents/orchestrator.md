@@ -238,7 +238,9 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
    git -C ROOT worktree add --detach "$W" origin/BRANCH
    git -C ROOT ls-files --error-unmatch .infisical.json >/dev/null 2>&1 || cp ROOT/.infisical.json "$W/"   # STORE=infisical のとき
    [ -f ROOT/ENV_FILE ] && ln -s ROOT/ENV_FILE "$W/ENV_FILE"                                               # STORE=dotenv のとき
-   cd "$W" && setsid nohup bash -c \
+   if command -v setsid >/dev/null 2>&1; then DETACH=(setsid)                                             # Linux（util-linux）
+   else DETACH=(perl -MPOSIX=setsid -e 'setsid; exec @ARGV or die "exec: $!"'); fi                        # macOS には setsid が無い
+   cd "$W" && "${DETACH[@]}" nohup bash -c \
      'claude -p "$1" --permission-mode bypassPermissions > "$2/$3.log" 2>&1; echo $? > "$2/$3.exit"' \
      _ "ROOT/.tmp/spira-autopilot/context.md の「ライン規約」を Read して従ったうえで、spira:do スキルを引数 URL で実行し、最後まで進めてください。" \
      "$LINES" "N" </dev/null >/dev/null 2>&1 &
