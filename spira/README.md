@@ -274,6 +274,13 @@ URL: <url>
   ```bash
   <spira>/scripts/watch-lines.sh <ルート>/.tmp/spira-autopilot/lines   # 引数を省くとカレントの .tmp/spira-autopilot/lines
   ```
+- ラインは起動のたびに新しく作った小文字 UUID を `--session-id` に渡して走る（再試行も新しい SID）。
+  SID は `lines/N.sid`（回収後は `archive/N-<日時>.sid`）と `state.md` のライン表・結果表に残り、⚠️ / 🆘 の報告には事後調査コマンドが添えられる。
+  終わったライン（worktree は削除済み）の会話は、autopilot と同じ `CLAUDE_CONFIG_DIR` でルートから開ける（worktree の再作成は不要。`CLAUDE_CONFIG_DIR` が違うと `No conversation found` になる）
+
+  ```bash
+  cd <ルート> && claude --resume <SID>
+  ```
 - 人の手による設定が必要になったライン（setup が止まった場合を含む）は、シークレットの置き場所（Infisical または `.env`）にプレースホルダを作り Issue に `## 人手対応待ち` を残して止まる。
   orchestrator は新しいラインを起動せず、走行中のラインが終わったら埋める手順を案内してループを終了する
 - ループ中に見つかった Issue（ループ開始後に作られた Open Issue）は orchestrator が判定する

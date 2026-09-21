@@ -111,17 +111,20 @@ Infisical（環境 `<ENV>`）にプレースホルダで作成済みです。値
 ## エスカレーション
 
 orchestrator だけが使う。自走を続けられないと判定した escalated Issue ごとに書く。
+`<ROOT>` はルート、SID は `state.md` の結果表で元 Issue の行の `SID`。
 
 ```markdown
 ## ⛔ 自走を続けられないエスカレーションがあります
 
-| Issue | 続けられない理由 |
-|:--|:--|
-| #34 fix(api): #21 の CI 失敗を解消する | デフォルトブランチの依存解決が壊れ、どのラインも CI が通らない |
+| Issue | 続けられない理由 | 元 Issue のライン（SID） |
+|:--|:--|:--|
+| #34 fix(api): #21 の CI 失敗を解消する | デフォルトブランチの依存解決が壊れ、どのラインも CI が通らない | #21 `3f2c9a1e-7b4d-4e8a-9c0f-1a2b3c4d5e6f` |
 
 ### 手順
 
-1. Issue の内容を確認し、原因を直す（直した PR をマージする）
+1. Issue の内容を確認し、原因を直す（直した PR をマージする）。
+   元 Issue のラインの会話は、autopilot と同じ `CLAUDE_CONFIG_DIR` で開ける（worktree の再作成は不要）:
+   `cd <ROOT> && claude --resume <SID>`
 2. Issue をクローズする
 
 終わったら、<再開方法>
