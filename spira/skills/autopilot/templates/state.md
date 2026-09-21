@@ -1,6 +1,6 @@
 # テンプレート: 自走開発の状態
 
-- **書き手**: autopilot スキル（初期化）、orchestrator エージェント（毎イテレーション更新）
+- **書き手**: autopilot スキル（初期化）、orchestrator エージェント（見回りごとに更新）
 - 書き出し先: `.tmp/spira-autopilot/state.md`
 - 下の `---` 以降をそのまま書き出す。表の空行（`—`）は初期状態
 
@@ -22,7 +22,7 @@
 
 # 自走開発の状態
 
-- イテレーション: 0
+- 見回り: 0
 - 開始: {{CREATED_AT}}（UTC。ループ中に見つかった Issue の判定に使う）
 - 最終更新: {{CREATED_AT}}
 - 開始時の Open Issue: {{OPEN_COUNT}} 件
