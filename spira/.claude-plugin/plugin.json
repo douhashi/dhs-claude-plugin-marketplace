@@ -1,6 +1,6 @@
 {
   "name": "spira",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "自律的な開発サイクルを支援するツール群を提供する Claude Code プラグイン",
   "repository": "https://github.com/douhashi/spira",
   "license": "MIT",
