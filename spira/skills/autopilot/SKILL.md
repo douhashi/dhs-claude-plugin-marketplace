@@ -122,7 +122,6 @@ DIR="$ROOT/.tmp/spira-autopilot"
 | 検査 | コマンド | 欠けていた場合 |
 |:--|:--|:--|
 | gh 認証 | `gh auth status` | `gh auth login` を案内して終了 |
-| claude CLI | `command -v claude` | インストールを案内して終了 |
 | origin | `git remote get-url origin` | リモート設定を案内して終了 |
 
 #### 3-2. 必要なシークレットの洗い出し
@@ -215,4 +214,4 @@ Infisical が使えるかを検査する。
 ### Phase 6: 開始方法の案内
 
 [kickoff-report.md](templates/kickoff-report.md) に沿って、前提条件の検査結果・着手見込み・
-`/clear` 後に実行するプロンプトを提示して終了する。
+ループ前の `bypassPermissions` への切り替えと、`/clear` 後に実行するプロンプトを提示して終了する。

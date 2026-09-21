@@ -231,7 +231,7 @@ URL: <url>
 1. **最新化** — デフォルトブランチを `git pull`
 2. **確認** — ロードマップと Open Issue から着手見込みと依存を把握
 3. **前提条件の検査** — 欠けていたら案内して終了
-   - gh 認証・claude CLI・origin
+   - gh 認証・origin
    - 人の手による準備物（`.env.example`・ドキュメント・Issue 本文から変数名を集める）。
      **0 件なら置き場所の検査を飛ばす**（`.infisical.json` がデフォルトブランチにコミット済みなら Infisical、そうでなければ `.env` をループ中の置き場所にする）
    - シークレットの置き場所。Infisical（CLI・`.infisical.json`・そのデフォルトブランチへのコミット・ログイン）が使えなければ、
@@ -243,7 +243,7 @@ URL: <url>
    載せると決まったものを PR にしてマージし、載せないと決まったものは今回のループの対象外として記録する
    （ロードマップが無い場合は整理を飛ばし、着手順は番号順になる）
 5. **書き出し** — `.tmp/spira-autopilot/context.md`（ルール・進め方）と `state.md`（状態）
-6. **案内** — `/clear` 後に実行するプロンプトと、ラインの経過を見る閲覧コマンドを提示
+6. **案内** — ループ前の `bypassPermissions` への切り替えと、`/clear` 後に実行するプロンプトを提示
 
 ```bash
 /spira:autopilot
@@ -253,35 +253,25 @@ URL: <url>
 
 #### ループの仕組み
 
-メインセッションは `spira:orchestrator` を呼んで報告を表示し、ラインの完了を待つだけを繰り返します。
+メインセッションは `spira:orchestrator` を呼んで報告を表示し、報告が指すラインを起動して完了通知を待つだけを繰り返します。
 状態はすべて `.tmp/spira-autopilot/` にあるため、`/clear` しても続きから再開できます。
 
 | 担当 | やること |
 |:--|:--|
-| メインセッション | orchestrator の起動 → 報告の表示 → 待機（`NEXT: wait / halt / done`） |
-| `spira:orchestrator` | 終わったラインの回収 → 見つかった Issue の判定とロードマップ PR → ブロッカーの再確認 → `spira:pick --exclude` で選んで依存を確認 → ライン起動 → ループの終わりならロードマップの整合修正 → 進捗を表で報告 |
-| ライン | 専用 worktree で `claude -p` を起動し `spira:do` を最後まで実行 |
+| メインセッション | orchestrator の起動 → 報告の表示 → `LAUNCH:` 行のラインを起動 → 完了通知を待って `lines/N.done` に記録（`NEXT: wait / halt / done`） |
+| `spira:orchestrator` | 終わったラインの回収 → 見つかった Issue の判定とロードマップ PR → ブロッカーの再確認 → `spira:pick --exclude` で選んで依存を確認 → ラインの起動を `LAUNCH:` 行で依頼 → ループの終わりならロードマップの整合修正 → 進捗を表で報告 |
+| ライン | メインセッションが起動するバックグラウンドの `general-purpose` サブエージェント。context.md の「ライン規約」に従い `spira:do` を最後まで実行 |
 
 - 同時に走るラインは最大 3 本。依存が未完了の Issue は見送る
 - 進捗レポートは「現在のライン → 今回の出来事 → 次 → ループ対象の全体像」の順
   - 今回の出来事は、対象 Issue を読んで主題と最大 3 行のサマリー（何が、どう変わったか）を書く
   - ループ対象の全体像は、対象 Issue 全件を順番・状態・メモの表で毎回末尾に出す
-- ラインは人と対話できないため `--permission-mode bypassPermissions` で起動する
-- ラインは `--output-format stream-json --verbose` で起動し、経過（ツール呼び出し・発言・最後の result 行）を `.tmp/spira-autopilot/lines/N.log` へイベントごとに書き出す。
-  終わったラインの費用・ターン数・所要時間は、最後の result 行から `state.md` の結果表に残る
-- 走行中の全ラインの経過は、別の端末で `scripts/watch-lines.sh` を起動すると `[#N] HH:MM:SS 種別 要約` の 1 行ずつで流れる
-  （後から起動したラインも再起動なしで拾い、`archive/` へ退避されたログは追うのをやめる。Ctrl-C で終了。Linux / macOS 対応、`jq` 1.6 以降が必要）
-
-  ```bash
-  <spira>/scripts/watch-lines.sh <ルート>/.tmp/spira-autopilot/lines   # 引数を省くとカレントの .tmp/spira-autopilot/lines
-  ```
-- ラインは起動のたびに新しく作った小文字 UUID を `--session-id` に渡して走る（再試行も新しい SID）。
-  SID は `lines/N.sid`（回収後は `archive/N-<日時>.sid`）と `state.md` のライン表・結果表に残り、⚠️ / 🆘 の報告には事後調査コマンドが添えられる。
-  終わったライン（worktree は削除済み）の会話は、autopilot と同じ `CLAUDE_CONFIG_DIR` でルートから開ける（worktree の再作成は不要。`CLAUDE_CONFIG_DIR` が違うと `No conversation found` になる）
-
-  ```bash
-  cd <ルート> && claude --resume <SID>
-  ```
+- ラインはメインセッションの権限モードで走り、人と対話できないため、ループは `bypassPermissions` を前提とする（キックオフの案内で切り替える）
+- メインセッションはラインの完了通知を受けると、agentId・status・usage（トークン・ツール回数・所要時間）を `.tmp/spira-autopilot/lines/N.done` に書く。
+  orchestrator はそれを終了の印として回収し、`state.md` の結果表に agentId・セッション ID・トークン・ツール・所要を残す
+- ラインの会話は `<CLAUDE_CONFIG_DIR>/projects/<slug>/<セッション ID>/subagents/agent-<agentId>.jsonl` に記録され、⚠️ / 🆘 の報告にはそのパスが添えられる
+- ⚠️（完了せずに終わった）ラインは、再試行の前に `spira:do` が残した `impl-N` の worktree とブランチを消す
+- 並行するラインの Issue コメント・本文は、Issue 番号付きの一時ファイル（`.tmp/spira-comment-<Issue 番号>.md` など）を経て投稿するため衝突しない
 - 人の手による設定が必要になったライン（setup が止まった場合を含む）は、シークレットの置き場所（Infisical または `.env`）にプレースホルダを作り Issue に `## 人手対応待ち` を残して止まる。
   orchestrator は新しいラインを起動せず、走行中のラインが終わったら埋める手順を案内してループを終了する
 - ループ中に見つかった Issue（ループ開始後に作られた Open Issue）は orchestrator が判定する
@@ -355,8 +345,6 @@ spira/
 │   ├── blocked.md         # 人手対応待ち
 │   ├── roadmap-pr.md      # ロードマップの行・追加位置・整合の規則・PR（autopilot / orchestrator / create-issue 共通）
 │   └── completion-report.md
-├── scripts/
-│   └── watch-lines.sh     # autopilot のラインの経過を全ライン分 1 行ずつ流す
 └── README.md
 ```
 

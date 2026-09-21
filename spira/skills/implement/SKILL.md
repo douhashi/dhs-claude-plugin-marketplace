@@ -63,12 +63,12 @@ Issue に書き込む全てのコメントは、書式と記述量の上限が�
 
 ```
 mkdir -p .tmp
-cat > .tmp/spira-comment.md <<'EOF'
+cat > .tmp/spira-comment-ISSUE_NO.md <<'EOF'
 （テンプレートに沿った本文）
 EOF
 
-wc -m .tmp/spira-comment.md
-gh issue comment ISSUE_URL --body-file .tmp/spira-comment.md
+wc -m .tmp/spira-comment-ISSUE_NO.md
+gh issue comment ISSUE_URL --body-file .tmp/spira-comment-ISSUE_NO.md
 ```
 
 ### Issue へのコメント記録
@@ -264,12 +264,12 @@ Agent ツール呼び出し:
    `${CLAUDE_PLUGIN_ROOT}/templates/completion-report.md` の `## CI 修正打ち切り` 節に従い、300 字以内で記録する。
    ```
    mkdir -p .tmp
-   cat > .tmp/spira-comment.md <<'EOF'
+   cat > .tmp/spira-comment-ISSUE_NO.md <<'EOF'
    （テンプレートに沿った本文）
    EOF
 
-   wc -m .tmp/spira-comment.md          # 300 字以内であることを確認する
-   gh issue comment ISSUE_URL --body-file .tmp/spira-comment.md
+   wc -m .tmp/spira-comment-ISSUE_NO.md          # 300 字以内であることを確認する
+   gh issue comment ISSUE_URL --body-file .tmp/spira-comment-ISSUE_NO.md
    ```
 2. `escalated` ラベル付きのフォローアップ Issue を起票する。
    タイトルは `${CLAUDE_PLUGIN_ROOT}/templates/completion-report.md` の「エスカレーション Issue のタイトル」節に従い、
@@ -277,15 +277,15 @@ Agent ツール呼び出し:
    本文は同ファイルの「エスカレーション Issue の本文」節に従い、**500 字以内**とする。
    ```
    mkdir -p .tmp
-   cat > .tmp/spira-issue.md <<'EOF'
+   cat > .tmp/spira-issue-ISSUE_NO.md <<'EOF'
    （テンプレートに沿った本文）
    EOF
 
-   wc -m .tmp/spira-issue.md          # 500 字以内であることを確認する
+   wc -m .tmp/spira-issue-ISSUE_NO.md          # 500 字以内であることを確認する
    gh issue create --repo OWNER/REPOSITORY \
      --title "fix(SCOPE): #ISSUE_NO の CI 失敗を解消する" \
      --label escalated \
-     --body-file .tmp/spira-issue.md
+     --body-file .tmp/spira-issue-ISSUE_NO.md
    ```
 3. ユーザーに状況を報告して終了する（Phase 5 は実行しない）。元 Issue はオープンのままとする。
 
@@ -296,12 +296,12 @@ Issue にコメントを記録してください（見出し: `## 完了報告`�
 
 ```
 mkdir -p .tmp
-cat > .tmp/spira-comment.md <<'EOF'
+cat > .tmp/spira-comment-ISSUE_NO.md <<'EOF'
 （テンプレートに沿った本文）
 EOF
 
-wc -m .tmp/spira-comment.md          # 500 字以内であることを確認する
-gh issue comment ISSUE_URL --body-file .tmp/spira-comment.md
+wc -m .tmp/spira-comment-ISSUE_NO.md          # 500 字以内であることを確認する
+gh issue comment ISSUE_URL --body-file .tmp/spira-comment-ISSUE_NO.md
 ```
 
 実装内容の再掲は禁止。詳細は `## 実装内容` コメントと PR の diff にある。

@@ -28,12 +28,13 @@ model: inherit
 - ロードマップの未完了行どうしを並べ替えることは禁止（着手順は人とトリアージが決める。動かしてよいのは完了行の完了節への移動だけ）
 - Issue の選択を `spira:pick` を通さずに行うことは禁止
 - 走行中のラインを 3 本より多くすることは禁止
-- 走行中のラインのプロセスを止めることは禁止
+- 走行中のラインを止めることは禁止
+- ラインを自分で起動することは禁止（起動はメインセッションが進捗レポートの `LAUNCH:` 行で行う）
 - 未解消のブロッカー、または `停止理由` があるのに新しいラインを起動することは禁止
 - エスカレーションを見つけただけでループを止めることは禁止（継続できるかを判定する）
 - `escalated` Issue をラインに流すことは禁止（ループ開始前からあるものも含む。自動修正が限界に達した Issue であり、人に任せる）
 - シークレットの値を出力・記録することは禁止
-- ラインの完了を待つために `sleep` やポーリングで居座ることは禁止（待機はメインセッションが行う。ロードマップ PR の CI 待ちだけは例外）
+- ラインの完了を待つために `sleep` やポーリングで居座ることは禁止（待機はメインセッションが完了通知で行う。ロードマップ PR の CI 待ちだけは例外）
 - 進捗レポートにログやエラーの全文を載せることは禁止
 
 ## 手順
@@ -60,7 +61,7 @@ git -C ROOT pull --ff-only --quiet
 `state.md` のライン表で Issue が入っている行ごとに、終わったかを判定する。
 
 ```bash
-test -f "$LINES/N.exit" || ! kill -0 PID 2>/dev/null   # 真なら終了している
+test -f "$LINES/N.done"   # 真なら終了している（メインセッションが完了通知を受けて書く）
 ```
 
 **終わっている場合**は、上から順に最初に当てはまる結果とする。
@@ -79,15 +80,22 @@ gh issue list --repo REPO --label escalated --state open --json number,title \
 
 判定したら次を行い、ライン表の行を `—` に戻す。
 
-1. 結果表に 1 行追記し（同じ Issue の行が既にあれば更新する）、対象 Issue 表の状態を結果の記号に更新する。
-   `SID` にはライン表の SID を写す（⚠️ の再試行で行を更新するときは、最新のラインの SID にする）。
-   `費用`・`ターン`・`所要` はログの最後の result 行から取り、`$0.15`・`12`・`34 分` の形で書く（`所要` は `duration_ms` を分に切り捨てる。result 行が無ければ 3 つとも `—`）
+1. 結果表に 1 行追記し（同じ Issue の行が既にあれば最新のラインの値で更新する）、対象 Issue 表の状態を結果の記号に更新する。
+   `agentId`・`トークン`・`ツール`・`所要` は `N.done` の `agentId`・`tokens`・`tool_uses`・`duration_ms` から取り、`a33b4fd1c09361436`・`49003`・`3`・`34 分` の形で書く（`所要` は分に切り捨てる。無い値は `—`）。
+   `セッション ID` は、会話記録 `agent-<agentId>.jsonl` の親の親ディレクトリ名から得る（見つからなければ `—`）
 
    ```bash
-   grep '"type":"result"' "$LINES/N.log" | tail -1 | jq -c '{total_cost_usd, num_turns, duration_ms}'
+   f=$(find "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects" -name "agent-<agentId>.jsonl" 2>/dev/null | head -1)
+   [ -n "$f" ] && basename "$(dirname "$(dirname "$f")")"
    ```
-2. 出力を退避する: `mv "$LINES"/N.* "$LINES/archive/"` の前に、ファイル名へ日時を付ける（`N-<YYYYmmddHHMM>.log`・`N-<YYYYmmddHHMM>.sid` など。`N.sid` も対象）
-3. ライン用 worktree を消す: `git -C ROOT worktree remove --force <worktree>`
+2. 出力を退避する: `mv "$LINES"/N.* "$LINES/archive/"` の前に、ファイル名へ日時を付ける（`N-<YYYYmmddHHMM>.done`・`N-<YYYYmmddHHMM>.blocked.md` など）
+3. ⚠️ のときは、`spira:do` が残した worktree とブランチを消す（再試行で `git worktree add -b impl-N` が成功するようにするため）
+
+   ```bash
+   W=$(git -C ROOT worktree list --porcelain | awk '/^worktree /{w=substr($0,10)} $0=="branch refs/heads/impl-N"{print w}')
+   [ -n "$W" ] && git -C ROOT worktree remove --force "$W"
+   git -C ROOT branch -D impl-N 2>/dev/null || true
+   ```
 
 **走っている場合**は、状態を Issue から推定する（レポートの状態列に使う）。
 
@@ -236,31 +244,8 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
    - ロードマップの `[dep #M]` が指す項目が未完了（`- [x]` でない）
    - 本文に `depends on #M` / `blocked by #M` / `#M の完了後` などがあり、`#M` が Open
    - 走行中のラインの Issue に依存している、または同じファイル群を変更することが本文から明らか
-4. **ラインを起動する**。`N` は Issue 番号、`URL` は Issue URL
-
-   ```bash
-   W="$(dirname ROOT)/$(basename ROOT)-autopilot-N"
-   git -C ROOT fetch origin --quiet
-   git -C ROOT worktree add --detach "$W" origin/BRANCH
-   if command -v setsid >/dev/null 2>&1; then DETACH=(setsid)                                             # Linux（util-linux）
-   else DETACH=(perl -MPOSIX=setsid -e 'setsid; exec @ARGV or die "exec: $!"'); fi                        # macOS には setsid が無い
-   SID=$( (uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid) | tr 'A-F' 'a-f')                     # 起動ごとに新規生成（macOS の uuidgen は大文字）
-   echo "$SID" > "$LINES/N.sid"
-   cd "$W" && "${DETACH[@]}" nohup bash -c \
-     'claude -p "$1" \
-        --session-id "$4" \
-        --permission-mode bypassPermissions \
-        --output-format stream-json \
-        --verbose \
-        > "$2/$3.log" 2>&1; echo $? > "$2/$3.exit"' \
-     _ "ROOT/.tmp/spira-autopilot/context.md の「ライン規約」を Read して従ったうえで、spira:do スキルを引数 URL で実行し、最後まで進めてください。" \
-     "$LINES" "N" "$SID" </dev/null >/dev/null 2>&1 &
-   echo $!
-   ```
-   `--session-id` により、ラインの会話は `SID` で記録される。worktree を消した後も、autopilot と同じ `CLAUDE_CONFIG_DIR` で `cd ROOT && claude --resume <SID>` とすれば開いて事後調査できる。
-   SID は再試行を含めて**起動のたびに新しく作る**（同じ SID を別の worktree で使い回すと、会話の記録が重複する）
-   `--output-format stream-json --verbose` により、ラインの経過（ツール呼び出し・発言・最後の result 行）がイベントごとに 1 行ずつ `N.log` へ書き出される
-5. ライン表の空き行に Issue・タイトル・PID（`echo $!` の値）・SID・worktree・開始時刻を書き、対象 Issue 表の状態を `📝 計画` にする
+4. **ラインの起動を予約する**: ライン表の空き行に Issue・タイトル・開始時刻を書き、対象 Issue 表の状態を `📝 計画` にして、
+   進捗レポートの `LAUNCH:` 行に `LAUNCH: N URL`（`N` は Issue 番号、`URL` は Issue URL）を加える。起動はメインセッションが行う
 
 ### 5. 状態の更新
 
