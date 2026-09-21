@@ -70,14 +70,14 @@ model: inherit
 
 ```
 mkdir -p .tmp
-cat > .tmp/spira-comment.md <<'EOF'
+cat > .tmp/spira-comment-<Issue 番号>.md <<'EOF'
 ## 実装内容
 
 （テンプレートに沿った本文）
 EOF
 
-wc -m .tmp/spira-comment.md          # テンプレート記載の上限以内であることを確認する
-gh issue comment <ISSUE_URL> --body-file .tmp/spira-comment.md
+wc -m .tmp/spira-comment-<Issue 番号>.md          # テンプレート記載の上限以内であることを確認する
+gh issue comment <ISSUE_URL> --body-file .tmp/spira-comment-<Issue 番号>.md
 ```
 
 上限を超えていた場合は、**投稿せずに本文を削ってから再度確認する**。削る優先順位は `${CLAUDE_PLUGIN_ROOT}/templates/_rules.md` に従う。

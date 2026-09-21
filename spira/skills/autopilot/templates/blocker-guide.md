@@ -115,20 +115,19 @@ Infisical（環境 `<ENV>`）にプレースホルダで作成済みです。値
 ## エスカレーション
 
 orchestrator だけが使う。自走を続けられないと判定した escalated Issue ごとに書く。
-`<ROOT>` はルート、SID は `state.md` の結果表で元 Issue の行の `SID`。
+`<記録パス>` は `state.md` の結果表で元 Issue の行の `agentId` から、`find "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects" -name "agent-<agentId>.jsonl"` で得た絶対パス。
 
 ```markdown
 ## ⛔ 自走を続けられないエスカレーションがあります
 
-| Issue | 続けられない理由 | 元 Issue のライン（SID） |
+| Issue | 続けられない理由 | 元 Issue のライン（agentId） |
 |:--|:--|:--|
-| #34 fix(api): #21 の CI 失敗を解消する | デフォルトブランチの依存解決が壊れ、どのラインも CI が通らない | #21 `3f2c9a1e-7b4d-4e8a-9c0f-1a2b3c4d5e6f` |
+| #34 fix(api): #21 の CI 失敗を解消する | デフォルトブランチの依存解決が壊れ、どのラインも CI が通らない | #21 `a33b4fd1c09361436` |
 
 ### 手順
 
 1. Issue の内容を確認し、原因を直す（直した PR をマージする）。
-   元 Issue のラインの会話は、autopilot と同じ `CLAUDE_CONFIG_DIR` で開ける（worktree の再作成は不要）:
-   `cd <ROOT> && claude --resume <SID>`
+   元 Issue のラインの会話は記録に残っている: `<記録パス>`
 2. Issue をクローズする
 
 終わったら、<再開方法>

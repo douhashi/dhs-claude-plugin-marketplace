@@ -39,17 +39,18 @@ spira が GitHub Issue に書き込む本文・コメントすべてに適用す
 
 ```bash
 mkdir -p .tmp
-cat > .tmp/spira-comment.md <<'EOF'
+cat > .tmp/spira-comment-<Issue 番号>.md <<'EOF'
 ## 見出し
 
 （本文）
 EOF
 
-wc -m .tmp/spira-comment.md          # 上限以内であることを確認する
-gh issue comment <ISSUE_URL> --body-file .tmp/spira-comment.md
+wc -m .tmp/spira-comment-<Issue 番号>.md          # 上限以内であることを確認する
+gh issue comment <ISSUE_URL> --body-file .tmp/spira-comment-<Issue 番号>.md
 ```
 
-Issue 本文の場合は `gh issue create --body-file .tmp/spira-issue.md` を使う。
+一時ファイル名には対象 Issue の番号を付ける（並行して走る autopilot のラインどうしで衝突させないため）。
+Issue 本文の場合は `gh issue create --body-file .tmp/spira-issue-<元 Issue 番号>.md` を使う（元 Issue の無い新規起票は `.tmp/spira-issue.md`）。
 
 上限を超えていた場合は、**投稿せずに本文を削ってから再度確認する**。
 削る優先順位は次のとおり。

@@ -74,7 +74,7 @@ SKILL.md で `@path` によるインポートは使えない（`@` は CLAUDE.md
 | `## QA 結果` / `## CI 失敗 (N回目)` | qa | エージェント自身 |
 | Issue 本文 | create-issue スキル | スキル自身 |
 | `## PR 作成` / `## 完了報告` / `## CI 修正打ち切り` / エスカレーション Issue 本文 | implement / do スキル | スキル自身 |
-| `## 人手対応待ち` | setup / autopilot のライン（`claude -p`） | setup はエージェント自身、ラインはライン自身（`context.md` の「ライン規約」から参照） |
+| `## 人手対応待ち` | setup / autopilot のライン（サブエージェント） | setup はエージェント自身、ラインはライン自身（`context.md` の「ライン規約」から参照） |
 
 オーケストレータがエージェントに渡すのは**見出しだけ**でよい。テンプレートの解決はエージェントが行う。
 
@@ -84,15 +84,16 @@ SKILL.md で `@path` によるインポートは使えない（`@` は CLAUDE.md
 
 ```bash
 mkdir -p .tmp
-cat > .tmp/spira-comment.md <<'EOF'
+cat > .tmp/spira-comment-<Issue 番号>.md <<'EOF'
 （本文）
 EOF
 
-wc -m .tmp/spira-comment.md          # 上限以内であることを確認する
-gh issue comment <ISSUE_URL> --body-file .tmp/spira-comment.md
+wc -m .tmp/spira-comment-<Issue 番号>.md          # 上限以内であることを確認する
+gh issue comment <ISSUE_URL> --body-file .tmp/spira-comment-<Issue 番号>.md
 ```
 
 `--body-file` を使うのは、投稿前に `wc -m` を挟むためである。
+一時ファイル名に Issue 番号を付けるのは、並行して走る autopilot のラインどうしで同じファイルを上書きし合わないためである（命名は `_rules.md` の「投稿手順」が正本）。
 上限を超えた本文は投稿しない。`_rules.md` の優先順位に従って削り、再度確認する。
 
 ## 差分で記録するコメント
