@@ -138,8 +138,8 @@ DIR="$ROOT/.tmp/spira-autopilot"
 **0 件なら 3-3・3-4 を飛ばす**（Infisical も `.env` も検査しない）。置き場所は検査せずに次のとおり決める。
 ループ中に必要と判明したら、ラインがこの置き場所にプレースホルダを作って止まる。
 
-- `.infisical.json` がある: `STORE=infisical`
-- 無い: `STORE=dotenv`、`ENV_FILE=.env`
+- `.infisical.json` が `origin/BRANCH` にコミット済み（`git -C "$ROOT" cat-file -e "origin/BRANCH:.infisical.json"` が成功）: `STORE=infisical`
+- それ以外（ファイルが無い・未コミット・未 push）: `STORE=dotenv`、`ENV_FILE=.env`
 
 #### 3-3. 置き場所の決定
 
@@ -149,10 +149,15 @@ Infisical が使えるかを検査する。
 |:--|:--|
 | CLI | `command -v infisical` |
 | プロジェクト紐付け | `test -f "$ROOT/.infisical.json"` |
+| デフォルトブランチへのコミット | `git -C "$ROOT" cat-file -e "origin/BRANCH:.infisical.json"` |
 | ログイン・環境 | `infisical secrets --env ENV --silent -o json >/dev/null` |
 
+ライン（`spira:do` が作る worktree）はコミット済みの `.infisical.json` で Infisical に繋ぐため、コミットも検査する。
+
 - すべて通れば `STORE=infisical` とする
-- 1 つでも失敗したら、[blocker-guide.md](templates/blocker-guide.md) の「置き場所の提案」節に沿って
+- コミットだけが失敗したら、提案を挟まず [blocker-guide.md](templates/blocker-guide.md) の「Infisical セットアップ」節に沿って
+  コミットの手順を案内し、**終了する**
+- それ以外で 1 つでも失敗したら、[blocker-guide.md](templates/blocker-guide.md) の「置き場所の提案」節に沿って
   Infisical のセットアップと `.env` での代替を提案し、**ユーザーの返答を待つ**
   - Infisical を選んだ: 同ファイルの「Infisical セットアップ」節に沿って手順を案内し、**終了する**
   - `.env` を選んだ: `STORE=dotenv`、`ENV_FILE` をユーザーが指定したファイル（既定 `.env`）とする
