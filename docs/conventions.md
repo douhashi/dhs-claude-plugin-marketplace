@@ -89,6 +89,8 @@ dhs-claude-plugin-marketplace/
 │   │   ├── blocked.md
 │   │   ├── roadmap-pr.md
 │   │   └── completion-report.md
+│   ├── scripts/               # スキル・エージェントが共有するシェルスクリプト
+│   │   └── clean-line.sh      # 中断・失敗したラインの impl-N を片付ける（autopilot / orchestrator 共通）
 │   └── README.md
 ├── docs/
 │   ├── plugin-spec.md
@@ -128,7 +130,7 @@ dhs-claude-plugin-marketplace/
 - `scripts/` ディレクトリに配置
 - shebang 行を含める（`#!/bin/bash` or `#!/usr/bin/env bash`）
 - 実行権限を付与する（`chmod +x`）
-- フックからは `${CLAUDE_PLUGIN_ROOT}/scripts/...` で参照する
+- フック・スキル・エージェントからは `${CLAUDE_PLUGIN_ROOT}/scripts/...` で参照する
 
 ## コミットメッセージ
 
