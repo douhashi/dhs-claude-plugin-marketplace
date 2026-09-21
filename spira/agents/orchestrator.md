@@ -89,24 +89,24 @@ gh issue list --repo REPO --label escalated --state open --json number,title \
    [ -n "$f" ] && basename "$(dirname "$(dirname "$f")")"
    ```
 2. 出力を退避する: `mv "$LINES"/N.* "$LINES/archive/"` の前に、ファイル名へ日時を付ける（`N-<YYYYmmddHHMM>.done`・`N-<YYYYmmddHHMM>.blocked.md` など）
-3. ⚠️ のときは、`spira:do` が残した worktree とブランチを消す（再試行で `git worktree add -b impl-N` が成功するようにするため）
+3. ⚠️ のときは、`spira:do` が残した `impl-N` の worktree・ブランチ・未マージ PR を片付ける（再試行の `spira:do` が `impl-N` と PR を作り直せるようにするため。未マージ PR は引き継がずに閉じる）
 
    ```bash
-   W=$(git -C ROOT worktree list --porcelain | awk '/^worktree /{w=substr($0,10)} $0=="branch refs/heads/impl-N"{print w}')
-   [ -n "$W" ] && git -C ROOT worktree remove --force "$W"
-   git -C ROOT branch -D impl-N 2>/dev/null || true
+   "${CLAUDE_PLUGIN_ROOT}/scripts/clean-line.sh" ROOT REPO N
    ```
 
-**走っている場合**は、状態を Issue から推定する（レポートの状態列に使う）。
+**走っている場合**は、状態を Issue と PR から推定する（レポートの状態列に使う）。
 
 ```bash
-gh issue view N --repo REPO --json labels,comments \
-  --jq '{planned: ([.labels[].name] | index("planned") != null), pr: ([.comments[].body | select(startswith("## PR 作成"))] | length > 0)}'
+pr=$(gh pr list --repo REPO --head impl-N --state open --json number --jq 'length > 0')
+planned=$(gh issue view N --repo REPO --json labels --jq '[.labels[].name] | index("planned") != null')
 ```
+
+`## PR 作成` コメントでは判定しない（前回のループで閉じた PR のコメントが残っていることがある）。
 
 | 条件 | 状態 |
 |:--|:--|
-| `pr` が真 | 🧪 CI |
+| `pr` が真（head `impl-N` の Open PR がある） | 🧪 CI |
 | `planned` が真 | 🛠 実装 |
 | それ以外 | 📝 計画 |
 

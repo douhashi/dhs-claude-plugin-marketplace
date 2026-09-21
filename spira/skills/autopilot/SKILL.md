@@ -29,6 +29,7 @@ allowed-tools: Read, Grep, Glob, Write, Bash
 - 必要なシークレットが 0 件なのに Infisical を検査・案内することは禁止
 - ユーザーの選択を待たずに `.env` の代替へ切り替えることは禁止
 - git に無視されていないファイルにシークレットを書くことは禁止
+- `state.md` のライン表に無い Issue の worktree・ブランチ・PR に触れることは禁止（`state.md` が無いときは `impl-*` を片付けない）
 - 前提条件が欠けたまま `.tmp/spira-autopilot/context.md` を書き出すことは禁止
 - ループのプロンプトを案内する前に、自分でループを開始することは禁止
 - ユーザーが載せると決めていない Issue をロードマップに追加することは禁止
@@ -98,6 +99,25 @@ DIR="$ROOT/.tmp/spira-autopilot"
 
 1. `git status` を確認する。未コミット変更があればユーザーに伝えて終了する（勝手に stash・破棄しない）
 2. `git switch BRANCH && git pull` で最新化する
+
+### Phase 1.5: 中断したラインの片付け
+
+前回のループが途中で終わると、ラインが残した `impl-N` の worktree・ブランチ・未マージ PR が再着手を妨げる。
+前回の `state.md` に記録されたラインだけを片付け、未マージ PR は引き継がずに閉じてやり直す。
+
+1. `$DIR/state.md` が無ければ、この Phase を飛ばす
+2. ライン表で Issue が入っている行（`—` でない行）のうち、次の両方を満たす Issue を対象とする
+   - `gh issue view N --repo REPO --json state --jq .state` が `OPEN`
+   - タイトルに `#N の CI 失敗` を含む Open な `escalated` Issue が無い（あれば人が PR を引き継ぐため触れない）
+
+   ```
+   gh issue list --repo REPO --label escalated --state open --json number,title \
+     --jq '.[] | select(.title | contains("#N の CI 失敗")) | .number'
+   ```
+3. 対象ごとに次を行う
+   - `"${CLAUDE_PLUGIN_ROOT}/scripts/clean-line.sh" ROOT REPO N` を実行し、出力（実施した内容）を Phase 6 の報告に使う
+   - `$DIR/lines/N.*` があれば、ファイル名に日時を付けて `$DIR/lines/archive/` に退避する（`N-<YYYYmmddHHMM>.done` など）
+4. Issue 側は触らない。`planned` ラベルと `## 実装計画` は残し、再着手時に `spira:do` が計画を再利用する
 
 ### Phase 2: ロードマップと Open Issue の確認
 
@@ -207,11 +227,12 @@ Infisical が使えるかを検査する。
 3. [state.md](templates/state.md) を Read し、`{{...}}` を埋めて `$DIR/state.md` に書き出す
    - `{{TARGET_ROWS}}` には Phase 4 の整合と整理を反映した着手順（escalated と対象外を除く）を、同じ順で 1 行ずつ入れる（状態は `⏳ 待機`、依存が未完了なら `⏸ 依存待ち` とし、メモに依存先を書く）
    - `{{EXCLUDED_ROWS}}` には Phase 4 で `載せない` と決まった Issue を、理由とともに 1 行ずつ入れる（0 件なら空のままにする）
-   （既に `$DIR/state.md` がある場合は、前回のループの記録として `$DIR/lines/archive/state-<日時>.md` に退避してから書き出す）
+   （既に `$DIR/state.md` がある場合は、前回のループの記録として `$DIR/lines/archive/state-<日時>.md` に退避してから書き出す。
+   `$DIR/lines/` 直下に残ったファイルも、ファイル名に日時を付けて `$DIR/lines/archive/` に退避する）
 4. `.tmp/` が `.gitignore` 等で無視されているか `git check-ignore -q .tmp/spira-autopilot/context.md` で確認し、
    無視されていなければその旨を報告に含める（`.gitignore` は編集しない）
 
 ### Phase 6: 開始方法の案内
 
-[kickoff-report.md](templates/kickoff-report.md) に沿って、前提条件の検査結果・着手見込み・
+[kickoff-report.md](templates/kickoff-report.md) に沿って、前提条件の検査結果・中断したラインの片付け（Phase 1.5）・着手見込み・
 ループ前の `bypassPermissions` への切り替えと、`/clear` 後に実行するプロンプトを提示して終了する。

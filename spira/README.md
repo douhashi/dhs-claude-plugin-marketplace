@@ -229,6 +229,8 @@ URL: <url>
 開発を自走で回す準備（キックオフ）をします。自身は開発しません。
 
 1. **最新化** — デフォルトブランチを `git pull`
+   - **中断したラインの片付け** — 前回の `state.md` のライン表に残った Issue（Open で、`#N の CI 失敗` の escalated Issue が無いもの）だけ、
+     `impl-N` の worktree・ブランチ・未マージ PR を `scripts/clean-line.sh` で片付ける（未マージ PR は閉じてやり直す。計画は残して再利用する）
 2. **確認** — ロードマップと Open Issue から着手見込みと依存を把握
 3. **前提条件の検査** — 欠けていたら案内して終了
    - gh 認証・origin
@@ -270,7 +272,8 @@ URL: <url>
 - メインセッションはラインの完了通知を受けると、agentId・status・usage（トークン・ツール回数・所要時間）を `.tmp/spira-autopilot/lines/N.done` に書く。
   orchestrator はそれを終了の印として回収し、`state.md` の結果表に agentId・セッション ID・トークン・ツール・所要を残す
 - ラインの会話は `<CLAUDE_CONFIG_DIR>/projects/<slug>/<セッション ID>/subagents/agent-<agentId>.jsonl` に記録され、⚠️ / 🆘 の報告にはそのパスが添えられる
-- ⚠️（完了せずに終わった）ラインは、再試行の前に `spira:do` が残した `impl-N` の worktree とブランチを消す
+- ⚠️（完了せずに終わった）ラインは、再試行の前に `spira:do` が残した `impl-N` の worktree・ブランチ・未マージ PR を `scripts/clean-line.sh` で片付ける
+- 走行中のラインが 🧪 CI かどうかは、`## PR 作成` コメントではなく head `impl-N` の Open PR の有無で判定する
 - 並行するラインの Issue コメント・本文は、Issue 番号付きの一時ファイル（`.tmp/spira-comment-<Issue 番号>.md` など）を経て投稿するため衝突しない
 - 人の手による設定が必要になったライン（setup が止まった場合を含む）は、シークレットの置き場所（Infisical または `.env`）にプレースホルダを作り Issue に `## 人手対応待ち` を残して止まる。
   orchestrator は新しいラインを起動せず、走行中のラインが終わったら埋める手順を案内してループを終了する
@@ -345,6 +348,8 @@ spira/
 │   ├── blocked.md         # 人手対応待ち
 │   ├── roadmap-pr.md      # ロードマップの行・追加位置・整合の規則・PR（autopilot / orchestrator / create-issue 共通）
 │   └── completion-report.md
+├── scripts/
+│   └── clean-line.sh      # 中断・失敗したラインの impl-N（worktree・ブランチ・未マージ PR）を片付ける（autopilot / orchestrator 共通）
 └── README.md
 ```
 
