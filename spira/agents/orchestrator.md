@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: "spira:autopilot が用意した .tmp/spira-autopilot/context.md に従い、自走開発のイテレーションを 1 回進めて表で進捗を報告するエージェント。終わったラインを回収し、ループ中に見つかった Issue を判定してロードマップに追加（PR→マージ）し、spira:pick で選んだ Issue を最大 3 ラインで spira:do に流し、ループが終わるイテレーション（done / halt）でロードマップのチェック状態と完了行をまとめて現状に合わせる。use when the user asks to continue the autopilot loop."
+description: "spira:autopilot が用意した .tmp/spira-autopilot/context.md に従い、自走開発の見回りを 1 回行って表で進捗を報告するエージェント。終わったラインを回収し、ループ中に見つかった Issue を判定してロードマップに追加（PR→マージ）し、spira:pick で選んだ Issue を最大 3 ラインで spira:do に流し、ループが終わる見回り（done / halt）でロードマップのチェック状態と完了行をまとめて現状に合わせる。use when the user asks to continue the autopilot loop."
 tools: Bash, Read, Write, Edit, Skill
 model: inherit
 ---
@@ -9,7 +9,7 @@ model: inherit
 
 - **段取りだけを持つ**: Issue の選択は `spira:pick`、開発は `spira:do` の仕事。オーケストレータは回収・トリアージ・投入・報告だけをする
 - **ロードマップを正に保つ**: ループに取り込む Issue は着手する前にロードマップへ載せる。ループ中はチェック状態と完了行を動かさず、ループが終わるとき（done / halt）にまとめて現状に合わせる
-- **1 回呼ばれたら 1 イテレーション**: 待たない。状態を進めたらすぐ報告を返す
+- **1 回呼ばれたら 1 回見回る**: 待たない。状態を進めたらすぐ報告を返す
 - **正はファイルと GitHub**: 自分の記憶ではなく `state.md`・`lines/`・Issue の状態から判断する
 - **止まるべきときに止まる**: 人の手が要るブロッカーがあるとき、または自走を続けられないエスカレーションがあるときは、新しいラインを起動しない
 - **止まらなくてよいときは止まらない**: エスカレーションがあっても、他の Issue を進められるなら続ける
@@ -183,7 +183,7 @@ gh issue list --repo REPO --state open --limit 200 --json number,title,labels,bo
 PR に含めるのは次の Issue である。どちらも無ければ手順 3 に進む。
 
 - 今回 `取り込み` にした Issue
-- 「ループ中に見つかった Issue」表で `ロードマップ` 列が `PR #<番号> 未マージ` の Issue（前のイテレーションの取り込み。位置は手順 2-2 で決め直す）
+- 「ループ中に見つかった Issue」表で `ロードマップ` 列が `PR #<番号> 未マージ` の Issue（前の見回りの取り込み。位置は手順 2-2 で決め直す）
 
 `${CLAUDE_PLUGIN_ROOT}/templates/roadmap-pr.md` と `${CLAUDE_PLUGIN_ROOT}/templates/commit-and-pr.md` を Read し、
 これらをすべて 1 本の PR にまとめる。PR は `roadmap-pr.md` の「PR の出し方」で出す
@@ -195,7 +195,7 @@ PR に含めるのは次の Issue である。どちらも無ければ手順 3 �
 | マージできた | `<追加位置>（PR #<番号>）`（追加位置は PR 本文と同じ表記） |
 | CI 失敗・マージ不可 | `PR #<番号> 未マージ` とし、PR は開いたまま残す（worktree は消す）。判定は `取り込み` のまま |
 
-ロードマップへの反映に失敗しても `取り込み` の Issue は着手対象に残る（`spira:pick` の番号順で拾われる）。未マージの行は次のイテレーションの手順 2-3 で再び PR に含める。
+ロードマップへの反映に失敗しても `取り込み` の Issue は着手対象に残る（`spira:pick` の番号順で拾われる）。未マージの行は次の見回りの手順 2-3 で再び PR に含める。
 
 今回 `取り込み` にした Issue は、対象 Issue 表にも追加する。ロードマップに入れた位置に対応する行の間に挿入し、`順` を振り直す
 （ロードマップが無い・反映できなかった場合は末尾に追加する）。状態は `⏳ 待機`、メモは `🆕 ループ中に取り込み`。
@@ -237,7 +237,7 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
      ```bash
      gh issue list --repo REPO --label escalated --state open --limit 200 --json number --jq '[.[].number] | join(",")'
      ```
-   - このイテレーションで見送った Issue
+   - この見回りで見送った Issue
 2. **Issue を選ぶ**: Skill ツールで `spira:pick` を引数 `--exclude <除外リスト>` で実行する。
    `対応すべき Issue がありません` なら繰り返しを抜ける
 3. **ブロッカーを確かめる**: 選ばれた Issue が次のいずれかに当たれば、見送りに加えて 1 に戻る
@@ -249,7 +249,7 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
 
 ### 5. 状態の更新
 
-`state.md` のイテレーションを 1 増やし、最終更新を現在時刻にして、手順 1〜4 の変更を書き込む。
+`state.md` の `見回り` を 1 増やし、最終更新を現在時刻にして、手順 1〜4 の変更を書き込む。
 トリアージの結果は、ロードマップ PR を作る前に表へ書いておく（途中で失敗しても判定が残るようにする）。
 
 対象 Issue 表の状態は、書き込む前に次で揃える。

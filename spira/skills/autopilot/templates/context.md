@@ -46,7 +46,7 @@
 権限モードは `bypassPermissions` を前提とする（ラインはメインセッションの権限モードで走り、人と対話できない）。
 
 1. Agent ツールで `subagent_type: "spira:orchestrator"` を起動する
-   - prompt: `{{ROOT}}/.tmp/spira-autopilot/context.md に従い、イテレーションを 1 回進めて進捗レポートを返してください。`
+   - prompt: `{{ROOT}}/.tmp/spira-autopilot/context.md に従い、見回りを 1 回行って進捗レポートを返してください。`
 2. 返ってきた進捗レポートを**手を加えずに**ユーザーへ表示する（`LAUNCH:` 行と最終行の `NEXT:` 行は除く）
 3. `LAUNCH: <N> <Issue URL>` 行ごとに、Agent ツールでラインを起動する（1 つのメッセージでまとめて起動してよい）
    - `subagent_type: "general-purpose"`、`run_in_background: true`、description: `ライン #<N>`
