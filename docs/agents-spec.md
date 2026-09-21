@@ -29,14 +29,16 @@ model: sonnet
 | `tools` | いいえ | 使用可能なツール。省略時は全ツール継承 |
 | `disallowedTools` | いいえ | 拒否するツール |
 | `model` | いいえ | `sonnet`, `opus`, `haiku`, `inherit`（デフォルト: `inherit`） |
-| `permissionMode` | いいえ | `default`, `acceptEdits`, `dontAsk`, `bypassPermissions`, `plan` |
+| `permissionMode` | いいえ | `default`, `acceptEdits`, `dontAsk`, `bypassPermissions`, `plan`（プラグインのエージェントでは無視される） |
 | `maxTurns` | いいえ | 最大ターン数 |
 | `skills` | いいえ | プリロードするスキル名リスト |
-| `mcpServers` | いいえ | 利用可能な MCP サーバー |
-| `hooks` | いいえ | ライフサイクルフック |
+| `mcpServers` | いいえ | 利用可能な MCP サーバー（プラグインのエージェントでは無視される） |
+| `hooks` | いいえ | ライフサイクルフック（プラグインのエージェントでは無視される） |
 | `memory` | いいえ | 永続メモリスコープ: `user`, `project`, `local` |
 | `background` | いいえ | `true` でバックグラウンド実行 |
 | `isolation` | いいえ | `worktree` で git worktree 分離実行 |
+
+プラグインのエージェントでは、セキュリティ上の理由で `hooks`・`mcpServers`・`permissionMode` が無視される。必要な場合はエージェントファイルを `.claude/agents/` か `~/.claude/agents/` にコピーして使う。
 
 ## 組み込みエージェント
 
@@ -75,7 +77,9 @@ hooks:
 - **サブエージェント**: 大量出力の分離、ツール制限の強制、自己完結型タスク
 - **スキル**: メインコンテキストで実行する再利用可能プロンプト
 
-サブエージェントは他のサブエージェントを生成できない。ネストが必要な場合はスキルを使うかメイン会話からチェーンする。
+サブエージェントは、既定でメイン会話から 3 層下まで自分のサブエージェントを生成できる。上限の層のサブエージェントには `Agent` ツールが渡されない。
+深さは環境変数 `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` で変えられる（`1` で入れ子を禁止）。
+特定のエージェントだけ生成を禁止するには、`tools` から `Agent` を外すか `disallowedTools` に入れる。
 
 ## ベストプラクティス
 
