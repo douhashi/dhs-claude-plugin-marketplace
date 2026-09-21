@@ -242,8 +242,6 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
    W="$(dirname ROOT)/$(basename ROOT)-autopilot-N"
    git -C ROOT fetch origin --quiet
    git -C ROOT worktree add --detach "$W" origin/BRANCH
-   git -C ROOT ls-files --error-unmatch .infisical.json >/dev/null 2>&1 || cp ROOT/.infisical.json "$W/"   # STORE=infisical のとき
-   [ -f ROOT/ENV_FILE ] && ln -s ROOT/ENV_FILE "$W/ENV_FILE"                                               # STORE=dotenv のとき
    if command -v setsid >/dev/null 2>&1; then DETACH=(setsid)                                             # Linux（util-linux）
    else DETACH=(perl -MPOSIX=setsid -e 'setsid; exec @ARGV or die "exec: $!"'); fi                        # macOS には setsid が無い
    SID=$( (uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid) | tr 'A-F' 'a-f')                     # 起動ごとに新規生成（macOS の uuidgen は大文字）

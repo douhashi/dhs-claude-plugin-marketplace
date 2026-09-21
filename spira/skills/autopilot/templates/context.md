@@ -69,7 +69,7 @@ d={{ROOT}}/.tmp/spira-autopilot/lines; s=$(date +%s); until ls "$d"/*.exit >/dev
 
 - `spira:do` を渡された Issue URL で最後まで進める。途中でユーザーに質問しない
 - シークレットが必要なコマンドは、置き場所に応じて次のように実行する
-  - `infisical`: `infisical run --env {{ENV}} -- <コマンド>`
+  - `infisical`: `infisical run --env {{ENV}} -- <コマンド>`（worktree でもデフォルトブランチにコミット済みの `.infisical.json` で繋がる）
   - `dotenv`: プロジェクトの読み込み（mise の `_.file`・dotenv 等）に任せる。読み込まれないときは `set -a; . {{ROOT}}/{{ENV_FILE}}; set +a` の後に実行する
 - シークレットの値を出力・コミット・Issue コメントに書かない
 - **人の手による設定が必要と判明したら**、次の 3 つを行ってすぐに終了する（PR は作らない）

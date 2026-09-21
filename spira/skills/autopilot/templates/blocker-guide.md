@@ -19,6 +19,7 @@
 |:--|:--|
 | Infisical CLI | ❌ 見つかりません |
 | プロジェクト紐付け（`.infisical.json`） | ❌ ありません |
+| デフォルトブランチへのコミット（`.infisical.json`） | ❌ コミットされていません |
 | ログイン・環境 `<ENV>` へのアクセス | ❌ 失敗しました |
 
 | 案 | 内容 | 向いている場面 |
@@ -50,6 +51,7 @@ A / B のどちらにしますか？ B で `.env` 以外のファイル（例: `
 |:--|:--|
 | Infisical CLI | ❌ 見つかりません |
 | プロジェクト紐付け（`.infisical.json`） | ❌ ありません |
+| デフォルトブランチへのコミット（`.infisical.json`） | ❌ コミットされていません |
 | ログイン・環境 `<ENV>` へのアクセス | ❌ 失敗しました |
 
 ### 手順
@@ -57,7 +59,9 @@ A / B のどちらにしますか？ B で `.env` 以外のファイル（例: `
 1. CLI を入れる: `mise use -g infisical`（または https://infisical.com/docs/cli/overview ）
 2. ログインする: `infisical login`
 3. リポジトリのルートでプロジェクトを紐付ける: `infisical init`
-4. 環境 `<ENV>` が見えることを確認する: `infisical secrets --env <ENV> --silent >/dev/null && echo OK`
+4. `.infisical.json` をコミットしてデフォルトブランチへ入れる（中身はプロジェクトの紐付けだけで、シークレットは含まれない）。
+   `.gitignore` で無視していれば外してから `git add .infisical.json` する
+5. 環境 `<ENV>` が見えることを確認する: `infisical secrets --env <ENV> --silent >/dev/null && echo OK`
 
 終わったら、もう一度 `/spira:autopilot` を実行してください。
 ```
