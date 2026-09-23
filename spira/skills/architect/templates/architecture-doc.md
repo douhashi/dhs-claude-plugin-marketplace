@@ -1,8 +1,8 @@
-# テンプレート: docs/architecture.md
+# テンプレート: アーキテクチャのドキュメント
 
 - **書き手**: architect スキル（Phase 8。`spira:update-doc` の手順で作成・更新する）
 - **用途**: 承認された構成と配布先を、planner・po・setup が前提として読める形で残す
-- **読み手**: プロジェクトの `CLAUDE.md` から `@docs/architecture.md` で読み込まれる
+- **読み手**: planner・po・setup などのエージェントと開発者
 
 ## 雛形
 

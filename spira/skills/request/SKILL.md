@@ -1,6 +1,6 @@
 ---
-name: feedback
-description: "フィードバックの内容を確認・調査し、起票が必要なら create-issue で Issue を起票してロードマップを更新する。feedback, フィードバック, 要望, 不具合報告, 使ってみて"
+name: request
+description: "フィードバックの内容を確認・調査し、起票が必要なら create-issue で Issue を起票してロードマップを更新する。request, feedback, フィードバック, 要望, 不具合報告, 使ってみて"
 argument-hint: "<フィードバック内容>"
 disable-model-invocation: true
 user-invocable: true
