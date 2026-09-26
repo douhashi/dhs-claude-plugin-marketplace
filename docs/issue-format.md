@@ -33,7 +33,10 @@ spira が GitHub Issue に書き込む本文・コメントは、書式と記述
 
 Issue の起票は取り消しにくいため、create-issue スキルは本文を書く前に
 **作成予定 Issue の一覧表**を提示して承認を得る。書式は
-`spira/skills/create-issue/templates/issue-plan.md`（`#` / タイトル / 目的 / 完了条件）。
+`spira/skills/create-issue/templates/issue-plan.md`（`#` / タイトル / 目的 / 完了条件 / 依存）。
+
+Issue どうしの依存（先に完了していないと着手できない関係）は本文に書かず、起票時に GitHub の Blocked by で設定する。
+書き方は `issue-plan.md` の「依存の書き方」節が単一ソース。
 
 起票の対象は、完了したときにコードベースの状態が変わる Issue に限る。判定基準と、
 外した項目を brainstorming に回す書式も `issue-plan.md`（「起票の可否」「起票しない項目の扱い」節）が単一ソース。

@@ -13,7 +13,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 - **Why を書く**: 何をするかだけでなく、なぜ必要かを Issue に記録する
 - **一つの Issue に一つの関心事**: スコープを絞り、明確な完了条件を持たせる
 - **状態が変わるものだけを起票する**: 完了条件がコードベースの差分で書けないものは Issue にしない。決めることは議論で決着させる
-- **フラットな構造**: Issue は親子関係を持たせず、対等に並ぶフラットな構造で作成する
+- **フラットな構造**: Issue は親子関係を持たせず、対等に並ぶフラットな構造で作成する。着手の前後関係は GitHub の Blocked by で表す
 - **承認してから起票する**: 起票は取り消しにくい。何を作るかを先に見せて合意を取る
 - **借りた言葉で話す**: 用語はコードベースとドキュメントに実在する語を使う
 - **起票に専念する**: ロードマップへの反映は `spira:sync-roadmap` がまとめて行う。起票のたびにロードマップに触れない
@@ -37,6 +37,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 - 構造化された Issue（epic Issue・Sub-Issue・親子関係を持つ Issue）の作成は禁止。複数 Issue を起票する場合も全てフラットに並べる
 - 結合試験・統合テスト・E2E テストなどテストのみを目的とした単独 Issue の作成は禁止。テストは各機能 Issue の受け入れ基準に含める
 - テンプレートに無いセクションの追加は禁止。上限字数を超えた本文の投稿も禁止
+- 依存を本文（`depends on #N` / `blocked by #N` / `#N の完了後` 等）に書くことは禁止。依存は GitHub の Blocked by だけで表す
 
 ## 入力の解析
 
@@ -85,8 +86,9 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 
 ### Phase 4: Issue 作成
 
-承認された表の**全行**を起票する。タイトルは表に出したものをそのまま使う。
+承認された表の**全行**を、**表の `#` の順**に起票する。タイトルは表に出したものをそのまま使う。
 本文を一時ファイルに書き出し、**投稿前に `wc -m` で字数を確認**してから `gh issue create` で作成する。
+依存がある行は、依存列の `行 N` を起票済みの Issue 番号に置き換え、`#N` と合わせて `--blocked-by` に渡す。
 
 ```
 mkdir -p .tmp
@@ -96,7 +98,23 @@ EOF
 
 wc -m .tmp/spira-issue.md          # 1,500 字以内であることを確認する
 gh issue create --title "feat(spira): 論点テーブルに状態列を追加する" --body-file .tmp/spira-issue.md
+gh issue create --title "feat(spira): 論点の状態で表を絞り込む" --body-file .tmp/spira-issue.md --blocked-by 12,57
 ```
+
+起票したら、依存を付けた Issue ごとに設定されたことを確かめる。
+
+```
+gh issue view <番号> --json blockedBy --jq '[.blockedBy.nodes[].number]'
+```
+
+`gh issue create` が `--blocked-by` を受け付けない（gh が古い）場合は、起票後に REST API で付ける。`issue_id` は依存先の Issue の番号ではなく `id` である。
+
+```
+gh api -X POST repos/{owner}/{repo}/issues/<番号>/dependencies/blocked_by \
+  -F issue_id="$(gh api repos/{owner}/{repo}/issues/<依存先の番号> --jq .id)"
+```
+
+Blocked by を付けられなかった Issue は、Phase 5 の報告でその旨と依存先を示す（本文には書かない）。
 
 上限を超えていた場合は、**作成せずに本文を削ってから再度確認する**。削る優先順位は `${CLAUDE_PLUGIN_ROOT}/templates/_rules.md` に従う。
 削っても収まらない場合は、関心事が複数混ざっているサインなので Issue を分割し、Phase 2 に戻って再度承認を得る。
@@ -106,13 +124,14 @@ gh issue create --title "feat(spira): 論点テーブルに状態列を追加す
 複数の Issue を起票するときは以下を守る:
 
 - 全ての Issue を対等・フラットに起票する。epic Issue や Sub-Issue といった親子構造を作らない
-- Issue 同士を親子・包含関係で紐付けない（必要なら本文中で関連 Issue として参照するに留める）
+- Issue 同士を親子・包含関係で紐付けない（関連 Issue は本文中で参照するに留め、着手の前後関係だけを Blocked by で表す）
 - 結合試験・統合テスト・E2E テストなど、テストのみを目的とした単独 Issue は作らない。テスト観点は各機能 Issue の受け入れ基準に織り込む
 
 ### Phase 5: 報告
 
-作成した Issue を 1 行 1 件で提示する。本文の再掲はしない。
+作成した Issue を 1 行 1 件で提示する。本文の再掲はしない。依存を付けた Issue は末尾に `（blocked by #N, #M）` を添える。
 
 ```
 #12 feat(spira): 論点テーブルに状態列を追加する — https://github.com/owner/repo/issues/12
+#13 feat(spira): 論点の状態で表を絞り込む — https://github.com/owner/repo/issues/13（blocked by #12, #57）
 ```

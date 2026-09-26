@@ -53,7 +53,7 @@ sync-roadmap の整理で使う（ループ中に取り込む不具合の位置�
 | 3 | 関連する Issue の行がある（同じ機能・同じファイル群） | その行の直後 |
 | 4 | 上記のいずれでもない | 未完了行の末尾に、番号が若い順 |
 
-- 依存は、ロードマップの `[dep #N]` と、Issue 本文の `depends on #N` / `blocked by #N` / `#N の完了後` から読む
+- 依存は、GitHub の Blocked by（`gh issue view <番号> --json blockedBy`）、ロードマップの `[dep #N]`、本文の `depends on #N` / `blocked by #N` / `#N の完了後`（Blocked by が無い古い Issue のため） から読む
 - 既存の行との関係が行の文言だけで判断できなければ、その Issue の本文を `gh issue view` で読んで確かめる
 - 1 と 2 が両立しない（依存先が、前提にしている行より下にある）場合は 1 を優先し、理由にその旨を書く
 - 同時に追加する Issue どうしにも同じ規則を当てる
