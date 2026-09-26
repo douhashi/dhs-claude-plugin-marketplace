@@ -156,7 +156,7 @@ gh issue list --repo REPO --state open --limit 200 --json number,title,labels,bo
 |:--|:--|
 | 失敗の原因がデフォルトブランチ側にあり、どのラインでも同じ失敗が起きる（ビルド・依存・CI 設定・テスト基盤の破損） | escalated Issue の本文と元 Issue の `## CI 失敗 (N回目)` コメントを読み、失敗が変更箇所ではなく共通部分で起きているか |
 | 同じ原因の ⚠️ / 🆘 が、このループで既に別の Issue でも起きている | 結果表で ⚠️ / 🆘 の Issue の `## CI 失敗` コメントと原因が同じか |
-| 未完了の Issue がすべて、元 Issue か escalated Issue に依存している | ロードマップの `[dep]` と各 Issue 本文の依存 |
+| 未完了の Issue がすべて、元 Issue か escalated Issue に依存している | 各 Issue の GitHub の Blocked by、ロードマップの `[dep]`、各 Issue 本文の依存 |
 
 続けられない場合は、`state.md` の `停止理由` に次の形で書く。
 
@@ -172,7 +172,7 @@ gh issue list --repo REPO --state open --limit 200 --json number,title,labels,bo
 
 | 優先 | 条件 | 位置 |
 |:--|:--|:--|
-| 1 | 依存先がある（本文の `depends on #M` などが指す、未完了の Issue） | 依存先の行の直後 |
+| 1 | 依存先がある（GitHub の Blocked by か、本文の `depends on #M` などが指す、未完了の Issue） | 依存先の行の直後 |
 | 2 | 未着手の Issue の完了を妨げている | 妨げている行のうち最も上の行の直前 |
 | 3 | 上記のいずれでもない | 未完了行の先頭 |
 
@@ -242,7 +242,8 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
    `対応すべき Issue がありません` なら繰り返しを抜ける
 3. **ブロッカーを確かめる**: 選ばれた Issue が次のいずれかに当たれば、見送りに加えて 1 に戻る
    - ロードマップの `[dep #M]` が指す項目が未完了（`- [x]` でない）
-   - 本文に `depends on #M` / `blocked by #M` / `#M の完了後` などがあり、`#M` が Open
+   - GitHub の Blocked by に Open な Issue がある（`gh issue view <番号> --json blockedBy --jq '[.blockedBy.nodes[] | select(.state == "OPEN") | .number]'` が空でない）
+   - 本文に `depends on #M` / `blocked by #M` / `#M の完了後` などがあり、`#M` が Open（Blocked by が無い古い Issue のため）
    - 走行中のラインの Issue に依存している、または同じファイル群を変更することが本文から明らか
 4. **ラインの起動を予約する**: ライン表の空き行に Issue・タイトル・開始時刻を書き、対象 Issue 表の状態を `📝 計画` にして、
    進捗レポートの `LAUNCH:` 行に `LAUNCH: N URL`（`N` は Issue 番号、`URL` は Issue URL）を加える。起動はメインセッションが行う
