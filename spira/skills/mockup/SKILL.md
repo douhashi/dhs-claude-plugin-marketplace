@@ -3,7 +3,7 @@ name: mockup
 description: "画面ごとのデザインモックアップをアーティファクトで提案し、承認後に docs/mockups のモックアップと docs/development のデザインシステム・ビジュアライゼーションのドキュメントを作成・更新する。mockup, モックアップ, デザイン, 画面デザイン, UI デザイン, デザインシステム, アニメーション"
 argument-hint: "[画面名または機能]"
 user-invocable: true
-allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, Skill, Artifact
+allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, Skill, Artifact, ArtifactComments
 ---
 
 「$ARGUMENTS」について、画面のデザインモックアップを提案し、承認後にリポジトリへ反映してください。
@@ -12,7 +12,7 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, Skill, 
 
 - **プロダクションの品質で描く**: そのまま実装の手本になる完成度で描く。ワイヤーフレームや仮置きの見た目で済ませない
 - **デザインシステムを正とする**: 既存のデザインシステムのトークン・コンポーネントで描く。足りない場合だけ拡張を提案する
-- **見て決める**: 文章で説明せず、アーティファクトで実物を見せて承認を得る
+- **見て決める**: 提案は 1 つのアーティファクトにまとめ、実物のモックアップと判断の根拠をそれだけで見られるようにして承認を得る
 - **根拠で提案する**: 画面の要素はコンセプトの文書の機能記述から導き、デザインの判断にはデザインスキルの指針を添える
 - **借りた言葉で話す**: 用語はリポジトリとデザインスキルの資料に実在する語を使う
 
@@ -54,15 +54,16 @@ Phase 4 のデザインスキルと Phase 8 の `spira:update-doc` は**同じ�
 | プロダクトが画面を持たない（API・CLI 等） | このスキルの対象外 |
 | 描く画面の機能がコンセプトの文書に無い（`spira:request` から呼ばれた場合を除く） | `spira:brainstorming` で機能を決めてドキュメントに残す |
 
-### アーティファクトの公開
+### 提案ページの公開
 
-モックアップとスタイルガイドは Artifact ツールで公開して見せる。
+提案は、画面のモックアップを埋め込んだ 1 つの提案ページとして Artifact ツールで公開する。作業用のモックアップを単体で公開しない。
 
-1. 最初の公開の前に Skill ツールで `artifact-design` を読み込み、ページの規約に従う
-2. 作業ファイルは `.tmp/spira-mockup/` に置く。公開するファイルは Phase 8 でリポジトリに置くファイルと同じ内容にする
-3. 修正を反映するときは同じファイルパスで公開し直し、URL を変えない
+1. 最初の公開の前に Skill ツールで `artifact-design` を読み込み、提案ページをその規約に従って作る
+2. 作業ファイルは `.tmp/spira-mockup/` に置く。提案ページは `proposal.html`、画面のモックアップは `screens/<slug>.html`
+3. 提案ページを `file_path` に、画面のモックアップを `files` に渡して公開する。埋め込むモックアップは Phase 8 でリポジトリに置くファイルと同じ内容にする
+4. 修正を反映するときは同じファイルパスで公開し直し、URL を変えない
 
-Artifact ツールが使えない環境では、作業ファイルのパスを伝え、ブラウザで開いて確認するよう案内する。
+Artifact ツールが使えない環境では、`.tmp/spira-mockup/proposal.html` のパスを伝え、ブラウザで開いて確認するよう案内する。
 
 ## 手順
 
@@ -117,21 +118,21 @@ Skill ツールでデザインスキルを読み込み、その資料を使っ�
 
 ### Phase 5: モックアップの作成
 
-1. 画面ごとに [templates/mockup.md](templates/mockup.md) を Read し、その規約どおりに HTML を書く
-2. デザインシステムを新規に作る・拡張する場合、または動きを新規に決めた場合は、トークン・コンポーネント・動きを一覧で見せるスタイルガイドの HTML を書く（書式は [templates/mockup.md](templates/mockup.md) の「スタイルガイド」節）
-3. 「アーティファクトの公開」に従い、画面ごとに 1 つ、スタイルガイドを 1 つ公開する
-4. 公開したページを自分で見直し、UX の指針とデザインシステムから外れた箇所があれば直して公開し直す
+1. 画面ごとに [templates/mockup.md](templates/mockup.md) を Read し、その規約どおりに `.tmp/spira-mockup/screens/<slug>.html` を書く
+2. [templates/proposal.md](templates/proposal.md) の「提案ページ」を Read し、その節どおりに `.tmp/spira-mockup/proposal.html` を書く。デザインシステムを新規に作る・拡張する場合と、動きを新規に決めた場合は、その節で実物を並べる
+3. 「提案ページの公開」に従って公開する
+4. 公開したページを自分で見直し、UX の指針とデザインシステムから外れた箇所・提案ページの節の抜けがあれば直して公開し直す
 
 ### Phase 6: 提案
 
-[templates/proposal.md](templates/proposal.md) を Read し、その雛形どおりに提案する。
+[templates/proposal.md](templates/proposal.md) の「チャットでの提示」どおりに、提案ページの URL と要約だけをチャットに書く。表や判断の説明はチャットに再掲しない。
 
 ### Phase 7: 承認
 
 | ユーザーの応答 | 行動 |
 |:--|:--|
 | 承認 | Phase 8 へ進む |
-| 修正指示 | 必要なら Phase 4 をやり直し、同じパスで公開し直して Phase 6 の提案を差分だけ再提示する |
+| 修正指示（チャットか、提案ページへのコメント） | 必要なら Phase 4 をやり直し、モックアップと提案ページを直して同じパスで公開し直し、「チャットでの提示」の再提示の形で示す |
 | 見送り | 反映をせずに Phase 9 へ進む |
 
 **承認が取れるまで Phase 8 に進まない。**
@@ -149,7 +150,7 @@ Skill ツールでデザインスキルを読み込み、その資料を使っ�
    | `docs/development/design-system.md` | デザインシステムを新規に作った・拡張した | [templates/design-system.md](templates/design-system.md) |
    | `docs/development/visualization.md` | 動きを新規に決めた・変えた | [templates/visualization.md](templates/visualization.md) |
 
-2. Skill ツールで `spira:update-doc` を呼び出す。引数には、上表で決めたファイルに承認された内容を反映することを渡す。モックアップの HTML は `.tmp/spira-mockup/` の公開したファイルを写す。`docs/mockups/` の HTML はドキュメントとして扱うことも添える
+2. Skill ツールで `spira:update-doc` を呼び出す。引数には、上表で決めたファイルに承認された内容を反映することを渡す。モックアップの HTML は `.tmp/spira-mockup/screens/` の公開したファイルを写す（提案ページはリポジトリに置かない）。`docs/mockups/` の HTML はドキュメントとして扱うことも添える
 3. **読み込まれた update-doc の手順を最後まで実行する**。ブランチ作成 → 編集 → PR 作成 → CI 監視 → マージまで自分で行う
 
 ### Phase 9: 完了報告
@@ -158,6 +159,6 @@ Skill ツールでデザインスキルを読み込み、その資料を使っ�
 
 1. Phase 8 の PR URL とマージ結果（Phase 8 を行わなかった場合は「反映なし」）
 2. 反映したファイルの一覧
-3. アーティファクトの URL（画面ごと・スタイルガイド）
+3. 提案ページの URL
 
 他のスキル（`spira:request` 等）から呼ばれた場合は、報告のあと呼び出し元の手順に戻る。
