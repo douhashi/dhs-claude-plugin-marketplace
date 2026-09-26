@@ -1,6 +1,6 @@
 ---
 name: request
-description: "フィードバックの内容を確認・調査し、起票が必要なら create-issue で Issue を起票してロードマップを更新する。request, feedback, フィードバック, 要望, 不具合報告, 使ってみて"
+description: "フィードバックの内容を確認・調査し、起票が必要なら create-issue で Issue を起票する。request, feedback, フィードバック, 要望, 不具合報告, 使ってみて"
 argument-hint: "<フィードバック内容>"
 disable-model-invocation: true
 user-invocable: true
@@ -76,12 +76,12 @@ user-invocable: true
 
 `起票` が 0 件なら、ここで終了する。
 
-### Phase 5: 起票とロードマップ更新
+### Phase 5: 起票
 
 `起票` の観点があれば、Skill ツールで `spira:create-issue` を呼び出す。
 
 1. `起票` の観点と、その調査結果（原因の箇所・関連 Issue・現状の仕様）を Issue 化の入力とする
-2. **読み込まれた create-issue の手順を最後まで実行する**。一覧表の提示 → 承認 → 起票 → ロードマップへの追記（PR → マージ） → 報告まで自分で行う
+2. **読み込まれた create-issue の手順を最後まで実行する**。一覧表の提示 → 承認 → 起票 → 報告まで自分で行う
 3. Issue 本文の背景には、フィードバック由来であることと調査で確かめた事実を書く
 
 **起票の承認は `spira:create-issue` が行う。** このスキルで Issue の一覧を先に出さない。

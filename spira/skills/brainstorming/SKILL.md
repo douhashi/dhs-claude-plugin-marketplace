@@ -107,12 +107,12 @@ Phase 7・Phase 8 の作業は `spira:create-issue` / `spira:update-doc` に委�
 ### Phase 7: Issue 化
 
 ドキュメントより先に Issue を起票する。Issue 番号を参照する記述があり、
-起票しないと番号が確定しないためである。ロードマップへの追記は `spira:create-issue` が行うため、Phase 8 では扱わない。
+起票しないと番号が確定しないためである。ロードマップへの反映は `spira:sync-roadmap` の責務であり、このスキルでは扱わない。
 
 1. `templates/summary.md` を Read し、議論の結論をユーザーに提示する
 2. 議論の結論を Issue 化するかどうかをユーザーに確認する（1 文で聞く）
 3. 承認されたら Skill ツールで `spira:create-issue` を呼び出す
-4. **読み込まれた create-issue の手順を最後まで実行する**。一覧表の提示 → 承認 → 起票 → ロードマップへの追記（PR → マージ） → 報告まで自分で行う
+4. **読み込まれた create-issue の手順を最後まで実行する**。一覧表の提示 → 承認 → 起票 → 報告まで自分で行う
 5. 起票した Issue の**番号と URL を控える**。Phase 8 でドキュメントに書き込む
 
 **候補の提示と起票の承認は `spira:create-issue` が行う。** このスキルで候補を先に列挙しない。

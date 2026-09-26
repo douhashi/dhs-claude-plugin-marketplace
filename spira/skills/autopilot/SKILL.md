@@ -4,7 +4,7 @@ description: "開発を自走で回す準備をする。前提条件（必要な
 argument-hint: "[--env <Infisical 環境名>]"
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Read, Grep, Glob, Write, Bash
+allowed-tools: Read, Grep, Glob, Write, Bash, Skill
 ---
 
 現在のリポジトリで、開発を自走で回すための準備（キックオフ）を行ってください。
@@ -15,7 +15,7 @@ allowed-tools: Read, Grep, Glob, Write, Bash
 - **人の準備物を先に潰す**: 走り出してから止まるより、走る前に止まるほうが安い
 - **セッションに記憶を持たせない**: ループに必要な情報はすべて `.tmp/spira-autopilot/` に書き出す
 - **開発は既存スキルに任せる**: Issue の選択は `spira:pick`、開発は `spira:do` が担う。autopilot は段取りだけを行う
-- **着手順を先に決めておく**: 現状とずれたロードマップや、ロードマップに無い Issue では着手順が定まらない。走り出す前にずれを直し、載せる
+- **着手順を先に決めておく**: 現状とずれたロードマップや、ロードマップに無い Issue では着手順が定まらない。走り出す前に `spira:sync-roadmap` でずれを直し、載せる
 
 ## Role
 
@@ -32,9 +32,7 @@ allowed-tools: Read, Grep, Glob, Write, Bash
 - `state.md` のライン表に無い Issue の worktree・ブランチ・PR に触れることは禁止（`state.md` が無いときは `impl-*` を片付けない）
 - 前提条件が欠けたまま `.tmp/spira-autopilot/context.md` を書き出すことは禁止
 - ループのプロンプトを案内する前に、自分でループを開始することは禁止
-- ユーザーが載せると決めていない Issue をロードマップに追加することは禁止
-- 未記載 Issue を載せる PR を、一覧を出す前、またはユーザーの返答を待たずに作成・マージすることは禁止
-- `roadmap-pr.md` の「整合の規則」に無いチェック状態の変更・行の移動と、未完了行どうしの並べ替え・既存行の文言の書き換えは禁止
+- `spira:sync-roadmap` を通さずにロードマップを変更することは禁止
 
 ## 入力の解析
 
@@ -198,24 +196,11 @@ Infisical が使えるかを検査する。
 現状とずれたロードマップや、ロードマップに載っていない Issue が自走の対象になると、着手順が狂う。走り出す前にずれを直し、載せる。
 
 1. Phase 2 で見つけたロードマップが無ければ、この Phase を飛ばす（Phase 6 の報告に「ロードマップが無いため番号順に進む」と書く）
-2. **ずれを直す**: `→ #<番号>` を持つ各行の Issue の状態を取得し、`${CLAUDE_PLUGIN_ROOT}/templates/roadmap-pr.md` の
-   「整合の規則」に照らしてずれを洗い出す
-
-   ```
-   gh issue list --repo REPO --state all --limit 1000 --json number,state,stateReason
-   ```
-   - ずれがあれば、同ファイルの「整合修正」節（キックオフのブランチ）と「PR の出し方」に従い、すべてのずれを 1 本の PR にまとめる。ずれが 0 件なら PR は作らない
-   - CI 失敗・マージ不可のときは、PR を開いたまま残し、その旨を Phase 6 の報告に書いて先に進む
-   - 以降の手順は、ロードマップを Read し直し、整合後のロードマップを基にする
-3. **未記載の Issue を洗い出す**: Phase 2 の Open Issue（`escalated` を除く）のうち、ロードマップに `→ #<番号>` の行が無いもの。無ければ手順 4〜6 を飛ばす
-4. **一覧を出して一緒に決める**: [roadmap-triage.md](templates/roadmap-triage.md) を Read し、
-   未記載の Issue を一覧で提示して、どれをロードマップに載せるかをユーザーと決める。
-   載せるものは追加位置も併せて決める。**決めるのはユーザー**であり、スキルは案を出して質問に答える
-5. **PR を作ってマージする**: `載せる` と決まった Issue を、`${CLAUDE_PLUGIN_ROOT}/templates/roadmap-pr.md` の
-   「キックオフ整理」節と「PR の出し方」に従って 1 本の PR にまとめる
-   - `載せる` が 0 件なら PR は作らない
-   - CI 失敗・マージ不可のときは、PR を開いたまま残し、その旨を Phase 6 の報告に書いて先に進む
-6. **対象外を記録する**: `載せない` と決まった Issue は、今回のループの対象外として Phase 5 で `state.md` に理由とともに書く
+2. Skill ツールで `spira:sync-roadmap` を呼び出し、**読み込まれた手順を最後まで実行する**。
+   整合（ずれを直す PR）→ 未記載 Issue の一覧の提示 → ユーザーとの決定 → 整理（載せる PR）→ 報告まで自分で行う
+3. 結果を控える。整合と整理の PR（番号・マージ結果・直した行・追加した行）は Phase 6 の報告に、
+   `載せない` と決まった Issue は今回のループの対象外として Phase 5 で `state.md` に理由とともに書く
+4. 以降の手順は、ロードマップを Read し直し、整合・整理後のロードマップを基にする
 
 ### Phase 5: コンテキストの書き出し
 
