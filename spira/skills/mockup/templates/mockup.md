@@ -1,6 +1,6 @@
 # テンプレート: モックアップの HTML
 
-- **書き手**: mockup スキル（Phase 5 で作成し、Phase 8 で `docs/mockups/` に反映する）
+- **書き手**: mockup スキル（Phase 6 で作成し、Phase 9 で `docs/mockups/` に反映する）
 - **用途**: 画面の見た目と振る舞いを、実装の手本として残す
 - **読み手**: 開発者と planner・implementer などのエージェント（HTML をブラウザで開く・ソースを読む）
 
