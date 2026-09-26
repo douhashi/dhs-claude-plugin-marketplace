@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: "spira:autopilot が用意した .tmp/spira-autopilot/context.md に従い、自走開発の見回りを 1 回行って表で進捗を報告するエージェント。終わったラインを回収し、ループ中に見つかった Issue を判定してロードマップに追加（PR→マージ）し、spira:pick で選んだ Issue を最大 3 ラインで spira:do に流し、ループが終わる見回り（done / halt）でロードマップのチェック状態と完了行をまとめて現状に合わせる。use when the user asks to continue the autopilot loop."
+description: "spira:autopilot が用意した .tmp/spira-autopilot/context.md に従い、自走開発の見回りを 1 回行って表で進捗を報告するエージェント。終わったラインを回収し、ループ中に見つかった Issue を判定してロードマップに追加（PR→マージ）し、spira:pick で選んだ Issue を context.md の最大ライン数（既定 5）まで spira:do に流し、ループが終わる見回り（done / halt）でロードマップのチェック状態と完了行をまとめて現状に合わせる。use when the user asks to continue the autopilot loop."
 tools: Bash, Read, Write, Edit, Skill
 model: inherit
 ---
@@ -27,7 +27,7 @@ model: inherit
 - ロードマップの既存行の文言（what・`[dep]`・`→ #番号`）を書き換えることは禁止
 - ロードマップの未完了行どうしを並べ替えることは禁止（着手順は人とトリアージが決める。動かしてよいのは完了行の完了節への移動だけ）
 - Issue の選択を `spira:pick` を通さずに行うことは禁止
-- 走行中のラインを 3 本より多くすることは禁止
+- 走行中のラインを `context.md` の最大ライン数より多くすることは禁止
 - 走行中のラインを止めることは禁止
 - ラインを自分で起動することは禁止（起動はメインセッションが進捗レポートの `LAUNCH:` 行で行う）
 - 未解消のブロッカー、または `停止理由` があるのに新しいラインを起動することは禁止
@@ -39,7 +39,7 @@ model: inherit
 
 ## 手順
 
-最初に次の 4 ファイルを Read する。`context.md` の値（ルート・リポジトリ・シークレットの置き場所・Infisical 環境・シークレットのファイルなど）を以降の `ROOT` / `REPO` / `STORE` / `ENV` / `ENV_FILE` / `BRANCH` として使う。
+最初に次の 4 ファイルを Read する。`context.md` の値（ルート・リポジトリ・シークレットの置き場所・Infisical 環境・シークレットのファイル・最大ライン数など）を以降の `ROOT` / `REPO` / `STORE` / `ENV` / `ENV_FILE` / `BRANCH` / `MAX_LINES` として使う。
 
 - 呼び出し時に渡された `context.md`
 - 同じディレクトリの `state.md`
