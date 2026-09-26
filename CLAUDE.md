@@ -39,8 +39,9 @@ dhs-claude-plugin-marketplace/
 
 - **ブレインストーミング**: 論点を洗い出し、1 つずつ対話で決着させ、Issue 化とドキュメント更新まで繋ぐスキル（`spira:brainstorming`）
 - **構成決め**: 同梱のアーキテクチャセットを叩き台に、要件の根拠と調査の出典を添えて構成と配布先を提案し、承認後に `spira:update-doc` でドキュメントとしてまとめてから `spira:create-issue` で構成の立ち上げ Issue を起票するスキル（`spira:architect`）
-- **Issue 作成**: 作成予定 Issue を一覧表で提示し、承認を得てから起票し、ロードマップの適切な位置に追記して PR→マージまで行うスキル（`spira:create-issue`）
-- **フィードバック**: フィードバックの内容を確認・調査し、起票が必要なら `spira:create-issue` で Issue を起票してロードマップを更新するスキル（`spira:request`）
+- **Issue 作成**: 作成予定 Issue を一覧表で提示し、承認を得てから起票するスキル（`spira:create-issue`）。ロードマップには触れない
+- **ロードマップ整備**: ロードマップのチェック状態・完了行のずれを直し、未記載の Open Issue を載せるかどうか・どこに載せるかをユーザーと決めて、それぞれ PR→マージまで行うスキル（`spira:sync-roadmap`）
+- **フィードバック**: フィードバックの内容を確認・調査し、起票が必要なら `spira:create-issue` で Issue を起票するスキル（`spira:request`）
 - **ドキュメント更新**: ドキュメントを更新し、PR 作成から CI 通過後のマージまで行うスキル（`spira:update-doc`）
 - **設計判断**: コードベースとドキュメントを調査し、PO視点で設計判断を下すスキル
 - **開発環境セットアップ**: `mise install` と `mise run setup` で整う環境を構築し、人手の設定が必要な値では Infisical のプレースホルダ作成（無ければ設定箇所の案内）と `## 人手対応待ち` の記録をして止まるエージェント（`spira:setup`）
@@ -48,7 +49,7 @@ dhs-claude-plugin-marketplace/
 - **実装サイクル**: 計画済み Issue を入力に、実装・PR 作成・CI 監視を自律実行するスキル（`spira:implement`）
 - **一気通貫サイクル**: 計画から PR マージまでを単一フローで実行するスキル（`spira:do`）
 - **次タスク抽出**: 対応すべき Issue を 1 件抽出するスキル（`spira:pick`）
-- **自走開発**: 前提条件（必要な環境変数と、その置き場所の Infisical または `.env`。Infisical は `.infisical.json` のデフォルトブランチへのコミットまで求める。必要なシークレットが 0 件なら置き場所の検査は飛ばす）を検査し、前回のループで中断したラインの `impl-N`（worktree・ブランチ・未マージ PR）を片付け、ロードマップのずれを直す PR をマージし、ロードマップ未記載の Issue を一緒に整理してからループ開発のコンテキストを `.tmp` に書き出すスキル（`spira:autopilot`）と、それに従い `spira:pick` → `spira:do` を最大 3 ラインで回し、ループ中に見つかったシステムを壊す不具合のロードマップへの追加と、ループ終了時のロードマップの整合修正（PR→マージ）を行いながら表で進捗を報告するエージェント（`spira:orchestrator`）。ラインは orchestrator の報告の `LAUNCH:` 行を受けてメインセッションが起動するバックグラウンドの `general-purpose` サブエージェントで（`bypassPermissions` 前提）、完了通知を `lines/N.done` に書いて回収し、会話記録 `subagents/agent-<agentId>.jsonl` で事後調査できる
+- **自走開発**: 前提条件（必要な環境変数と、その置き場所の Infisical または `.env`。Infisical は `.infisical.json` のデフォルトブランチへのコミットまで求める。必要なシークレットが 0 件なら置き場所の検査は飛ばす）を検査し、前回のループで中断したラインの `impl-N`（worktree・ブランチ・未マージ PR）を片付け、`spira:sync-roadmap` でロードマップのずれを直してロードマップ未記載の Issue を一緒に整理してからループ開発のコンテキストを `.tmp` に書き出すスキル（`spira:autopilot`）と、それに従い `spira:pick` → `spira:do` を最大 3 ラインで回し、ループ中に見つかったシステムを壊す不具合のロードマップへの追加と、ループ終了時のロードマップの整合修正（PR→マージ）を行いながら表で進捗を報告するエージェント（`spira:orchestrator`）。ラインは orchestrator の報告の `LAUNCH:` 行を受けてメインセッションが起動するバックグラウンドの `general-purpose` サブエージェントで（`bypassPermissions` 前提）、完了通知を `lines/N.done` に書いて回収し、会話記録 `subagents/agent-<agentId>.jsonl` で事後調査できる
 - **タスク管理**: `gh project` を操作するスキル群
 
 ### tts-notify

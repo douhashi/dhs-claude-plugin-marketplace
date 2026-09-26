@@ -12,13 +12,13 @@
 
 | # | 観点 | 種別 | 調査結果 | 対応 |
 |:--|:--|:--|:--|:--|
-| 1 | 起票後にロードマップが更新されない | 不具合 | `create-issue/SKILL.md` に追記の手順が無い | 起票 |
+| 1 | 論点テーブルの表が崩れる | 不具合 | `discussion-points.md` の区切り行の列数が見出しと合わない | 起票 |
 | 2 | Issue の本文が長すぎる | 改善要望 | #18 で字数上限の見直しを扱っている | 既存 Issue（#18） |
 | 3 | pick が escalated を先に選ぶ | 質問 | `pick/SKILL.md` の優先順どおり | 仕様どおり |
 
 ### 根拠
 
-- **1**: `spira/skills/create-issue/SKILL.md:88` — 報告で終わり、ロードマップに触れていない
+- **1**: `spira/skills/brainstorming/templates/discussion-points.md:12` — 見出しは 5 列、区切り行は 4 列
 - **2**: #18 `refactor(spira): Issue 本文の上限を見直す`（Open）
 - **3**: `spira/skills/pick/SKILL.md:52` — 優先順 1 が `escalated`
 

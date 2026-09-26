@@ -49,8 +49,7 @@ dhs-claude-plugin-marketplace/
 │   │   ├── create-issue/
 │   │   │   ├── SKILL.md
 │   │   │   └── templates/
-│   │   │       ├── issue-plan.md
-│   │   │       └── roadmap-placement.md
+│   │   │       └── issue-plan.md
 │   │   ├── decide/
 │   │   │   └── SKILL.md
 │   │   ├── do/
@@ -65,6 +64,10 @@ dhs-claude-plugin-marketplace/
 │   │   │   ├── SKILL.md
 │   │   │   └── templates/
 │   │   │       └── investigation-report.md
+│   │   ├── sync-roadmap/
+│   │   │   ├── SKILL.md
+│   │   │   └── templates/
+│   │   │       └── roadmap-triage.md
 │   │   ├── update-doc/
 │   │   │   └── SKILL.md
 │   │   └── ...

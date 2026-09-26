@@ -90,14 +90,14 @@ git リポジトリでない場合やリモート・`gh` 認証が無い場合�
 
 ### `/spira:create-issue [owner/repo]`
 
-議論結果や指示に基づいて GitHub Issue を起票し、ロードマップに追記します。**承認前に起票・PR 作成をしません。**
+議論結果や指示に基づいて GitHub Issue を起票します。**承認前に起票しません。**
+ロードマップには触れません。起票した Issue を着手順に組み込むには、区切りのよいところで `/spira:sync-roadmap` を実行します。
 
 1. **内容の整理と選別** — 会話の文脈から関心事ごとに分割し、コードベースの状態が変わらない項目を外す
 2. **提示と承認** — 作成予定 Issue を一覧表で提示し、承認を待つ
 3. **本文の作成** — `templates/issue-body.md` に沿って本文を書き、`wc -m` で 1,500 字以内を確認
 4. **起票** — 承認された表の全行を `gh issue create` で作成
-5. **ロードマップへの追記** — `docs/` 配下の `roadmap.md` を読み、依存と前提関係から追加位置を決めて表で提示し、承認後に PR を作ってマージ（ロードマップが無ければ飛ばす）
-6. **報告** — 1 行 1 件で URL を提示し、ロードマップ PR の結果を添える
+5. **報告** — 1 行 1 件で URL を提示
 
 承認段階で提示するのは次の表だけです。本文の全文は、ユーザーが求めた Issue の分だけ提示します。
 
@@ -121,6 +121,22 @@ Issue にせず、「先に決着が必要な論点」として表の下に挙�
 /spira:create-issue douhashi/dhs-claude-plugin-marketplace
 ```
 
+### `/spira:sync-roadmap`
+
+ロードマップ（`docs/` 配下の `roadmap.md`）を Issue の現状に合わせます。create-issue で細かく起票した後や、自走開発の前に使います。
+**ユーザーが決めていない Issue をロードマップに載せません。**
+
+1. **現状の確認** — ロードマップと全 Issue の状態を取得（ロードマップが無ければ終了）
+2. **整合** — チェック状態・完了行の置き場所が Issue の状態とずれていれば、`templates/roadmap-pr.md` の「整合の規則」どおりに直す PR を作ってマージ
+3. **未記載 Issue の整理** — ロードマップに載っていない Open Issue を、載せる／載せないの案と追加位置の案を添えて一覧で提示し、ユーザーと決める。載せると決まったものを PR にしてマージ
+4. **報告** — 整合・整理の PR と、載せなかった Issue を提示
+
+未完了行どうしの並べ替えや、既存行の文言の書き換えはしません。autopilot のキックオフからも呼ばれます。
+
+```bash
+/spira:sync-roadmap
+```
+
 ### `/spira:request <フィードバック内容>`
 
 フィードバックの内容を確認・調査し、必要な Issue を起票します。**調査せずに起票しません。**
@@ -129,10 +145,10 @@ Issue にせず、「先に決着が必要な論点」として表の下に挙�
 2. **内容の確認** — フィードバックを観点ごとに分け、種別（不具合・改善要望・質問・その他）を整理
 3. **調査** — コード・ドキュメント・既存 Issue・ロードマップで裏を取り、観点ごとに対応（起票・既存 Issue・対応済み・仕様どおり・判断保留）を決める
 4. **調査結果の提示** — 観点・調査結果・対応の表と根拠（`path:line`・Issue 番号）を提示
-5. **起票とロードマップ更新** — `起票` の観点があれば `spira:create-issue` を呼び出し、承認 → 起票 → ロードマップへの追記（PR → マージ）まで行う
+5. **起票** — `起票` の観点があれば `spira:create-issue` を呼び出し、承認 → 起票まで行う
 
 ```bash
-/spira:request create-issue の後にロードマップが更新されず、着手順がずれる
+/spira:request brainstorming の論点テーブルの表が崩れる
 ```
 
 ### `/spira:architect [追加したい要素]`
@@ -240,9 +256,8 @@ URL: <url>
      Infisical のセットアップ（案内して終了）と `.env` での代替（git に無視されたファイルで続行）を提案してユーザーが選ぶ。
      欠けたのがコミットだけなら、提案せずにコミットの手順を案内して終了する（ラインの worktree はコミット済みの `.infisical.json` で Infisical に繋ぐ）
    - 置き場所に無い変数は値 `__SPIRA_PLACEHOLDER__` で作成し、未設定があれば埋める手順を案内して終了
-4. **ロードマップの整理** — まず Issue の状態とずれたチェック状態・完了行の置き場所を直す PR を作ってマージする。
-   次に、ロードマップに未記載の Open Issue があれば一覧で提示し、どれを載せるかをユーザーと決める。
-   載せると決まったものを PR にしてマージし、載せないと決まったものは今回のループの対象外として記録する
+4. **ロードマップの整理** — `spira:sync-roadmap` を呼び出し、Issue の状態とずれたチェック状態・完了行の置き場所を直す PR と、
+   ユーザーと決めた未記載 Open Issue を載せる PR をマージする。載せないと決まったものは今回のループの対象外として記録する
    （ロードマップが無い場合は整理を飛ばし、着手順は番号順になる）
 5. **書き出し** — `.tmp/spira-autopilot/context.md`（ルール・進め方）と `state.md`（状態）
 6. **案内** — ループ前の `bypassPermissions` への切り替えと、`/clear` 後に実行するプロンプトを提示
@@ -296,9 +311,8 @@ URL: <url>
 | キックオフ報告 | `kickoff-report.md` |
 | 進捗レポート | `progress-report.md` |
 | 人の手が必要なときの案内 | `blocker-guide.md` |
-| 未記載 Issue の検討 | `roadmap-triage.md` |
 
-ロードマップ PR（キックオフ整合・キックオフ整理・追加・整合修正）の書式と、ずれの規則（整合の規則）は、create-issue と共有するため `templates/roadmap-pr.md` にあります。
+ロードマップ PR（整合・整理・追加・整合修正）の書式と、ずれの規則（整合の規則）は、sync-roadmap と共有するため `templates/roadmap-pr.md` にあります。
 
 ## プロジェクト構成
 
@@ -319,7 +333,7 @@ spira/
 │   │   └── templates/     # 論点テーブル・対話・結論のテンプレート
 │   ├── create-issue/      # Issue 起票
 │   │   ├── SKILL.md
-│   │   └── templates/     # 作成予定 Issue 一覧・ロードマップ追加位置のテンプレート
+│   │   └── templates/     # 作成予定 Issue 一覧のテンプレート
 │   ├── decide/            # 設計判断
 │   ├── do/                # 一気通貫サイクル
 │   ├── implement/         # 実装サイクル
@@ -328,6 +342,9 @@ spira/
 │   ├── request/           # フィードバックの調査・起票
 │   │   ├── SKILL.md
 │   │   └── templates/     # 調査結果のテンプレート
+│   ├── sync-roadmap/      # ロードマップを Issue の現状に合わせる
+│   │   ├── SKILL.md
+│   │   └── templates/     # 未記載 Issue の一覧のテンプレート
 │   └── update-doc/        # ドキュメント更新・PR・マージ
 ├── agents/
 │   ├── planner.md         # 計画エージェント
@@ -346,7 +363,7 @@ spira/
 │   ├── implementation-result.md
 │   ├── qa-result.md
 │   ├── blocked.md         # 人手対応待ち
-│   ├── roadmap-pr.md      # ロードマップの行・追加位置・整合の規則・PR（autopilot / orchestrator / create-issue 共通）
+│   ├── roadmap-pr.md      # ロードマップの行・追加位置・整合の規則・PR（sync-roadmap / orchestrator 共通）
 │   └── completion-report.md
 ├── scripts/
 │   └── clean-line.sh      # 中断・失敗したラインの impl-N（worktree・ブランチ・未マージ PR）を片付ける（autopilot / orchestrator 共通）
