@@ -30,7 +30,8 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 - Conventional Commits スタイルから外れたタイトルでの起票は禁止（`<type>(<scope>): <説明>`）
 - 独自の省略形・造語・比喩で語ることは禁止。用語はコードベース／ドキュメントに実在する語だけを使う
 - 承認を求める段階で本文の全文を提示することは禁止（ユーザーが求めた Issue の分だけ提示する）
-- 作成予定 Issue 一覧の表の外に、承認を求める 1 文と「先に決着が必要な論点」を超える説明を書くことは禁止
+- 作成予定 Issue 一覧の表の外に、承認を求める 1 文と「先に決着が必要な論点」「既存の Open Issue との関係」を超える説明を書くことは禁止
+- 既存の Open Issue との依存を確かめずに作成予定 Issue 一覧を提示することは禁止
 - ファイルの作成・書き換えは禁止（`.tmp/` 配下の投稿用一時ファイルを除く）
 - ロードマップの変更・ロードマップへの追記の提案は禁止（`spira:sync-roadmap` の責務）
 - 一度に複数の関心事を含む Issue の作成は禁止（分割して起票する）
@@ -70,11 +71,25 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 「先に決着が必要な論点」として Phase 2 で brainstorming を促す。
 起票できる項目が 1 つも無い場合は、表を出さずにその案内だけを出して終える。
 
+### Phase 1.5: 既存の Open Issue との依存の洗い出し
+
+起票する項目どうしだけでなく、**既存の Open Issue との依存も**洗い出す。
+Open Issue を取得し、項目ごとに、完了していないと着手できない Open Issue があるかを本文まで読んで判断する。
+
+```
+gh issue list --state open --limit 200 --json number,title,body,labels
+```
+
+- 判断は `templates/issue-plan.md` の「依存の書き方」に従う。見つけた依存は Phase 2 の表の依存列に `#N` で書く
+- 既存の Open Issue が、起票する項目の完了を待たないと着手できない（逆向きの依存）場合も、Phase 2 の表の下に挙げる
+- 項目と同じ関心事の Open Issue があれば、依存ではなく重複である。表から外し、Phase 2 でその Issue 番号を示す
+
 ### Phase 2: 作成予定 Issue の提示と承認
 
 `templates/issue-plan.md` を Read し、作成予定の Issue を一覧表で提示する。
 表の後に、承認を求める 1 文を添える。Phase 1 で外した項目があれば、
-同テンプレートの「起票しない項目の扱い」に従って先に決着が必要な論点を続ける。それ以外は書かない。
+同テンプレートの「起票しない項目の扱い」に従って先に決着が必要な論点を続ける。
+Phase 1.5 で逆向きの依存・重複を見つけた場合は、同テンプレートの「既存の Open Issue との関係」に従って続ける。それ以外は書かない。
 
 **ユーザーの承認が得られるまで Phase 3 に進まない。** 応答ごとの行動は
 `templates/issue-plan.md` の「承認の扱い」に従う。
@@ -89,6 +104,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 承認された表の**全行**を、**表の `#` の順**に起票する。タイトルは表に出したものをそのまま使う。
 本文を一時ファイルに書き出し、**投稿前に `wc -m` で字数を確認**してから `gh issue create` で作成する。
 依存がある行は、依存列の `行 N` を起票済みの Issue 番号に置き換え、`#N` と合わせて `--blocked-by` に渡す。
+全行を起票したら、承認された逆向きの依存を既存の Open Issue に付ける（下の REST API で、`<番号>` を既存の Issue、依存先を起票した Issue にする）。
 
 ```
 mkdir -p .tmp
@@ -130,6 +146,7 @@ Blocked by を付けられなかった Issue は、Phase 5 の報告でその旨
 ### Phase 5: 報告
 
 作成した Issue を 1 行 1 件で提示する。本文の再掲はしない。依存を付けた Issue は末尾に `（blocked by #N, #M）` を添える。
+既存の Open Issue に逆向きの依存を付けた場合は、その Issue も同じ形で 1 行ずつ続ける。
 
 ```
 #12 feat(spira): 論点テーブルに状態列を追加する — https://github.com/owner/repo/issues/12

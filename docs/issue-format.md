@@ -36,6 +36,7 @@ Issue の起票は取り消しにくいため、create-issue スキルは本文�
 `spira/skills/create-issue/templates/issue-plan.md`（`#` / タイトル / 目的 / 完了条件 / 依存）。
 
 Issue どうしの依存（先に完了していないと着手できない関係）は本文に書かず、起票時に GitHub の Blocked by で設定する。
+依存は同時に起票する Issue どうしだけでなく、既存の Open Issue とも照合する（逆向きの依存は既存の Issue 側に付ける）。
 書き方は `issue-plan.md` の「依存の書き方」節が単一ソース。
 
 起票の対象は、完了したときにコードベースの状態が変わる Issue に限る。判定基準と、
