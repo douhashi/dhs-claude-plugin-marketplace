@@ -42,7 +42,7 @@ dhs-claude-plugin-marketplace/
 - **モックアップ**: デザインスキル（`ui-ux-pro-max` 等）を使って画面ごとのモックアップをアーティファクトで提案し、承認後に `spira:update-doc` で `docs/mockups/` のモックアップと `docs/development/` のデザインシステム・ビジュアライゼーションのドキュメントを作成・更新するスキル（`spira:mockup`）
 - **Issue 作成**: 作成予定 Issue を一覧表で提示し、承認を得てから起票するスキル（`spira:create-issue`）。ロードマップには触れない
 - **ロードマップ整備**: ロードマップのチェック状態・完了行のずれを直し、未記載の Open Issue を載せるかどうか・どこに載せるかをユーザーと決めて、それぞれ PR→マージまで行うスキル（`spira:sync-roadmap`）
-- **フィードバック**: フィードバックの内容を確認・調査し、起票が必要なら `spira:create-issue` で Issue を起票するスキル（`spira:request`）
+- **フィードバック**: フィードバックの内容を確認・調査し、起票が必要なら `spira:create-issue` で Issue を起票するスキル（`spira:request`）。画面の変更を伴う観点は、起票の前に `spira:mockup` でモックアップを提案し、承認後に PR→マージする
 - **ドキュメント更新**: ドキュメントを更新し、PR 作成から CI 通過後のマージまで行うスキル（`spira:update-doc`）
 - **設計判断**: コードベースとドキュメントを調査し、PO視点で設計判断を下すスキル
 - **開発環境セットアップ**: `mise install` と `mise run setup` で整う環境を構築し、人手の設定が必要な値では Infisical のプレースホルダ作成（無ければ設定箇所の案内）と `## 人手対応待ち` の記録をして止まるエージェント（`spira:setup`）

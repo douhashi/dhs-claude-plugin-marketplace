@@ -2,7 +2,6 @@
 name: mockup
 description: "画面ごとのデザインモックアップをアーティファクトで提案し、承認後に docs/mockups のモックアップと docs/development のデザインシステム・ビジュアライゼーションのドキュメントを作成・更新する。mockup, モックアップ, デザイン, 画面デザイン, UI デザイン, デザインシステム, アニメーション"
 argument-hint: "[画面名または機能]"
-disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, Skill, Artifact
 ---
@@ -26,7 +25,7 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, Skill, 
 - 承認前に `docs/mockups/` と `docs/development/` のファイルを書き換えることは禁止（Phase 7 の承認が取れるまで Phase 8 に進まない）
 - アプリケーションのコードを書き換えることは禁止。反映するのはモックアップとドキュメントだけ
 - 既存のデザインシステムに無い色・書体・余白・動きを、拡張の提案なしにモックアップへ使うことは禁止
-- コンセプトの文書に無い機能を画面に描くことは禁止
+- 根拠の無い機能を画面に描くことは禁止。根拠はコンセプトの文書か、`spira:request` から渡された観点と調査結果
 - ダミーの文言に `Lorem ipsum` や `テキスト` などの仮置きを使うことは禁止。プロダクトで実際に表示する文言を書く
 - 独自の略語・造語・比喩で語ることは禁止
 
@@ -37,6 +36,7 @@ Phase 4 のデザインスキルと Phase 8 の `spira:update-doc` は**同じ�
 
 - **`$ARGUMENTS` あり**: 描く画面の名前か、画面を特定できる機能として扱う（例: 「ログイン画面」「通知一覧」）
 - **`$ARGUMENTS` なし**: コンセプトの文書から画面の一覧を作り、Phase 3 で描く画面をユーザーに選んでもらう
+- **`spira:request` からの呼び出し**: 渡された観点ごとに、変える画面と変更の内容として扱う。観点と調査結果を画面の要素の根拠にし、Phase 3 で描く画面を質問しない
 
 ## 共通オペレーション
 
@@ -52,7 +52,7 @@ Phase 4 のデザインスキルと Phase 8 の `spira:update-doc` は**同じ�
 |:--|:--|
 | コンセプトの文書が無い | `spira:brainstorming` で議論し、ドキュメント更新だけ行う |
 | プロダクトが画面を持たない（API・CLI 等） | このスキルの対象外 |
-| 描く画面の機能がコンセプトの文書に無い | `spira:brainstorming` で機能を決めてドキュメントに残す |
+| 描く画面の機能がコンセプトの文書に無い（`spira:request` から呼ばれた場合を除く） | `spira:brainstorming` で機能を決めてドキュメントに残す |
 
 ### アーティファクトの公開
 
@@ -159,3 +159,5 @@ Skill ツールでデザインスキルを読み込み、その資料を使っ�
 1. Phase 8 の PR URL とマージ結果（Phase 8 を行わなかった場合は「反映なし」）
 2. 反映したファイルの一覧
 3. アーティファクトの URL（画面ごと・スタイルガイド）
+
+他のスキル（`spira:request` 等）から呼ばれた場合は、報告のあと呼び出し元の手順に戻る。
