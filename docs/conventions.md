@@ -58,6 +58,13 @@ dhs-claude-plugin-marketplace/
 │   │   │   └── SKILL.md
 │   │   ├── pick/
 │   │   │   └── SKILL.md
+│   │   ├── mockup/
+│   │   │   ├── SKILL.md
+│   │   │   └── templates/
+│   │   │       ├── proposal.md
+│   │   │       ├── mockup.md
+│   │   │       ├── design-system.md
+│   │   │       └── visualization.md
 │   │   ├── plan/
 │   │   │   └── SKILL.md
 │   │   ├── request/

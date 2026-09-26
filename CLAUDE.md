@@ -39,6 +39,7 @@ dhs-claude-plugin-marketplace/
 
 - **ブレインストーミング**: 論点を洗い出し、1 つずつ対話で決着させ、Issue 化とドキュメント更新まで繋ぐスキル（`spira:brainstorming`）
 - **構成決め**: 同梱のアーキテクチャセットを叩き台に、要件の根拠と調査の出典を添えて構成と配布先を提案し、承認後に `spira:update-doc` でドキュメントとしてまとめてから `spira:create-issue` で構成の立ち上げ Issue を起票するスキル（`spira:architect`）
+- **モックアップ**: デザインスキル（`ui-ux-pro-max` 等）を使って画面ごとのモックアップをアーティファクトで提案し、承認後に `spira:update-doc` で `docs/mockups/` のモックアップと `docs/development/` のデザインシステム・ビジュアライゼーションのドキュメントを作成・更新するスキル（`spira:mockup`）
 - **Issue 作成**: 作成予定 Issue を一覧表で提示し、承認を得てから起票するスキル（`spira:create-issue`）。ロードマップには触れない
 - **ロードマップ整備**: ロードマップのチェック状態・完了行のずれを直し、未記載の Open Issue を載せるかどうか・どこに載せるかをユーザーと決めて、それぞれ PR→マージまで行うスキル（`spira:sync-roadmap`）
 - **フィードバック**: フィードバックの内容を確認・調査し、起票が必要なら `spira:create-issue` で Issue を起票するスキル（`spira:request`）
