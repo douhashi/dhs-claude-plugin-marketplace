@@ -1,7 +1,7 @@
 ---
 name: autopilot
 description: "開発を自走で回す準備をする。前提条件（必要な環境変数と、その置き場所の Infisical または .env）を検査し、/clear 後も継続できるループ開発のコンテキストを .tmp に書き出す。autopilot, 自走, ループ開発, 自動で回して"
-argument-hint: "[--env <Infisical 環境名>]"
+argument-hint: "[--lines <ライン数>] [--env <Infisical 環境名>]"
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Bash, Skill
@@ -38,7 +38,10 @@ allowed-tools: Read, Grep, Glob, Write, Bash, Skill
 
 | 引数 | 既定値 | 用途 |
 |:--|:--|:--|
+| `--lines <N>` | `5` | ループで同時に走らせるラインの最大数（`MAX_LINES`）。1 以上の整数 |
 | `--env <名前>` | `.infisical.json` の `defaultEnvironment`、無ければ `dev` | シークレットを検査・作成する Infisical 環境 |
+
+`--lines` が 1 以上の整数でなければ、その旨を伝えて終了する。
 
 以下の変数を確定させる。`STORE` と `ENV_FILE` は Phase 3 で確定させる（「シークレットの置き場所」を参照）。
 
@@ -209,8 +212,10 @@ Infisical が使えるかを検査する。
    - `{{PLUGIN_ROOT}}` には `${CLAUDE_PLUGIN_ROOT}` の展開後の絶対パスを入れる
    - `{{STORE}}` / `{{ENV}}` / `{{ENV_FILE}}` には Phase 3 で確定させた値を入れる（使わない方は `—`）
    - `{{CREATED_AT}}` には `date -u +%Y-%m-%dT%H:%M:%SZ` の値を入れる（GitHub の `createdAt` と比較するため UTC）
+   - `{{MAX_LINES}}` には入力の解析で決めた `MAX_LINES` を入れる
 3. [state.md](templates/state.md) を Read し、`{{...}}` を埋めて `$DIR/state.md` に書き出す
    - `{{TARGET_ROWS}}` には Phase 4 の整合と整理を反映した着手順（escalated と対象外を除く）を、同じ順で 1 行ずつ入れる（状態は `⏳ 待機`、依存が未完了なら `⏸ 依存待ち` とし、メモに依存先を書く）
+   - `{{LINE_ROWS}}` には `| L1 | — | — | — |` から `| L<MAX_LINES> | — | — | — |` までを 1 行ずつ入れる
    - `{{EXCLUDED_ROWS}}` には Phase 4 で `載せない` と決まった Issue を、理由とともに 1 行ずつ入れる（0 件なら空のままにする）
    （既に `$DIR/state.md` がある場合は、前回のループの記録として `$DIR/lines/archive/state-<日時>.md` に退避してから書き出す。
    `$DIR/lines/` 直下に残ったファイルも、ファイル名に日時を付けて `$DIR/lines/archive/` に退避する）
