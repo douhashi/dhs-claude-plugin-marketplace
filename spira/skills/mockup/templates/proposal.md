@@ -6,7 +6,7 @@
 
 ## 提案ページ
 
-`.tmp/spira-mockup/proposal.html` に書き、画面のモックアップ（`.tmp/spira-mockup/screens/<slug>.html`）を
+作業ディレクトリ（SKILL.md の「作業ディレクトリ」）の `proposal.html` に書き、画面のモックアップ（作業ディレクトリの `screens/<slug>.html`）を
 Artifact ツールの `files` で `screens/<slug>.html` として一緒に公開する。提案ページはモックアップを `<iframe src="screens/<slug>.html">` で埋め込む。
 
 提案ページはプレゼンテーションとして作る。モックアップの見た目を主役にし、文章は判断と根拠に絞る。
@@ -54,8 +54,8 @@ Artifact ツールの `files` で `screens/<slug>.html` として一緒に公開
 
 ## 方向性の比較ページ
 
-デザインシステムを新規に作るとき（SKILL.md の Phase 5）だけ作る。`.tmp/spira-mockup/directions.html` に書き、
-案ごとの画面（`.tmp/spira-mockup/directions/<a|b|c>.html`）を `files` で `directions/<a|b|c>.html` として一緒に公開する。
+デザインシステムを新規に作るとき（SKILL.md の Phase 5）だけ作る。作業ディレクトリの `directions.html` に書き、
+案ごとの画面（作業ディレクトリの `directions/<a|b|c>.html`）を `files` で `directions/<a|b|c>.html` として一緒に公開する。
 
 | # | 節 | 内容 |
 |:--|:--|:--|

@@ -54,16 +54,23 @@ Phase 4 のデザインスキルと Phase 9 の `spira:update-doc` は**同じ�
 | プロダクトが画面を持たない（API・CLI 等） | このスキルの対象外 |
 | 描く画面の機能がコンセプトの文書に無い（`spira:request` から呼ばれた場合を除く） | `spira:brainstorming` で機能を決めてドキュメントに残す |
 
+### 作業ディレクトリ
+
+作業ファイルは `.tmp/spira-mockup/${CLAUDE_SESSION_ID}/` に置く（以下「作業ディレクトリ」）。セッションごとに分けるのは、並行して走る別のセッションのモックアップと上書きし合わないためである。
+
+- 他のセッションのディレクトリ（`.tmp/spira-mockup/` の他の子）は読まない・書かない・消さない
+- テンプレートに出てくる「作業ディレクトリ」は、このパスを指す
+
 ### 提案ページの公開
 
 提案は、画面のモックアップを埋め込んだ 1 つの提案ページとして Artifact ツールで公開する。作業用のモックアップを単体で公開しない。
 
 1. 最初の公開の前に Skill ツールで `artifact-design` を読み込み、提案ページをその規約に従って作る（Phase 5 の方向性の比較ページも同じ）
-2. 作業ファイルは `.tmp/spira-mockup/` に置く。提案ページは `proposal.html`、画面のモックアップは `screens/<slug>.html`
+2. 作業ファイルは作業ディレクトリに置く。提案ページは `proposal.html`、画面のモックアップは `screens/<slug>.html`
 3. 提案ページを `file_path` に、画面のモックアップを `files` に渡して公開する。埋め込むモックアップは Phase 9 でリポジトリに置くファイルと同じ内容にする
 4. 修正を反映するときは同じファイルパスで公開し直し、URL を変えない
 
-Artifact ツールが使えない環境では、`.tmp/spira-mockup/proposal.html` のパスを伝え、ブラウザで開いて確認するよう案内する。
+Artifact ツールが使えない環境では、作業ディレクトリの `proposal.html` のパスを伝え、ブラウザで開いて確認するよう案内する。
 
 ## 手順
 
@@ -128,8 +135,8 @@ Skill ツールでデザインスキルを読み込み、その資料を使っ�
 Phase 4 でデザインシステムを新規に作ると決めたときだけ行う。それ以外は Phase 6 へ進む。
 
 1. `ui-ux-pro-max:ui-ux-pro-max` でプロダクトの種類に合うスタイル・配色・書体を検索し、方向性を 3 案決める。3 案は配色の違いだけにせず、スタイル・書体・角丸と余白・動きの性格まで互いに変える
-2. 案ごとに、描く画面のうち主となる 1 画面を通常の状態だけ描く（`.tmp/spira-mockup/directions/<a|b|c>.html`。規約は [templates/mockup.md](templates/mockup.md)）
-3. [templates/proposal.md](templates/proposal.md) の「方向性の比較ページ」を Read し、`.tmp/spira-mockup/directions.html` を書いて「提案ページの公開」と同じ手順で公開する
+2. 案ごとに、描く画面のうち主となる 1 画面を通常の状態だけ描く（作業ディレクトリの `directions/<a|b|c>.html`。規約は [templates/mockup.md](templates/mockup.md)）
+3. [templates/proposal.md](templates/proposal.md) の「方向性の比較ページ」を Read し、作業ディレクトリの `directions.html` を書いて「提案ページの公開」と同じ手順で公開する
 4. 「方向性の比較ページ」の「チャットでの提示」どおりに URL を示し、1 案を選んでもらう
 
 | ユーザーの応答 | 行動 |
@@ -140,8 +147,8 @@ Phase 4 でデザインシステムを新規に作ると決めたときだけ行
 
 ### Phase 6: モックアップの作成
 
-1. 画面ごとに [templates/mockup.md](templates/mockup.md) を Read し、その規約どおりに `.tmp/spira-mockup/screens/<slug>.html` を書く
-2. [templates/proposal.md](templates/proposal.md) の「提案ページ」を Read し、その節どおりに `.tmp/spira-mockup/proposal.html` を書く。デザインシステムを新規に作る・拡張する場合と、動きを新規に決めた場合は、その節で実物を並べる
+1. 画面ごとに [templates/mockup.md](templates/mockup.md) を Read し、その規約どおりに作業ディレクトリの `screens/<slug>.html` を書く
+2. [templates/proposal.md](templates/proposal.md) の「提案ページ」を Read し、その節どおりに作業ディレクトリの `proposal.html` を書く。デザインシステムを新規に作る・拡張する場合と、動きを新規に決めた場合は、その節で実物を並べる
 3. 「提案ページの公開」に従って公開する
 4. 公開したページを自分で見直し、UX の指針とデザインシステムから外れた箇所・提案ページの節の抜けがあれば直して公開し直す
 
@@ -172,7 +179,7 @@ Phase 4 でデザインシステムを新規に作ると決めたときだけ行
    | `docs/development/design-system.md` | デザインシステムを新規に作った・コードから起こした・拡張した | [templates/design-system.md](templates/design-system.md) |
    | `docs/development/visualization.md` | 動きのパターンかデータの見せ方を新規に決めた・変えた | [templates/visualization.md](templates/visualization.md) |
 
-2. Skill ツールで `spira:update-doc` を呼び出す。引数には、上表で決めたファイルに承認された内容を反映することを渡す。モックアップの HTML は `.tmp/spira-mockup/screens/` の公開したファイルを写す（提案ページはリポジトリに置かない）。`docs/mockups/` の HTML はドキュメントとして扱うことも添える
+2. Skill ツールで `spira:update-doc` を呼び出す。引数には、上表で決めたファイルに承認された内容を反映することを渡す。モックアップの HTML は作業ディレクトリの `screens/` の公開したファイルを写す（引数には実際のパスを書く。提案ページはリポジトリに置かない）。`docs/mockups/` の HTML はドキュメントとして扱うことも添える
 3. **読み込まれた update-doc の手順を最後まで実行する**。ブランチ作成 → 編集 → PR 作成 → CI 監視 → マージまで自分で行う
 
 ### Phase 10: 完了報告

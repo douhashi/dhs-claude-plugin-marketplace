@@ -11,7 +11,7 @@
 | `docs/mockups/<画面の slug>.html` | 1 画面 1 ファイル。slug は英小文字・ハイフン（例: `login`, `notification-list`） |
 | `docs/mockups/README.md` | 画面の一覧（「一覧」節） |
 
-作業中は `.tmp/spira-mockup/screens/<画面の slug>.html` に置き、提案ページ（[proposal.md](proposal.md)）に埋め込んで見せる。承認後に同じ内容を `docs/mockups/` に写す。
+作業中は作業ディレクトリ（SKILL.md の「作業ディレクトリ」）の `screens/<画面の slug>.html` に置き、提案ページ（[proposal.md](proposal.md)）に埋め込んで見せる。承認後に同じ内容を `docs/mockups/` に写す。
 
 ## HTML の規約
 
