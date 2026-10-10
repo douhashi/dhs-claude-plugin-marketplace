@@ -322,6 +322,7 @@ URL: <url>
   - 今回の出来事は、対象 Issue を読んで主題と最大 3 行のサマリー（何が、どう変わったか）を書く
   - ループ対象の全体像は、対象 Issue 全件を順番・状態・メモの表で毎回末尾に出す
 - ラインはメインセッションの権限モードで走り、人と対話できないため、ループは `bypassPermissions` を前提とする（キックオフの案内で切り替える）
+- `bypassPermissions` でも、複数文をまとめた `bash -c` / `sh -c` は許可待ちになりうるため、context.md の「ライン規約」と `spira:implementer` / `spira:setup` の禁則事項がその形を禁じている
 - メインセッションはラインの完了通知を受けると、agentId・status・usage（トークン・ツール回数・所要時間）を `.tmp/spira-autopilot/lines/N.done` に書く。
   orchestrator はそれを終了の印として回収し、`state.md` の結果表に agentId・セッション ID・トークン・ツール・所要を残す
 - ラインの会話は `<CLAUDE_CONFIG_DIR>/projects/<slug>/<セッション ID>/subagents/agent-<agentId>.jsonl` に記録され、⚠️ / 🆘 の報告にはそのパスが添えられる
