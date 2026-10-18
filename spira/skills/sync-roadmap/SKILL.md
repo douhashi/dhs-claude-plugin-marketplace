@@ -23,6 +23,7 @@ allowed-tools: Read, Grep, Glob, Bash, Edit, Write
 
 - ユーザーが載せると決めていない Issue をロードマップに追加することは禁止
 - 未記載 Issue を載せる PR を、一覧を出す前、またはユーザーの返答を待たずに作成・マージすることは禁止
+- 載せるかどうか・位置の決定を本文のテキストで求めてターンを終えることは禁止。`AskUserQuestion` で聞く
 - `roadmap-pr.md` の「整合の規則」に無いチェック状態の変更・行の移動は禁止
 - 未完了行どうしの並べ替え・既存行の文言の書き換えは禁止
 - Issue 側（本文・ラベル・状態）の変更は禁止
@@ -48,7 +49,8 @@ BRANCH=$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)
 | 出力 | テンプレート |
 |:--|:--|
 | ロードマップの行・整合の規則・追加位置の決め方・PR | `${CLAUDE_PLUGIN_ROOT}/templates/roadmap-pr.md` |
-| 未記載 Issue の一覧 | [templates/roadmap-triage.md](templates/roadmap-triage.md) |
+| 未記載 Issue の一覧・問い | [templates/roadmap-triage.md](templates/roadmap-triage.md) |
+| 承認・選択の問いの共通規則 | `${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` |
 | コミット・PR の共通書式 | `${CLAUDE_PLUGIN_ROOT}/templates/commit-and-pr.md` |
 
 ## 手順
@@ -80,8 +82,8 @@ BRANCH=$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)
 2. **位置の案を作る**: 各 Issue の本文を `gh issue view <番号> --repo REPO` で読み、`roadmap-pr.md` の「追加位置の決め方」に従って案を作る。
    関係しそうな未完了行の Issue も、行の文言だけで判断できなければ本文を読んで確かめる
 3. **一覧を出して一緒に決める**: [templates/roadmap-triage.md](templates/roadmap-triage.md) を Read し、未記載の Issue を一覧で提示する。
-   どれを載せるか・どこに載せるかは**ユーザーが決める**。応答ごとの行動は同テンプレートの「進め方」に従う
-4. **PR を作ってマージする**: `載せる` と決まった Issue を、`roadmap-pr.md` の「整理」節と「PR の出し方」に従って 1 本の PR にまとめる
+   どれを載せるか・どこに載せるかは**ユーザーが決める**。同テンプレートの「問い」に従い、Issue ごとの問いと決まった内容の確認を `AskUserQuestion` で出す
+4. **PR を作ってマージする**: 確認の問いで `PR を作る` が選ばれたら、`載せる` と決まった Issue を、`roadmap-pr.md` の「整理」節と「PR の出し方」に従って 1 本の PR にまとめる
    - `載せる` が 0 件なら PR は作らない
    - CI 失敗・マージ不可のときは、PR を開いたまま残し、失敗したチェック名を Phase 4 の報告に書く
 
