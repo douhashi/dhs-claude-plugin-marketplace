@@ -95,6 +95,12 @@ gh issue list --repo REPO --label escalated --state open --json number,title \
    ```bash
    "${CLAUDE_PLUGIN_ROOT}/scripts/clean-line.sh" ROOT REPO N
    ```
+4. ✅ のときは、Orca のライン（ブランチ `*/impl-N`・表示名 `impl-N`）が残したワークツリーを Orca の登録ごと削除し、ローカル・リモートのブランチ `*/impl-N` も消す。
+   出力があれば「今回の出来事」に 🧹 として載せる（対象が無ければ何もせずに終わる。`N.done` があるラインだけが対象なので、走行中のラインには触れない）
+
+   ```bash
+   "${CLAUDE_PLUGIN_ROOT}/scripts/finish-line.sh" ROOT REPO N
+   ```
 
 **走っている場合**は、状態を Issue と PR から推定する（レポートの状態列に使う）。
 
@@ -274,6 +280,15 @@ gh issue view <escalated Issue> --repo REPO --json state --jq .state
 
 ブロッカーか `停止理由` があって走行中のラインが残っている間は `wait` とし、`次` の行に
 「人手対応待ちのため新しいラインは起動しません」と書く。
+
+#### 6-1. 完了したラインの片付け
+
+NEXT が `done` / `halt` のとき（走行中のラインが無いとき）、結果表で ✅ の Issue ごとに次を実行し、回収時に消し損ねたワークツリー・ブランチを片付ける。
+NEXT が `wait` のときは飛ばす（走行中のラインのワークツリーをまとめて消さないため）。出力があれば「今回の出来事」に 🧹 として載せる。
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/finish-line.sh" ROOT REPO N
+```
 
 ### 7. ロードマップの整合修正
 

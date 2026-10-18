@@ -354,12 +354,13 @@ Orca の中（`ORCA_PANE_KEY` があるセッション）で autopilot を実行
 - 起動したラインの claude は Orca の設定で権限確認なし（`--dangerously-skip-permissions`）で走る前提。Orca の設定で無効にしていると、ラインは許可待ちで止まる
 - ラインの終了は `orca orchestration check --wait --types "worker_done,escalation,question"` を `run_in_background` の Bash で待って知る（ポーリングのスクリプトは使わない）
 - ラインは Orca が指示の先頭に差し込む前置きのコマンドで `worker_done` を送る。Issue が CLOSED なら `succeeded`、人手対応待ち・CI 修正打ち切り（escalated）・その他は `failed`。`ask` は使わず、判断は `spira:do` の PO に任せる（`question` が届いたら、メインセッションは「自分で判断して進めよ」と返す）
-- `worker_done` を受けたら `lines/N.done` を書き（`agentId`・usage は `—`、`status` は outcome、`dispatch`・`worktree` を記録）、`worker-release` でそのラインのターミナルを閉じる（ワークツリーは残る）
+- `worker_done` を受けたら `lines/N.done` を書き（`agentId`・usage は `—`、`status` は outcome、`dispatch`・`worktree` を記録）、`worker-release` でそのラインのターミナルを閉じる（ワークツリーはここでは残る）
 - 印を残さずに止まったラインは、空の待機が 3 回続いたら `worker-list` を見て、`projection.liveness` が `exited` のときだけ ⚠️ として回収する（`unverifiable` は待ち続ける）
 - 結果表の `ワークツリー` にラインが走ったワークツリーのパスが残り、⚠️ / 🆘 の報告にはそのパスが添えられる
 - ⚠️ の再試行はワークツリーを残して使い回す。`clean-line.sh` は `*/impl-N` の Open PR を閉じ、ワークツリーを既定ブランチに `reset --hard` で戻す。
   メインセッションは表示名 `impl-<N>` のワークツリーがあれば `--worktree name:impl-<N>` で起動する（そのため失敗したラインの作業内容はローカルからも消える）
-- Orca のワークツリー（`impl-<N>`）は自動では削除しない。ループが終わったら、要らないものを Orca から手動で削除する
+- ✅ のラインは、orchestrator が回収時に `finish-line.sh` でワークツリー `impl-<N>` を Orca の登録ごと削除し、ローカル・リモートのブランチ `*/impl-<N>` も消す（スカッシュマージでは Orca がブランチを残すため）。
+  ループが終わる見回り（`done` / `halt`）では、結果表で ✅ のラインの残りをまとめて片付ける。走行中のラインがある見回りではまとめて削除しない
 
 出力の書式は `skills/autopilot/templates/` で定義しています。
 
@@ -429,7 +430,8 @@ spira/
 │   ├── roadmap-pr.md      # ロードマップの行・追加位置・整合の規則・PR（sync-roadmap / orchestrator 共通）
 │   └── completion-report.md
 ├── scripts/
-│   └── clean-line.sh      # 中断・失敗したラインの impl-N（worktree・ブランチ・未マージ PR）を片付ける。Orca の */impl-N はワークツリーを残して既定ブランチに戻す（autopilot / orchestrator 共通）
+│   ├── clean-line.sh      # 中断・失敗したラインの impl-N（worktree・ブランチ・未マージ PR）を片付ける。Orca の */impl-N はワークツリーを残して既定ブランチに戻す（autopilot / orchestrator 共通）
+│   └── finish-line.sh     # 完了した Orca のラインのワークツリー impl-N を Orca の登録ごと削除し、ブランチ */impl-N をローカル・リモートとも消す（orchestrator）
 └── README.md
 ```
 

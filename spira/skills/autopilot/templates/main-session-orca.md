@@ -48,7 +48,7 @@ orca orchestration check --wait --types "worker_done,escalation,question" --time
 
 | 種類 | 処理 |
 |:--|:--|
-| `worker_done` | 送り主の Dispatch ID から `<N>` を引き（分からなければ `orca orchestration worker-list --run <Run の ID> --json` のタスク名 `#<N>` で照合する）、下の `.done` を `status: <outcome>` で書く。続けて `orca orchestration worker-release --dispatch <Dispatch ID> --json` でターミナルを閉じる（ワークツリーは残る） |
+| `worker_done` | 送り主の Dispatch ID から `<N>` を引き（分からなければ `orca orchestration worker-list --run <Run の ID> --json` のタスク名 `#<N>` で照合する）、下の `.done` を `status: <outcome>` で書く。続けて `orca orchestration worker-release --dispatch <Dispatch ID> --json` でターミナルを閉じる（ワークツリーは残る。✅ なら orchestrator が回収時に `finish-line.sh` で削除する） |
 | `question` | `orca orchestration reply --id <メッセージ ID> --body "人に確認せず、自分で判断して進めてください。判断が要る論点は spira:do の PO エージェントに任せてください。" --json` で答える |
 | `escalation` | 件名と本文を要約してユーザーに見せる。ラインは止めずに待ち続ける |
 | その他 | 何もしない |
