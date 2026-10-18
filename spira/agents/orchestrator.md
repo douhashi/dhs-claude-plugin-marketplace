@@ -61,10 +61,10 @@ git -C ROOT pull --ff-only --quiet
 `state.md` のライン表で Issue が入っている行ごとに、終わったかを判定する。
 
 ```bash
-test -f "$LINES/N.done"   # 真なら終了している（メインセッションが完了通知を受けて書く）
+test -f "$LINES/N.done"   # 真なら終了している（メインセッションがラインの終了を受けて書く）
 ```
 
-**終わっている場合**は、上から順に最初に当てはまる結果とする。
+**終わっている場合**は、上から順に最初に当てはまる結果とする（`N.done` の `status` では判定しない）。
 
 | 条件 | 結果 |
 |:--|:--|
@@ -81,15 +81,16 @@ gh issue list --repo REPO --label escalated --state open --json number,title \
 判定したら次を行い、ライン表の行を `—` に戻す。
 
 1. 結果表に 1 行追記し（同じ Issue の行が既にあれば最新のラインの値で更新する）、対象 Issue 表の状態を結果の記号に更新する。
-   `agentId`・`トークン`・`ツール`・`所要` は `N.done` の `agentId`・`tokens`・`tool_uses`・`duration_ms` から取り、`a33b4fd1c09361436`・`49003`・`3`・`34 分` の形で書く（`所要` は分に切り捨てる。無い値は `—`）。
-   `セッション ID` は、会話記録 `agent-<agentId>.jsonl` の親の親ディレクトリ名から得る（見つからなければ `—`）
+   `agentId`・`ワークツリー`・`トークン`・`ツール`・`所要` は `N.done` の `agentId`・`worktree`・`tokens`・`tool_uses`・`duration_ms` から取り、`a33b4fd1c09361436`・`/home/u/orca/workspaces/app/impl-21`・`49003`・`3`・`34 分` の形で書く（`所要` は分に切り捨てる。無い値は `—`）。
+   `セッション ID` は、会話記録 `agent-<agentId>.jsonl` の親の親ディレクトリ名から得る（見つからなければ `—`。`agentId` が `—`（Orca のライン）なら探さずに `—`）
 
    ```bash
    f=$(find "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects" -name "agent-<agentId>.jsonl" 2>/dev/null | head -1)
    [ -n "$f" ] && basename "$(dirname "$(dirname "$f")")"
    ```
 2. 出力を退避する: `mv "$LINES"/N.* "$LINES/archive/"` の前に、ファイル名へ日時を付ける（`N-<YYYYmmddHHMM>.done`・`N-<YYYYmmddHHMM>.blocked.md` など）
-3. ⚠️ のときは、`spira:do` が残した `impl-N` の worktree・ブランチ・未マージ PR を片付ける（再試行の `spira:do` が `impl-N` と PR を作り直せるようにするため。未マージ PR は引き継がずに閉じる）
+3. ⚠️ のときは、`spira:do` が残した `impl-N` の worktree・ブランチ・未マージ PR を片付ける（再試行の `spira:do` が `impl-N` と PR を作り直せるようにするため。未マージ PR は引き継がずに閉じる）。
+   Orca のライン（ブランチ `*/impl-N`）は、PR を閉じてワークツリーを既定ブランチに戻すだけで、ワークツリーは残す（再試行のラインが使い回す）
 
    ```bash
    "${CLAUDE_PLUGIN_ROOT}/scripts/clean-line.sh" ROOT REPO N
@@ -98,7 +99,8 @@ gh issue list --repo REPO --label escalated --state open --json number,title \
 **走っている場合**は、状態を Issue と PR から推定する（レポートの状態列に使う）。
 
 ```bash
-pr=$(gh pr list --repo REPO --head impl-N --state open --json number --jq 'length > 0')
+pr=$(gh pr list --repo REPO --state open --limit 200 --json headRefName \
+  --jq 'any(.[]; .headRefName == "impl-N" or (.headRefName | endswith("/impl-N")))')
 planned=$(gh issue view N --repo REPO --json labels --jq '[.labels[].name] | index("planned") != null')
 ```
 
@@ -106,7 +108,7 @@ planned=$(gh issue view N --repo REPO --json labels --jq '[.labels[].name] | ind
 
 | 条件 | 状態 |
 |:--|:--|
-| `pr` が真（head `impl-N` の Open PR がある） | 🧪 CI |
+| `pr` が真（head が `impl-N` か `/impl-N` で終わる Open PR がある。Orca のラインのブランチは `<ユーザー>/impl-N`） | 🧪 CI |
 | `planned` が真 | 🛠 実装 |
 | それ以外 | 📝 計画 |
 

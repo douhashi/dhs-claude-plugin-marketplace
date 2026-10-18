@@ -100,7 +100,7 @@ dhs-claude-plugin-marketplace/
 │   │   ├── roadmap-pr.md
 │   │   └── completion-report.md
 │   ├── scripts/               # スキル・エージェントが共有するシェルスクリプト
-│   │   └── clean-line.sh      # 中断・失敗したラインの impl-N を片付ける（autopilot / orchestrator 共通）
+│   │   └── clean-line.sh      # 中断・失敗したラインの impl-N を片付ける。Orca の */impl-N はワークツリーを残して既定ブランチに戻す（autopilot / orchestrator 共通）
 │   └── README.md
 ├── docs/
 │   ├── plugin-spec.md

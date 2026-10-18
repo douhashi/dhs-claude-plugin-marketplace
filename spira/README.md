@@ -286,7 +286,8 @@ URL: <url>
 
 1. **最新化** — デフォルトブランチを `git pull`
    - **中断したラインの片付け** — 前回の `state.md` のライン表に残った Issue（Open で、`#N の CI 失敗` の escalated Issue が無いもの）だけ、
-     `impl-N` の worktree・ブランチ・未マージ PR を `scripts/clean-line.sh` で片付ける（未マージ PR は閉じてやり直す。計画は残して再利用する）
+     `impl-N` の worktree・ブランチ・未マージ PR を `scripts/clean-line.sh` で片付ける（未マージ PR は閉じてやり直す。計画は残して再利用する。
+     Orca のライン（ブランチ `*/impl-N`）はワークツリーを残し、既定ブランチに戻す）
 2. **確認** — ロードマップと Open Issue から着手見込みと依存を把握
 3. **前提条件の検査** — 欠けていたら案内して終了
    - gh 認証・origin
@@ -299,7 +300,8 @@ URL: <url>
 4. **ロードマップの整理** — `spira:sync-roadmap` を呼び出し、Issue の状態とずれたチェック状態・完了行の置き場所を直す PR と、
    ユーザーと決めた未記載 Open Issue を載せる PR をマージする。載せないと決まったものは今回のループの対象外として記録する
    （ロードマップが無い場合は整理を飛ばし、着手順は番号順になる）
-5. **書き出し** — `.tmp/spira-autopilot/context.md`（ルール・進め方）と `state.md`（状態）
+5. **書き出し** — `.tmp/spira-autopilot/context.md`（ルール・進め方）と `state.md`（状態）。
+   「メインセッションの進め方」は `ORCA_PANE_KEY` の有無で、サブエージェント版か Orca 版を書き出す
 6. **案内** — ループ前の `bypassPermissions` への切り替えと、`/clear` 後に実行するプロンプトを提示
 
 ```bash
@@ -311,14 +313,14 @@ URL: <url>
 
 #### ループの仕組み
 
-メインセッションは `spira:orchestrator` を呼んで報告を表示し、報告が指すラインを起動して完了通知を待つだけを繰り返します。
+メインセッションは `spira:orchestrator` を呼んで報告を表示し、報告が指すラインを起動してラインの終了を待つだけを繰り返します。
 状態はすべて `.tmp/spira-autopilot/` にあるため、`/clear` しても続きから再開できます。
 
 | 担当 | やること |
 |:--|:--|
-| メインセッション | orchestrator の起動 → 報告の表示 → `LAUNCH:` 行のラインを起動 → 完了通知を待って `lines/N.done` に記録（`NEXT: wait / halt / done`） |
+| メインセッション | orchestrator の起動 → 報告の表示 → `LAUNCH:` 行のラインを起動 → ラインの終了を待って `lines/N.done` に記録（`NEXT: wait / halt / done`） |
 | `spira:orchestrator` | 終わったラインの回収 → 見つかった Issue の判定とロードマップ PR → ブロッカーの再確認 → `spira:pick --exclude` で選んで依存を確認 → ラインの起動を `LAUNCH:` 行で依頼 → ループの終わりならロードマップの整合修正 → 進捗を表で報告 |
-| ライン | メインセッションが起動するバックグラウンドの `general-purpose` サブエージェント。context.md の「ライン規約」に従い `spira:do` を最後まで実行 |
+| ライン | メインセッションが起動するバックグラウンドの `general-purpose` サブエージェント（Orca 管理下では Orca の監督つきワーカー。下の「Orca 管理下のライン」）。context.md の「ライン規約」に従い `spira:do` を最後まで実行 |
 
 - 同時に走るラインは最大 5 本（`--lines <N>` で変更できる。値は `context.md` の最大ライン数に書き出される）。依存が未完了の Issue は見送る
 - 進捗レポートは「現在のライン → 今回の出来事 → 次 → ループ対象の全体像」の順
@@ -326,11 +328,11 @@ URL: <url>
   - ループ対象の全体像は、対象 Issue 全件を順番・状態・メモの表で毎回末尾に出す
 - ラインはメインセッションの権限モードで走り、人と対話できないため、ループは `bypassPermissions` を前提とする（キックオフの案内で切り替える）
 - `bypassPermissions` でも、複数文をまとめた `bash -c` / `sh -c` は許可待ちになりうるため、context.md の「ライン規約」と `spira:implementer` / `spira:setup` の禁則事項がその形を禁じている
-- メインセッションはラインの完了通知を受けると、agentId・status・usage（トークン・ツール回数・所要時間）を `.tmp/spira-autopilot/lines/N.done` に書く。
+- サブエージェントのラインでは、メインセッションがラインの完了通知を受けると、agentId・status・usage（トークン・ツール回数・所要時間）を `.tmp/spira-autopilot/lines/N.done` に書く。
   orchestrator はそれを終了の印として回収し、`state.md` の結果表に agentId・セッション ID・トークン・ツール・所要を残す
-- ラインの会話は `<CLAUDE_CONFIG_DIR>/projects/<slug>/<セッション ID>/subagents/agent-<agentId>.jsonl` に記録され、⚠️ / 🆘 の報告にはそのパスが添えられる
+- サブエージェントのラインの会話は `<CLAUDE_CONFIG_DIR>/projects/<slug>/<セッション ID>/subagents/agent-<agentId>.jsonl` に記録され、⚠️ / 🆘 の報告にはそのパスが添えられる
 - ⚠️（完了せずに終わった）ラインは、再試行の前に `spira:do` が残した `impl-N` の worktree・ブランチ・未マージ PR を `scripts/clean-line.sh` で片付ける
-- 走行中のラインが 🧪 CI かどうかは、`## PR 作成` コメントではなく head `impl-N` の Open PR の有無で判定する
+- 走行中のラインが 🧪 CI かどうかは、`## PR 作成` コメントではなく head が `impl-N`（Orca のラインは `/impl-N` で終わるブランチ）の Open PR の有無で判定する
 - 並行するラインの Issue コメント・本文は、Issue 番号付きの一時ファイル（`.tmp/spira-comment-<Issue 番号>.md` など）を経て投稿するため衝突しない
 - 人の手による設定が必要になったライン（setup が止まった場合を含む）は、シークレットの置き場所（Infisical または `.env`）にプレースホルダを作り Issue に `## 人手対応待ち` を残して止まる。
   orchestrator は新しいラインを起動せず、走行中のラインが終わったら埋める手順を案内してループを終了する
@@ -344,11 +346,27 @@ URL: <url>
   - 続けられない: 原因がデフォルトブランチ側にありどのラインでも同じ失敗が起きる／同じ原因の失敗が複数の Issue で起きている／未完了の Issue がすべてそれに依存している
   - 続けられないと判定したら新しいラインを起動せず、走行中のラインが終わってから手順を案内して終了する。escalated Issue がクローズされれば続きから再開できる
 
+#### Orca 管理下のライン
+
+Orca の中（`ORCA_PANE_KEY` があるセッション）で autopilot を実行すると、ラインは `orca orchestration` の監督つきワーカーとして Orca 上で走ります。
+
+- メインセッションは Run を 1 つ作り（`run-create`）、ラインごとに `worker-start --worktree new-top-level --name impl-<N> --agent claude` で起動し、`orca worktree set --issue` で Issue を紐付ける
+- 起動したラインの claude は Orca の設定で権限確認なし（`--dangerously-skip-permissions`）で走る前提。Orca の設定で無効にしていると、ラインは許可待ちで止まる
+- ラインの終了は `orca orchestration check --wait --types "worker_done,escalation,question"` を `run_in_background` の Bash で待って知る（ポーリングのスクリプトは使わない）
+- ラインは Orca が指示の先頭に差し込む前置きのコマンドで `worker_done` を送る。Issue が CLOSED なら `succeeded`、人手対応待ち・CI 修正打ち切り（escalated）・その他は `failed`。`ask` は使わず、判断は `spira:do` の PO に任せる（`question` が届いたら、メインセッションは「自分で判断して進めよ」と返す）
+- `worker_done` を受けたら `lines/N.done` を書き（`agentId`・usage は `—`、`status` は outcome、`dispatch`・`worktree` を記録）、`worker-release` でそのラインのターミナルを閉じる（ワークツリーは残る）
+- 印を残さずに止まったラインは、空の待機が 3 回続いたら `worker-list` を見て、`projection.liveness` が `exited` のときだけ ⚠️ として回収する（`unverifiable` は待ち続ける）
+- 結果表の `ワークツリー` にラインが走ったワークツリーのパスが残り、⚠️ / 🆘 の報告にはそのパスが添えられる
+- ⚠️ の再試行はワークツリーを残して使い回す。`clean-line.sh` は `*/impl-N` の Open PR を閉じ、ワークツリーを既定ブランチに `reset --hard` で戻す。
+  メインセッションは表示名 `impl-<N>` のワークツリーがあれば `--worktree name:impl-<N>` で起動する（そのため失敗したラインの作業内容はローカルからも消える）
+- Orca のワークツリー（`impl-<N>`）は自動では削除しない。ループが終わったら、要らないものを Orca から手動で削除する
+
 出力の書式は `skills/autopilot/templates/` で定義しています。
 
 | 出力 | テンプレート |
 |:--|:--|
 | ループのコンテキスト | `context.md` |
+| メインセッションの進め方 | `main-session-subagent.md`（サブエージェント版）／ `main-session-orca.md`（Orca 版） |
 | ループの状態 | `state.md` |
 | キックオフ報告 | `kickoff-report.md` |
 | 進捗レポート | `progress-report.md` |
@@ -411,7 +429,7 @@ spira/
 │   ├── roadmap-pr.md      # ロードマップの行・追加位置・整合の規則・PR（sync-roadmap / orchestrator 共通）
 │   └── completion-report.md
 ├── scripts/
-│   └── clean-line.sh      # 中断・失敗したラインの impl-N（worktree・ブランチ・未マージ PR）を片付ける（autopilot / orchestrator 共通）
+│   └── clean-line.sh      # 中断・失敗したラインの impl-N（worktree・ブランチ・未マージ PR）を片付ける。Orca の */impl-N はワークツリーを残して既定ブランチに戻す（autopilot / orchestrator 共通）
 └── README.md
 ```
 
