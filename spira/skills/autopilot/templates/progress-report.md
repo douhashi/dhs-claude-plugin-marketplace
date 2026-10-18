@@ -47,6 +47,7 @@
 ⚠️ / 🆘 は、サマリーの後にラインの会話記録のパスを 1 行足す。`<記録パス>` は結果表の `agentId`（🆘 は元 Issue の行）から
 `find "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects" -name "agent-<agentId>.jsonl"` で得た絶対パス
 （`.../<セッション ID>/subagents/agent-<agentId>.jsonl`）。
+Orca のライン（`agentId` が `—`）は、結果表の `ワークツリー` のパスを `<記録パス>` にする（会話は Orca のそのワークツリーで読む）。
 
 ```markdown
 > 調べる: `<記録パス>`

@@ -1,7 +1,8 @@
 # テンプレート: 自走開発のコンテキスト
 
 - **書き手**: autopilot スキル（`.tmp/spira-autopilot/context.md` に書き出す）
-- **読み手**: `/clear` 後のメインセッション、orchestrator エージェント、各ライン（メインセッションが起動するサブエージェント）
+- **読み手**: `/clear` 後のメインセッション、orchestrator エージェント、各ライン（メインセッションが起動するサブエージェント、または Orca のワーカー）
+- `{{MAIN_SESSION}}` は、autopilot スキルの Phase 5 で選んだ版（[main-session-subagent.md](./main-session-subagent.md) か [main-session-orca.md](./main-session-orca.md)）で埋める。入れた中の `{{...}}` も埋める
 - `{{...}}` はすべて埋める。埋められない値があれば書き出さずに報告する
 - 下の `---` 以降をそのまま書き出す
 
@@ -40,37 +41,7 @@
 8. **`escalated` Issue は自走では扱わない**（ループ開始前からあるものも含む）。ループ中に見つかっても、止めるのは自走を続けられないときだけ。他の Issue を進められるなら、見送って続ける
 9. **ロードマップは常に現状を表す**。キックオフ時点でロードマップのずれは直し、未記載の Issue は整理済み。orchestrator はループ中、見つかった不具合の行の追加だけを PR にする。チェック状態の修正と完了行の完了節への移動は、ループが終わるとき（NEXT が done / halt）に 1 本の PR にまとめてマージする
 
-## メインセッションの進め方
-
-メインセッションは**開発も判断もしない**。オーケストレータを呼び、報告を見せ、ラインを起動し、完了通知を待つだけを繰り返す。
-権限モードは `bypassPermissions` を前提とする（ラインはメインセッションの権限モードで走り、人と対話できない）。
-
-1. Agent ツールで `subagent_type: "spira:orchestrator"` を起動する
-   - prompt: `{{ROOT}}/.tmp/spira-autopilot/context.md に従い、見回りを 1 回行って進捗レポートを返してください。`
-2. 返ってきた進捗レポートを**手を加えずに**ユーザーへ表示する（`LAUNCH:` 行と最終行の `NEXT:` 行は除く）
-3. `LAUNCH: <N> <Issue URL>` 行ごとに、Agent ツールでラインを起動する（1 つのメッセージでまとめて起動してよい）
-   - `subagent_type: "general-purpose"`、`run_in_background: true`、description: `ライン #<N>`
-   - prompt: `{{ROOT}}/.tmp/spira-autopilot/context.md の「ライン規約」を Read して従ったうえで、spira:do スキルを引数 <Issue URL> で実行し、最後まで進めてください。`
-   - 起動結果の agentId と `<N>` の対応を覚えておく
-4. レポート最終行の `NEXT:` で分岐する
-
-| NEXT | 行動 |
-|:--|:--|
-| `wait` | ラインの完了通知を待つ。通知を受けたら下の `.done` を書いて 1 に戻る |
-| `halt` | ループを終了する（人の手が必要な設定、または自走を続けられないエスカレーションがある。レポートに手順が書かれている） |
-| `done` | ループを終了する（進められる Issue が無い） |
-
-完了通知を受けたら、その agentId に対応する `<N>` について `{{ROOT}}/.tmp/spira-autopilot/lines/<N>.done` を次の形で書く（通知に無い値は `—`）。
-
-```
-agentId: <agentId>
-status: <通知の status>
-tokens: <usage のトークン数（subagent_tokens）>
-tool_uses: <usage の tool_uses>
-duration_ms: <usage の duration_ms>
-```
-
-ユーザーから停止を指示されたら、新しいラインを起動せずに終了する（走行中のラインは止めない）。
+{{MAIN_SESSION}}
 
 ## ライン規約
 

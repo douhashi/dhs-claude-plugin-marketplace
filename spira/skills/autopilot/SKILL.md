@@ -105,6 +105,7 @@ DIR="$ROOT/.tmp/spira-autopilot"
 
 前回のループが途中で終わると、ラインが残した `impl-N` の worktree・ブランチ・未マージ PR が再着手を妨げる。
 前回の `state.md` に記録されたラインだけを片付け、未マージ PR は引き継がずに閉じてやり直す。
+Orca のライン（ブランチ `*/impl-N`）のワークツリーは削除せず、既定ブランチに戻して再試行で使い回す。
 
 1. `$DIR/state.md` が無ければ、この Phase を飛ばす
 2. ライン表で Issue が入っている行（`—` でない行）のうち、次の両方を満たす Issue を対象とする
@@ -209,6 +210,7 @@ Infisical が使えるかを検査する。
 
 1. `mkdir -p "$DIR/lines/archive"` を実行する
 2. [context.md](templates/context.md) を Read し、`{{...}}` をすべて埋めて `$DIR/context.md` に書き出す
+   - `{{MAIN_SESSION}}` には、ラインの起動方法に合う版を入れる。`[ -n "$ORCA_PANE_KEY" ]` が真（Orca 管理下）なら [main-session-orca.md](templates/main-session-orca.md)、偽なら [main-session-subagent.md](templates/main-session-subagent.md) を Read し、`---` 以降（前後の空行を除く）を入れる
    - `{{PLUGIN_ROOT}}` には `${CLAUDE_PLUGIN_ROOT}` の展開後の絶対パスを入れる
    - `{{STORE}}` / `{{ENV}}` / `{{ENV_FILE}}` には Phase 3 で確定させた値を入れる（使わない方は `—`）
    - `{{CREATED_AT}}` には `date -u +%Y-%m-%dT%H:%M:%SZ` の値を入れる（GitHub の `createdAt` と比較するため UTC）
