@@ -87,7 +87,7 @@ dhs-claude-plugin-marketplace/
 │   │   └── setup.md
 │   ├── hooks/
 │   │   └── hooks.json
-│   ├── templates/             # Issue 本文・コメント・コミット/PR のテンプレート（SSoT）
+│   ├── templates/             # Issue 本文・コメント・コミット/PR・承認の問いのテンプレート（SSoT）
 │   │   ├── _rules.md
 │   │   ├── issue-body.md
 │   │   ├── commit-and-pr.md
@@ -98,6 +98,7 @@ dhs-claude-plugin-marketplace/
 │   │   ├── qa-result.md
 │   │   ├── blocked.md
 │   │   ├── roadmap-pr.md
+│   │   ├── ask-user-question.md  # 承認・選択を AskUserQuestion で聞くときの共通規則
 │   │   └── completion-report.md
 │   ├── scripts/               # スキル・エージェントが共有するシェルスクリプト
 │   │   ├── clean-line.sh      # 中断・失敗したラインの impl-N を片付ける。Orca の */impl-N はワークツリーを残して既定ブランチに戻す（autopilot / orchestrator 共通）
@@ -121,6 +122,10 @@ dhs-claude-plugin-marketplace/
 - 出力の書式・分量の定義は SKILL.md 本文に直書きせず、テンプレートファイルに分離する
   - 複数スキル／エージェントで共有する書式（Issue 本文・コメント・ロードマップ PR）は `spira/templates/` に置き、`${CLAUDE_PLUGIN_ROOT}/templates/<name>.md` で参照する
   - 単一スキル専用の書式は `spira/skills/<skill>/templates/` に置き、相対 markdown リンクで参照する
+- ユーザーの承認・選択を待つ箇所は、表や提案を本文に出し、問いだけを `AskUserQuestion` で聞く。本文のテキストで聞いてターンを終えない
+  - 問いの共通規則（問いの数・選択肢の数・`header` の長さ・推奨の置き方・`Other` の扱い）と、複数スキルで同じ形になる問い（未コミットの変更の確認）は `spira/templates/ask-user-question.md` に置く
+  - 各スキルの問いの文・選択肢・回答ごとの行動は、そのスキルのテンプレートに「問い」の節として置く
+  - `allowed-tools` に `AskUserQuestion` を足さない（許可なしで使えるツールであり、足さなくても呼び出せる）
 - スキルが判断に使う材料（例: architect のアーキテクチャセット）は `spira/skills/<skill>/sets/` に置き、出力の書式を置く `templates/` と分ける
 
 ## エージェント設計方針

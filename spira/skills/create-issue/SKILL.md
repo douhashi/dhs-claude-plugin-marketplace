@@ -30,7 +30,8 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 - Conventional Commits スタイルから外れたタイトルでの起票は禁止（`<type>(<scope>): <説明>`）
 - 独自の省略形・造語・比喩で語ることは禁止。用語はコードベース／ドキュメントに実在する語だけを使う
 - 承認を求める段階で本文の全文を提示することは禁止（ユーザーが求めた Issue の分だけ提示する）
-- 作成予定 Issue 一覧の表の外に、承認を求める 1 文と「先に決着が必要な論点」「既存の Open Issue との関係」を超える説明を書くことは禁止
+- 作成予定 Issue 一覧の表の外に、「先に決着が必要な論点」「既存の Open Issue との関係」を超える説明を書くことは禁止
+- 承認を本文のテキストで求めてターンを終えることは禁止。承認は `AskUserQuestion` で求める
 - 既存の Open Issue との依存を確かめずに作成予定 Issue 一覧を提示することは禁止
 - ファイルの作成・書き換えは禁止（`.tmp/` 配下の投稿用一時ファイルを除く）
 - ロードマップの変更・ロードマップへの追記の提案は禁止（`spira:sync-roadmap` の責務）
@@ -55,7 +56,8 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 
 | 出力 | テンプレート | 上限 |
 |:--|:--|--:|
-| 作成予定 Issue 一覧 | [templates/issue-plan.md](templates/issue-plan.md) | — |
+| 作成予定 Issue 一覧・承認の問い | [templates/issue-plan.md](templates/issue-plan.md) | — |
+| 承認・選択の問いの共通規則 | `${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` | — |
 | Issue 本文 | `${CLAUDE_PLUGIN_ROOT}/templates/issue-body.md` | 1,500 字 |
 | 共通ルール | `${CLAUDE_PLUGIN_ROOT}/templates/_rules.md` | — |
 
@@ -86,13 +88,12 @@ gh issue list --state open --limit 200 --json number,title,body,labels
 
 ### Phase 2: 作成予定 Issue の提示と承認
 
-`templates/issue-plan.md` を Read し、作成予定の Issue を一覧表で提示する。
-表の後に、承認を求める 1 文を添える。Phase 1 で外した項目があれば、
+`templates/issue-plan.md` を Read し、作成予定の Issue を一覧表で提示する。Phase 1 で外した項目があれば、
 同テンプレートの「起票しない項目の扱い」に従って先に決着が必要な論点を続ける。
 Phase 1.5 で逆向きの依存・重複を見つけた場合は、同テンプレートの「既存の Open Issue との関係」に従って続ける。それ以外は書かない。
 
-**ユーザーの承認が得られるまで Phase 3 に進まない。** 応答ごとの行動は
-`templates/issue-plan.md` の「承認の扱い」に従う。
+続けて、同テンプレートの「承認の扱い」の問いを `AskUserQuestion` で出す（共通規則は `${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md`）。
+**ユーザーの承認が得られるまで Phase 3 に進まない。** 回答ごとの行動は「承認の扱い」に従う。
 
 ### Phase 3: テンプレートの読み込み
 
