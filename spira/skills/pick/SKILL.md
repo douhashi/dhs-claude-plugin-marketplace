@@ -44,18 +44,18 @@ gh repo view --json nameWithOwner --jq .nameWithOwner
 
 ### Issue 抽出コマンド
 
-`gh search issues` を使い、以下の条件で取得します。JSON で取得し、`EXCLUDE` に含まれない最初の 1 件の `number`・`title`・`url` を抽出します。
+`gh issue list` を使い、以下の条件で取得します。JSON で取得し、`EXCLUDE` に含まれない最初の 1 件の `number`・`title`・`url` を抽出します。
 
 | 優先度 | フィルタ | ソート |
 |---|---|---|
-| 1 | `is:issue is:open repo:REPO label:escalated` | `sort:created-asc`（番号が若い順） |
+| 1 | `--state open --label escalated` | `--search "sort:created-asc"`（番号が若い順） |
 | 2 | ロードマップの並び（下記） | ロードマップの記載順 |
-| 3 | `is:issue is:open repo:REPO` | `sort:created-asc`（番号が若い順） |
+| 3 | `--state open` | `--search "sort:created-asc"`（番号が若い順） |
 
 ```
-gh search issues --limit 100 --json number,title,url \
-  --jq '[.[] | select(.number as $n | EXCLUDE | index($n) | not)] | first // empty' \
-  -- "is:issue is:open repo:REPO label:escalated sort:created-asc"
+gh issue list --repo REPO --state open --label escalated --search "sort:created-asc" \
+  --limit 100 --json number,title,url \
+  --jq '[.[] | select(.number as $n | EXCLUDE | index($n) | not)] | first // empty'
 ```
 
 ### ロードマップの探索
@@ -84,9 +84,9 @@ find docs -name roadmap.md -type f 2>/dev/null | head -1
 1. **リポジトリ識別**: `gh repo view --json nameWithOwner --jq .nameWithOwner` で `REPO` を取得する
 2. **escalated 優先抽出**: 以下を実行し、結果が空でなければ「優先度: escalated」として手順 4 に進む
    ```
-   gh search issues --limit 100 --json number,title,url \
-     --jq '[.[] | select(.number as $n | EXCLUDE | index($n) | not)] | first // empty' \
-     -- "is:issue is:open repo:REPO label:escalated sort:created-asc"
+   gh issue list --repo REPO --state open --label escalated --search "sort:created-asc" \
+     --limit 100 --json number,title,url \
+     --jq '[.[] | select(.number as $n | EXCLUDE | index($n) | not)] | first // empty'
    ```
 3. **ロードマップ抽出**: escalated が 0 件の場合、`docs/` 配下の `roadmap.md` を探す。
    見つかった場合、未完了行の `→ #<番号>` を上から順に見て、Open な Issue として実在する
@@ -98,9 +98,9 @@ find docs -name roadmap.md -type f 2>/dev/null | head -1
    ロードマップが無い場合、または未完了行に Open な Issue が 1 件も無い場合は手順 4 に進む。
 4. **通常抽出**: 以下を実行する
    ```
-   gh search issues --limit 100 --json number,title,url \
-     --jq '[.[] | select(.number as $n | EXCLUDE | index($n) | not)] | first // empty' \
-     -- "is:issue is:open repo:REPO sort:created-asc"
+   gh issue list --repo REPO --state open --search "sort:created-asc" \
+     --limit 100 --json number,title,url \
+     --jq '[.[] | select(.number as $n | EXCLUDE | index($n) | not)] | first // empty'
    ```
    結果が空でなければ「優先度: normal」として手順 5 に進む。
    結果も空であれば「対応すべき Issue がありません」とユーザーに伝えて終了する。
