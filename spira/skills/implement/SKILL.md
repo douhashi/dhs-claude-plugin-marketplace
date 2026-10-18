@@ -85,16 +85,34 @@ gh issue comment ISSUE_URL --body-file .tmp/spira-comment-ISSUE_NO.md
 - `## CI 修正打ち切り`
 - `## 完了報告`
 
-### ワークツリーの作成
+### 作業場所の決定
 
-実装作業の前に、ワークツリーを作成する。
+実装作業の前に、作業するワークツリー `WORK_DIR` とブランチ `WORK_BRANCH` を決める。
+まず、起動したディレクトリがリポジトリ本体のチェックアウトか、本体以外のワークツリーかを判定する。**コマンドは必ず分けて実行すること。**
+
+1. `git rev-parse --path-format=absolute --git-dir`
+2. `git rev-parse --path-format=absolute --git-common-dir`
+
+2 つの出力が同じなら**本体モード**、異なれば**起動元モード**とする。
+
+**本体モード**（本体のチェックアウトで起動された場合）: ワークツリーを作成する。
 
 ```
 git worktree add ../REPOSITORY-impl-ISSUE_NO -b impl-ISSUE_NO
 ```
 
+`WORK_DIR` は `../REPOSITORY-impl-ISSUE_NO`、`WORK_BRANCH` は `impl-ISSUE_NO` とする。
 ワークツリーのパスは `git worktree list` で確認できる。
-以降の Phase 2（実装）および Phase 4（修正）では、このワークツリー内で作業を行う。
+
+**起動元モード**（本体以外のワークツリーで起動された場合）: `git worktree add` は実行せず、起動元のワークツリーで作業する。
+
+1. `WORK_DIR` を `git rev-parse --show-toplevel` の出力とする
+2. `WORK_BRANCH` を `git branch --show-current` の出力とする
+3. 2 の出力が空（detached HEAD）なら `git switch -c impl-ISSUE_NO` を実行し、`WORK_BRANCH` を `impl-ISSUE_NO` とする
+
+起動元モードでは、ワークツリーとブランチは起動元の持ち物なので、このスキルは削除しない。
+
+以降の Phase 2（実装）および Phase 4（修正）では、`WORK_DIR` 内で作業を行う。
 
 ### escalated ラベルの確保
 
@@ -120,7 +138,7 @@ Issue コメントに記録されている実装計画（見出し: `## 実装�
 #### setup エージェントを使う場合
 
 **Agent ツールを `subagent_type: "setup"` で起動**し、実装計画に基づいて環境を構築させてください。
-**ワークツリー `REPOSITORY-impl-ISSUE_NO` 内で作業すること。**
+**ワークツリー `WORK_DIR` 内で作業すること。**
 
 ```
 Agent ツール呼び出し:
@@ -138,7 +156,7 @@ Agent ツール呼び出し:
 #### implementer エージェントを使う場合
 
 **Agent ツールを `subagent_type: "implementer"` で起動**し、実装計画に基づいてコードを実装させてください。
-**ワークツリー `REPOSITORY-impl-ISSUE_NO` 内で作業すること。**
+**ワークツリー `WORK_DIR` 内で作業すること。**
 
 ```
 Agent ツール呼び出し:
@@ -160,7 +178,7 @@ Agent ツール呼び出し:
 エージェントの結果を受け取ったら:
 1. 変更内容のサマリをユーザーに提示する
 2. setup の返答の 1 行目が `人手対応待ち` であれば、Phase 2.5 以降（PR 作成・CI 監視・escalated 付与）に進まず、次を行って終了する
-   - ワークツリーとブランチを削除する（再実行時に `git worktree add -b` が成功するようにするため）
+   - 本体モードでは、ワークツリーとブランチを削除する（再実行時に `git worktree add -b` が成功するようにするため）。起動元モードでは削除せずに残す
      ```
      git worktree remove --force ../REPOSITORY-impl-ISSUE_NO
      git branch -D impl-ISSUE_NO
@@ -206,7 +224,7 @@ PO エージェントの判断を受け取ったら:
    ```
 3. PR を作成する（タイトルはコミットメッセージと同じ文字列）
    ```
-   gh pr create --head impl-ISSUE_NO --title "TITLE" --body "$(cat <<'EOF'
+   gh pr create --head WORK_BRANCH --title "TITLE" --body "$(cat <<'EOF'
    Closes #ISSUE_NO
 
    ## 変更内容
@@ -240,6 +258,7 @@ Agent ツール呼び出し:
 プロンプトには以下を含めてください:
 - PR 番号
 - CI チェックが全て通過したら squash マージすること
+- 起動元モードでは、マージ後にワークツリーを削除しないこと（ワークツリーを残す）
 - `ISSUE_URL` と見出し（CI 通過時は `## QA 結果`、CI 失敗時は `## CI 失敗 (N回目)` ※N はループ回数）を渡し、結果を **qa エージェント自身が** `gh issue comment` で記録すること
 
 #### 4b. 結果に応じた分岐
@@ -247,7 +266,7 @@ Agent ツール呼び出し:
 **CI 通過・マージ成功の場合**: Phase 5（完了報告）に進む。
 
 **CI 失敗の場合**:
-1. **Phase 2 で使用したのと同じエージェント（`setup` または `implementer`）を起動**し、ワークツリー `REPOSITORY-impl-ISSUE_NO` 内で CI 失敗の原因を修正させる
+1. **Phase 2 で使用したのと同じエージェント（`setup` または `implementer`）を起動**し、ワークツリー `WORK_DIR` 内で CI 失敗の原因を修正させる
    - プロンプトには失敗したチェック名・エラー内容を含めること
    - `ISSUE_URL` と見出し `## CI 修正 (N回目)` を渡し、修正内容を **エージェント自身が** `gh issue comment` で記録させること
 2. ワークツリー内で変更をコミット・プッシュする

@@ -38,7 +38,7 @@ model: sonnet
    - チェックが失敗した場合 → 失敗したチェック名とエラーログを `gh pr checks <PR番号>` および `gh run view <run-id> --log-failed` で取得し、詳細を報告して終了する（マージ・クリーンアップは行わない。呼び出し元が修正後に再度起動する）
 4. **マージ可能性の確認**: `gh pr view <PR番号> --json mergeable -q .mergeable` で mergeable 状態を確認する
 5. **マージの実行**: `gh pr merge <PR番号> --squash --delete-branch` でマージする
-6. **ワークツリーの削除**: マージ完了後、`git worktree remove <ワークツリーパス>` でワークツリーを削除する
+6. **ワークツリーの削除**: マージ完了後、`git worktree remove <ワークツリーパス>` でワークツリーを削除する。呼び出し元からワークツリーを残すよう指示されている場合は削除しない
 7. **メインリポジトリの最新化**: メインリポジトリで `git pull` を実行し、リモートと同期する
 8. **Issue への記録**: 呼び出し元から指定された Issue URL と見出しに従い、テンプレートに沿った内容を `gh issue comment` で記録する
 
