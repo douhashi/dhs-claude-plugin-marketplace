@@ -97,5 +97,6 @@ Orca のワーカーとして起動されたラインは、「ライン規約」
   |:--|:--|
   | Issue が CLOSED になった（`spira:do` が PR をマージした） | `succeeded` |
   | それ以外（人手対応待ちで止まった・CI 修正打ち切りで `escalated` Issue を起票した・途中で失敗した） | `failed` |
+- 前置きが 5 分ごとの heartbeat（`--type heartbeat` の生存通知）を求めていても送らず、送るのは `worker_done` だけにする（メインセッションは `check --wait` を `worker_done,escalation,question` に絞り、ラインの生存は `worker-list` の `projection.liveness` で判定するため、heartbeat は使われず通知の雑音になるだけである）
 - 前置きの `ask` は使わない。判断が要る論点は `spira:do` の PO エージェントに任せる
 - 前置きが無い（Orca のワーカーではない）ときは、この節を無視する

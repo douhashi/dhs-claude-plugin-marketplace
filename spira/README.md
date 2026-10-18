@@ -353,7 +353,7 @@ Orca の中（`ORCA_PANE_KEY` があるセッション）で autopilot を実行
 - メインセッションは Run を 1 つ作り（`run-create`）、ラインごとに `worker-start --worktree new-top-level --name impl-<N> --agent claude` で起動し、`orca worktree set --issue` で Issue を紐付ける
 - 起動したラインの claude は Orca の設定で権限確認なし（`--dangerously-skip-permissions`）で走る前提。Orca の設定で無効にしていると、ラインは許可待ちで止まる
 - ラインの終了は `orca orchestration check --wait --types "worker_done,escalation,question"` を `run_in_background` の Bash で待って知る（ポーリングのスクリプトは使わない）
-- ラインは Orca が指示の先頭に差し込む前置きのコマンドで `worker_done` を送る。Issue が CLOSED なら `succeeded`、人手対応待ち・CI 修正打ち切り（escalated）・その他は `failed`。`ask` は使わず、判断は `spira:do` の PO に任せる（`question` が届いたら、メインセッションは「自分で判断して進めよ」と返す）
+- ラインは Orca が指示の先頭に差し込む前置きのコマンドで `worker_done` を送る。Issue が CLOSED なら `succeeded`、人手対応待ち・CI 修正打ち切り（escalated）・その他は `failed`。前置きの heartbeat は送らない（生存は `projection.liveness` で判定する）。`ask` は使わず、判断は `spira:do` の PO に任せる（`question` が届いたら、メインセッションは「自分で判断して進めよ」と返す）
 - `worker_done` を受けたら `lines/N.done` を書き（`agentId`・usage は `—`、`status` は outcome、`dispatch`・`worktree` を記録）、`worker-release` でそのラインのターミナルを閉じる（ワークツリーはここでは残る）
 - 印を残さずに止まったラインは、空の待機が 3 回続いたら `worker-list` を見て、`projection.liveness` が `exited` のときだけ ⚠️ として回収する（`unverifiable` は待ち続ける）
 - 結果表の `ワークツリー` にラインが走ったワークツリーのパスが残り、⚠️ / 🆘 の報告にはそのパスが添えられる
