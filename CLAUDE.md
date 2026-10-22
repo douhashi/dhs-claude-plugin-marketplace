@@ -42,6 +42,7 @@ dhs-claude-plugin-marketplace/
 - **モックアップ**: デザインスキル（`ui-ux-pro-max` 等）を使って画面ごとのモックアップをアーティファクトで提案し、承認後に `spira:update-doc` で `docs/mockups/` のモックアップと `docs/development/` のデザインシステム・ビジュアライゼーションのドキュメントを作成・更新するスキル（`spira:mockup`）。未コミットの変更の確認、画面・対象デバイスの質問、方向性の選択、提案の承認は `AskUserQuestion` で聞く
 - **Issue 作成**: 作成予定 Issue を一覧表で提示し、`AskUserQuestion` で承認を得てから起票するスキル（`spira:create-issue`）。Issue どうしの依存は既存の Open Issue とも照合し、GitHub の Blocked by で設定する。ロードマップには触れない
 - **ロードマップ整備**: ロードマップのチェック状態・完了行のずれを直し、未記載の Open Issue を載せるかどうか・どこに載せるかをユーザーと決めて、それぞれ PR→マージまで行うスキル（`spira:sync-roadmap`）。載せるかどうか・位置は Issue ごとに `AskUserQuestion` で聞く
+- **解説**: 自然言語の質問に対して、コード・テスト・ドキュメントを調査し、読んでも確定しないことは実際に動かして確かめ、事実だけを図解中心の解説ページ（アーティファクト）で提示するスキル（`spira:explain`）。図とページの見た目に `diagram-design` と `ui-ux-pro-max` を使い、入っていなければユーザースコープへの導入と再起動を `AskUserQuestion` で提案する。載せる情報量には上限を設ける
 - **フィードバック**: フィードバックの内容を確認・調査し、起票が必要なら `spira:create-issue` で Issue を起票するスキル（`spira:request`）。画面の変更を伴う観点は、起票の前に `spira:mockup` でモックアップを提案し、承認後に PR→マージする
 - **ドキュメント更新**: ドキュメントを更新し、PR 作成から CI 通過後のマージまで行うスキル（`spira:update-doc`）
 - **設計判断**: コードベースとドキュメントを調査し、PO視点で設計判断を下すスキル

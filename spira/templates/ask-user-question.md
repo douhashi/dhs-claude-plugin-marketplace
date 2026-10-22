@@ -1,6 +1,6 @@
 # テンプレート: 承認・選択の問い（AskUserQuestion）
 
-- **書き手**: create-issue / sync-roadmap / mockup / architect / brainstorming スキル
+- **書き手**: create-issue / sync-roadmap / mockup / architect / brainstorming / explain スキル
 - **用途**: ユーザーの承認・選択を待つ箇所で、`AskUserQuestion` ツールに載せる問いの共通規則
 - **各スキルの問い**: 問いの文・選択肢・回答ごとの行動は、各スキルのテンプレートの「問い」の節が定める。この文書はその前提となる規則だけを定める
 

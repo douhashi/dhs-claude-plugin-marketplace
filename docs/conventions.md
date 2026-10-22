@@ -54,6 +54,12 @@ dhs-claude-plugin-marketplace/
 │   │   │   └── SKILL.md
 │   │   ├── do/
 │   │   │   └── SKILL.md
+│   │   ├── explain/
+│   │   │   ├── SKILL.md
+│   │   │   └── templates/
+│   │   │       ├── dependencies.md
+│   │   │       ├── facts.md
+│   │   │       └── page.md
 │   │   ├── implement/
 │   │   │   └── SKILL.md
 │   │   ├── pick/
