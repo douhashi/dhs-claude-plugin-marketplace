@@ -29,6 +29,7 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, Skill, 
 - ダミーの文言に `Lorem ipsum` や `テキスト` などの仮置きを使うことは禁止。プロダクトで実際に表示する文言を書く
 - 独自の略語・造語・比喩で語ることは禁止
 - 質問・選択・承認を本文のテキストで求めてターンを終えることは禁止。[templates/proposal.md](templates/proposal.md) の「問い」を `AskUserQuestion` で出す（共通規則は `${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md`）
+- 判断材料（表・提案・URL・質問の背景）を本文に出していない応答で `AskUserQuestion` を呼ぶことは禁止（`${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` の「判断材料を出さずに呼ばない」）
 
 Phase 4 のデザインスキルと Phase 9 の `spira:update-doc` は**同じセッションに指示が読み込まれる**（サブエージェントではない）。
 呼び出したあとは、読み込まれた手順に従って自分で調査・編集・`gh` コマンドを実行する。呼び出しただけで完了したことにしない。

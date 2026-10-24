@@ -32,6 +32,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 - 承認を求める段階で本文の全文を提示することは禁止（ユーザーが求めた Issue の分だけ提示する）
 - 作成予定 Issue 一覧の表の外に、「先に決着が必要な論点」「既存の Open Issue との関係」を超える説明を書くことは禁止
 - 承認を本文のテキストで求めてターンを終えることは禁止。承認は `AskUserQuestion` で求める
+- 判断材料（表・提案・URL・質問の背景）を本文に出していない応答で `AskUserQuestion` を呼ぶことは禁止（`${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` の「判断材料を出さずに呼ばない」）
 - 既存の Open Issue との依存を確かめずに作成予定 Issue 一覧を提示することは禁止
 - ファイルの作成・書き換えは禁止（`.tmp/` 配下の投稿用一時ファイルを除く）
 - ロードマップの変更・ロードマップへの追記の提案は禁止（`spira:sync-roadmap` の責務）

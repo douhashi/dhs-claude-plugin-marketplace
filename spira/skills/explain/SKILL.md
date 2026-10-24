@@ -28,6 +28,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, Edit, Skill, Artifact, ArtifactCom
 - 確かめるための実行で、外部に作用する操作（push・デプロイ・外部 API への書き込み・共有環境の DB の変更・メール送信など）をすることは禁止
 - 情報量の上限（[templates/page.md](templates/page.md) の「情報量の上限」）を超えるページを公開することは禁止
 - 質問・選択を本文のテキストで求めてターンを終えることは禁止。`AskUserQuestion` で出す（共通規則は `${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md`）
+- 判断材料（表・提案・URL・質問の背景）を本文に出していない応答で `AskUserQuestion` を呼ぶことは禁止（`${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` の「判断材料を出さずに呼ばない」）
 
 Phase 1 と Phase 7 で呼び出すスキルは**同じセッションに指示が読み込まれる**（サブエージェントではない）。
 呼び出したあとは、読み込まれた手順に従って自分で作業する。呼び出しただけで完了したことにしない。
