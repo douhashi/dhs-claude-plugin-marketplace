@@ -437,6 +437,8 @@ spira/
 │   │   ├── SKILL.md
 │   │   └── templates/     # 未記載 Issue の一覧のテンプレート
 │   └── update-doc/        # ドキュメント更新・PR・マージ
+├── hooks/
+│   └── hooks.json         # PreToolUse(AskUserQuestion) で判断材料の有無を検査する
 ├── agents/
 │   ├── planner.md         # 計画エージェント
 │   ├── implementer.md     # 実装エージェント
@@ -459,7 +461,8 @@ spira/
 │   └── completion-report.md
 ├── scripts/
 │   ├── clean-line.sh      # 中断・失敗したラインの impl-N（worktree・ブランチ・未マージ PR）を片付ける。Orca の */impl-N はワークツリーを残して既定ブランチに戻す（autopilot / orchestrator 共通）
-│   └── finish-line.sh     # 完了した Orca のラインのワークツリー impl-N を Orca の登録ごと削除し、ブランチ */impl-N をローカル・リモートとも消す（orchestrator）
+│   ├── finish-line.sh     # 完了した Orca のラインのワークツリー impl-N を Orca の登録ごと削除し、ブランチ */impl-N をローカル・リモートとも消す（orchestrator）
+│   └── check-ask-material.sh # 判断材料を本文に出さずに AskUserQuestion を呼んだら拒否するフック
 └── README.md
 ```
 
@@ -487,6 +490,7 @@ PO 判断の反映や CI 修正は**差分のみ**を記録し、実装計画・
 
 brainstorming・create-issue・sync-roadmap・mockup・architect・explain は、ユーザーの承認・選択を待つ箇所で、表や提案を本文に出したうえで問いだけを `AskUserQuestion` で聞きます。
 ダイアログには問いと選択肢しか出ないため、判断材料を本文に出していない応答では `AskUserQuestion` を呼びません。
+これはプロンプトの規則だけでは守られなかった（表を思考の中だけで作って問いを出す）ため、`PreToolUse` フック（`hooks/hooks.json` → `scripts/check-ask-material.sh`）で強制しています。直前に本文のテキスト（空白を除いて 20 字以上。`SPIRA_ASK_MIN_CHARS` で変更可）が無い `AskUserQuestion` の呼び出しは拒否され、本文を書いてから呼び直すよう指示が返ります。フックは spira のスキル以外の `AskUserQuestion` にも効きます。
 本文のテキストで聞いてターンを終えると、Orca は返事待ちのペインを作業を終えたペイン（`done`）と区別できないためです。`AskUserQuestion` の呼び出し中は `waiting`（Needs You）と表示されます。Orca の外でも聞き方は同じです。
 
 選択肢に無い答え（修正指示など）は `Other` に書きます。各スキルは、それを従来の修正指示と同じく扱います（表の作り直し・再提示など）。
