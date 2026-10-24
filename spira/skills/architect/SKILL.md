@@ -33,6 +33,7 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, Skill
 - 提案に載せない要素を調べることは禁止。追加モードでは既存の要素を調べ直さない
 - 独自の略語・造語・比喩で語ることは禁止
 - 質問・承認を本文のテキストで求めてターンを終えることは禁止。[templates/proposal.md](templates/proposal.md) の「問い」を `AskUserQuestion` で出す（共通規則は `${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md`）
+- 判断材料（表・提案・URL・質問の背景）を本文に出していない応答で `AskUserQuestion` を呼ぶことは禁止（`${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` の「判断材料を出さずに呼ばない」）
 
 Phase 8・Phase 9 の作業は `spira:update-doc` / `spira:create-issue` に委譲する。
 両スキルは**同じセッションに指示が読み込まれる**（サブエージェントではない）ため、
