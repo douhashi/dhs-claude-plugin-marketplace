@@ -84,7 +84,7 @@ Claude の Stop / Notification を hailer の broker（`POST /announce`）へ渡
 - **コードとドキュメントの同期**: スキル・エージェント・フック等を追加・変更・削除した場合は、対応する `docs/` 配下のドキュメントも必ず同時に更新する。コードだけ変更してドキュメントを放置しない。
 - **計画時のドキュメント更新**: 実装計画を立てる際は、影響するドキュメントの更新タスクを必ず計画に含める。
 - **Issue 記述はテンプレートに従う**: Issue 本文・コメントの書式と字数上限は `spira/templates/` が単一ソース。スキル・エージェント本文に書式を直書きしない。
-- **承認・選択は `AskUserQuestion` で聞く**: ユーザーの承認・選択を待つ箇所では、表や提案を本文に出し、問いだけを `AskUserQuestion` に載せる。判断材料を本文に出していない応答で `AskUserQuestion` を呼ばない。問いの共通規則は `spira/templates/ask-user-question.md` が単一ソース
+- **承認・選択は `AskUserQuestion` で聞く**: ユーザーの承認・選択を待つ箇所では、表や提案を本文に出し、問いだけを `AskUserQuestion` に載せる。問いの共通規則は `spira/templates/ask-user-question.md` が単一ソース
 - **スキルの出力もテンプレートに従う**: 特定スキルでしか使わない出力書式は `spira/skills/<skill>/templates/` に置き、SKILL.md からは相対リンクで参照する。SKILL.md 本文に書式を直書きしない。
 
 ## 開発

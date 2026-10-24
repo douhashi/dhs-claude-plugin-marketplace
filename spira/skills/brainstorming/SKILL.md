@@ -40,7 +40,6 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, Skill
 - **Phase 7 に入る前に GitHub Issue を作成することは禁止**
 - ユーザーの確認なしに Phase 7 以降へ進むことは禁止
 - Phase 1 の未コミットの変更の確認、Phase 3 の質問、Phase 4 の順序の確認、Phase 5 の案の選択と結論の確認、Phase 7・8 の確認を本文のテキストで求めてターンを終えることは禁止。各テンプレートの「問い」を `AskUserQuestion` で出す（共通規則は `${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md`）。Phase 5 の掘り下げの質問だけは本文に書く
-- 判断材料（表・提案・URL・質問の背景）を本文に出していない応答で `AskUserQuestion` を呼ぶことは禁止（`${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` の「判断材料を出さずに呼ばない」）
 
 Phase 7・Phase 8 の作業は `spira:create-issue` / `spira:update-doc` に委譲する。
 両スキルは**同じセッションに指示が読み込まれる**（サブエージェントではない）ため、

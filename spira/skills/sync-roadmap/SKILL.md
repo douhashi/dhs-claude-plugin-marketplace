@@ -24,7 +24,6 @@ allowed-tools: Read, Grep, Glob, Bash, Edit, Write
 - ユーザーが載せると決めていない Issue をロードマップに追加することは禁止
 - 未記載 Issue を載せる PR を、一覧を出す前、またはユーザーの返答を待たずに作成・マージすることは禁止
 - 載せるかどうか・位置の決定を本文のテキストで求めてターンを終えることは禁止。`AskUserQuestion` で聞く
-- 判断材料（表・提案・URL・質問の背景）を本文に出していない応答で `AskUserQuestion` を呼ぶことは禁止（`${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` の「判断材料を出さずに呼ばない」）
 - `roadmap-pr.md` の「整合の規則」に無いチェック状態の変更・行の移動は禁止
 - 未完了行どうしの並べ替え・既存行の文言の書き換えは禁止
 - Issue 側（本文・ラベル・状態）の変更は禁止

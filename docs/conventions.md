@@ -129,7 +129,6 @@ dhs-claude-plugin-marketplace/
   - 複数スキル／エージェントで共有する書式（Issue 本文・コメント・ロードマップ PR）は `spira/templates/` に置き、`${CLAUDE_PLUGIN_ROOT}/templates/<name>.md` で参照する
   - 単一スキル専用の書式は `spira/skills/<skill>/templates/` に置き、相対 markdown リンクで参照する
 - ユーザーの承認・選択を待つ箇所は、表や提案を本文に出し、問いだけを `AskUserQuestion` で聞く。本文のテキストで聞いてターンを終えない
-  - 判断材料（表・提案・URL・質問の背景）を本文に出していない応答で `AskUserQuestion` を呼ばない。ダイアログには問いと選択肢しか出ないため
   - 問いの共通規則（問いの数・選択肢の数・`header` の長さ・推奨の置き方・`Other` の扱い）と、複数スキルで同じ形になる問い（未コミットの変更の確認）は `spira/templates/ask-user-question.md` に置く
   - 各スキルの問いの文・選択肢・回答ごとの行動は、そのスキルのテンプレートに「問い」の節として置く
   - `allowed-tools` に `AskUserQuestion` を足さない（許可なしで使えるツールであり、足さなくても呼び出せる）

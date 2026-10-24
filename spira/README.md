@@ -485,8 +485,7 @@ PO 判断の反映や CI 修正は**差分のみ**を記録し、実装計画・
 
 ## 承認・選択の聞き方
 
-brainstorming・create-issue・sync-roadmap・mockup・architect・explain は、ユーザーの承認・選択を待つ箇所で、表や提案を本文に出したうえで問いだけを `AskUserQuestion` で聞きます。
-ダイアログには問いと選択肢しか出ないため、判断材料を本文に出していない応答では `AskUserQuestion` を呼びません。
+brainstorming・create-issue・sync-roadmap・mockup・architect は、ユーザーの承認・選択を待つ箇所で、表や提案を本文に出したうえで問いだけを `AskUserQuestion` で聞きます。
 本文のテキストで聞いてターンを終えると、Orca は返事待ちのペインを作業を終えたペイン（`done`）と区別できないためです。`AskUserQuestion` の呼び出し中は `waiting`（Needs You）と表示されます。Orca の外でも聞き方は同じです。
 
 選択肢に無い答え（修正指示など）は `Other` に書きます。各スキルは、それを従来の修正指示と同じく扱います（表の作り直し・再提示など）。
