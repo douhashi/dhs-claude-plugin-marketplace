@@ -32,8 +32,6 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, Skill
 - 置き換え（例: モノリスの分割、DB の乗り換え）に対応することは禁止。入口で案内して終了する
 - 提案に載せない要素を調べることは禁止。追加モードでは既存の要素を調べ直さない
 - 独自の略語・造語・比喩で語ることは禁止
-- 質問・承認を本文のテキストで求めてターンを終えることは禁止。[templates/proposal.md](templates/proposal.md) の「問い」を `AskUserQuestion` で出す（共通規則は `${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md`）
-- 判断材料（表・提案・URL・質問の背景）を本文に出していない応答で `AskUserQuestion` を呼ぶことは禁止（`${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` の「判断材料を出さずに呼ばない」）
 
 Phase 8・Phase 9 の作業は `spira:update-doc` / `spira:create-issue` に委譲する。
 両スキルは**同じセッションに指示が読み込まれる**（サブエージェントではない）ため、
@@ -71,7 +69,7 @@ Phase 8・Phase 9 の作業は `spira:update-doc` / `spira:create-issue` に委�
 ### Phase 1: 最新化
 
 `git status` で作業ツリーを確認し、クリーンなら既定ブランチに移動して `git pull` で最新化する。
-未コミットの変更があれば最新化せず、状況を伝えて `${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` の「未コミットの変更の確認」を `AskUserQuestion` で出し、回答に従う（指示なしに stash・破棄はしない）。
+未コミットの変更があれば最新化せず、ユーザーに状況を伝えて指示を仰ぐ（stash・破棄はしない）。
 
 ### Phase 2: モードの判定
 
@@ -86,7 +84,7 @@ Phase 8・Phase 9 の作業は `spira:update-doc` / `spira:create-issue` に委�
 | 依頼が既存の要素を別のものに替える・分ける（例: モノリスの分割、DB の乗り換え） | 置き換え → 「案内して終了」 |
 | アーキテクチャのドキュメントも既存コードも無い | 新規 |
 | アーキテクチャのドキュメントか既存コードがあり、`$ARGUMENTS` で追加する要素が分かる | 追加 |
-| アーキテクチャのドキュメントか既存コードがあり、追加する要素が分からない | [templates/proposal.md](templates/proposal.md) の「問い」の「追加する要素」を `AskUserQuestion` で出し、回答で上の行を当てはめ直す |
+| アーキテクチャのドキュメントか既存コードがあり、追加する要素が分からない | 追加したい要素を 1 文で尋ね、回答で上の行を当てはめ直す |
 
 追加モードでは、既存コードと既存のアーキテクチャのドキュメントを正とする。
 両者が食い違う場合は既存コードを正とし、食い違いを Phase 7 の提案で 1 行添える。
@@ -110,7 +108,7 @@ Phase 8・Phase 9 の作業は `spira:update-doc` / `spira:create-issue` に委�
 | 推定できない要件項目 | 進め方 |
 |:--|:--|
 | 0 | 質問せずに Phase 5 へ進む |
-| 1〜3 | [templates/proposal.md](templates/proposal.md) の「問い」の「要件の質問」に従い、`AskUserQuestion` の 1 回の呼び出しで質問し、回答を根拠にする |
+| 1〜3 | まとめて 1 回だけ質問し、回答を根拠にする |
 | 4 以上 | 「案内して終了」 |
 
 文書から読み取れることは質問しない。
@@ -147,13 +145,13 @@ Phase 5 で構成に載せた要素**だけ**を調べる。WebSearch / WebFetch
 
 ### Phase 7: 提案と承認
 
-[templates/proposal.md](templates/proposal.md) を Read し、その雛形どおりに提案する。続けて同テンプレートの「問い」の「承認」を `AskUserQuestion` で出す。
+[templates/proposal.md](templates/proposal.md) を Read し、その雛形どおりに提案する。
 
 | ユーザーの応答 | 行動 |
 |:--|:--|
-| `まとめる` | Phase 8 へ進む |
-| `Other`: 修正指示 | 必要なら Phase 5〜6 をやり直し、提案を作り直して再提示し、同じ問いを出す |
-| `見送る` | 文書化・起票をせずに Phase 11 へ進む |
+| 承認 | Phase 8 へ進む |
+| 修正指示 | 必要なら Phase 5〜6 をやり直し、提案を作り直して再提示する |
+| 見送り | 文書化・起票をせずに Phase 11 へ進む |
 
 **承認が取れるまで Phase 8 以降に進まない。**
 

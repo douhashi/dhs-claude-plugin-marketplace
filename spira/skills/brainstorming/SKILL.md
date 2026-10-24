@@ -39,8 +39,6 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash, WebSearch, WebFetch, Skill
 - **Phase 6 までの間にファイルを作成・書き換えることは禁止**。議論の途中経過をファイルに落とさない
 - **Phase 7 に入る前に GitHub Issue を作成することは禁止**
 - ユーザーの確認なしに Phase 7 以降へ進むことは禁止
-- Phase 1 の未コミットの変更の確認、Phase 3 の質問、Phase 4 の順序の確認、Phase 5 の案の選択と結論の確認、Phase 7・8 の確認を本文のテキストで求めてターンを終えることは禁止。各テンプレートの「問い」を `AskUserQuestion` で出す（共通規則は `${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md`）。Phase 5 の掘り下げの質問だけは本文に書く
-- 判断材料（表・提案・URL・質問の背景）を本文に出していない応答で `AskUserQuestion` を呼ぶことは禁止（`${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` の「判断材料を出さずに呼ばない」）
 
 Phase 7・Phase 8 の作業は `spira:create-issue` / `spira:update-doc` に委譲する。
 両スキルは**同じセッションに指示が読み込まれる**（サブエージェントではない）ため、
@@ -53,7 +51,7 @@ Phase 7・Phase 8 の作業は `spira:create-issue` / `spira:update-doc` に委�
 
 議論の材料が古くならないよう、議論開始前に必ず実行する。
 
-- `git status` で作業ツリーを確認。未コミット・未 push の変更があれば状況を伝えて `${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` の「未コミットの変更の確認」を `AskUserQuestion` で出し、回答に従う（勝手に stash・破棄しない）
+- `git status` で作業ツリーを確認。未コミット・未 push の変更があればユーザーに状況を伝えて指示を仰ぐ（勝手に stash・破棄しない）
 - 現在のブランチが `main` でなければ `git switch main` で移動
 - `git pull` で最新化
 
@@ -69,7 +67,7 @@ Phase 7・Phase 8 の作業は `spira:create-issue` / `spira:update-doc` に委�
 
 ### Phase 3: 不明点の質問
 
-情報収集で埋まらなかった不明点があれば、`templates/dialogue.md` の「問い」の「不明点の質問」に従い、`AskUserQuestion` の 1 回の呼び出しで質問する。
+情報収集で埋まらなかった不明点があれば、ユーザーに質問する。
 
 - 質問は最大 3 つ。それ以上あるなら、まず論点として扱えないか検討する
 - 不明点がなければこの Phase を飛ばす
@@ -82,18 +80,18 @@ Phase 7・Phase 8 の作業は `spira:create-issue` / `spira:update-doc` に委�
 - 先頭の論点だけ `議論中`、残りは `未着手`
 - **ユーザーが言葉にしていない前提を論点として起こす**。テーマをそのまま分解しただけの表を出さない
 - **テーマの前提そのものを疑う論点があれば、それを `1` に置く**（例: そもそも作る必要があるか）
-- 出力後、同テンプレートの「問い」を `AskUserQuestion` で出し、「この順序と粒度でよいか」を確認する
+- 出力後、「この順序と粒度でよいか」をユーザーに確認する
 
 ### Phase 5: 論点を 1 つずつ議論する
 
 `templates/dialogue.md` を Read し、`議論中` の論点**だけ**を扱う。
 
-1. 論点を提示する。案には必ず 1 つ、ユーザーが言っていない案を混ぜる。続けて `templates/dialogue.md` の「問い」の「案の選択」を `AskUserQuestion` で出す
-2. ユーザーの応答を受けて掘り下げる。1 往復ごとに 600 字以内、質問は 1 つ（掘り下げの質問は本文に書く）
+1. 論点を提示する。案には必ず 1 つ、ユーザーが言っていない案を混ぜる
+2. ユーザーの応答を受けて掘り下げる。1 往復ごとに 600 字以内、質問は 1 つ
 3. ユーザーが案を出したら、同意する前に**成り立たなくなる条件を 1 文**で示す（`templates/dialogue.md` の「ユーザーの提案への応答」に従う）
 4. 「なぜそれが必要か」「誰にとって価値があるか」「無くても成り立たないか」を問う
 5. 2 回反論して合意に至らなければ、両論をテーブルに残して次に進む
-6. 合意に近づいたら結論の文案を示し、`templates/dialogue.md` の「問い」の「結論の確認」を出す。決着した、または「今回は決めない」と決まったら Phase 6 へ進む
+6. 結論が出たら、または「今回は決めない」と合意したら Phase 6 へ進む
 
 - 他の論点に話が及んだら、テーブルの該当行に反映するだけに留め、その場では議論しない
 - 新しい論点が出たら、テーブルに `未着手` の行として追加する
@@ -112,7 +110,7 @@ Phase 7・Phase 8 の作業は `spira:create-issue` / `spira:update-doc` に委�
 起票しないと番号が確定しないためである。ロードマップへの反映は `spira:sync-roadmap` の責務であり、このスキルでは扱わない。
 
 1. `templates/summary.md` を Read し、議論の結論をユーザーに提示する
-2. 議論の結論を Issue 化するかどうかを、`templates/summary.md` の「問い」の「Issue 化の確認」で `AskUserQuestion` を使って確認する
+2. 議論の結論を Issue 化するかどうかをユーザーに確認する（1 文で聞く）
 3. 承認されたら Skill ツールで `spira:create-issue` を呼び出す
 4. **読み込まれた create-issue の手順を最後まで実行する**。一覧表の提示 → 承認 → 起票 → 報告まで自分で行う
 5. 起票した Issue の**番号と URL を控える**。Phase 8 でドキュメントに書き込む
@@ -123,7 +121,7 @@ Phase 7・Phase 8 の作業は `spira:create-issue` / `spira:update-doc` に委�
 ### Phase 8: ドキュメント更新
 
 1. `templates/summary.md` の「更新対象ドキュメント」に、Phase 7 で起票した Issue 番号を差し込む
-2. 「この内容でドキュメントを更新してよいか」を、`templates/summary.md` の「問い」の「ドキュメント更新の確認」で `AskUserQuestion` を使って確認する。**承認が取れるまで先に進まない**
+2. 「この内容でドキュメントを更新してよいか」を確認する。**承認が取れるまで先に進まない**
 3. 承認されたら Skill ツールで `spira:update-doc` を呼び出す。引数には更新対象ファイルと反映内容を渡す
 4. **読み込まれた update-doc の手順を最後まで実行する**。ブランチ作成 → 編集 → PR 作成 → CI 監視 → マージまで自分で行う
 5. マージ結果をユーザーに報告する
@@ -140,7 +138,6 @@ Phase 7 を飛ばした場合は、Issue 番号を含めずに更新する。
 | 論点テーブル | [templates/discussion-points.md](templates/discussion-points.md) | — |
 | 1 論点の提示・議論 | [templates/dialogue.md](templates/dialogue.md) | 600 字／応答 |
 | 議論の結論 | [templates/summary.md](templates/summary.md) | 800 字 |
-| 承認・選択の問いの共通規則 | `${CLAUDE_PLUGIN_ROOT}/templates/ask-user-question.md` | — |
 
 上記 3 つの出力はテキストとしてユーザーに提示するのみで、ファイルへの書き出しは行わない。
 Phase 8 のドキュメント編集は、これとは別に `spira:update-doc` の手順に従って実行する。
