@@ -382,7 +382,7 @@ Orca の中（`ORCA_PANE_KEY` があるセッション）で autopilot を実行
 - ラインの終了は `orca orchestration check --wait --types "worker_done,escalation,question"` を `run_in_background` の Bash で待って知る（ポーリングのスクリプトは使わない）
 - ラインは Orca が指示の先頭に差し込む前置きのコマンドで `worker_done` を送る。Issue が CLOSED なら `succeeded`、人手対応待ち・CI 修正打ち切り（escalated）・その他は `failed`。前置きの heartbeat は送らない（生存は `projection.liveness` で判定する）。`ask` は使わず、判断は `spira:do` の PO に任せる（`question` が届いたら、メインセッションは「自分で判断して進めよ」と返す）
 - `worker_done` を受けたら `lines/N.done` を書き（`agentId`・usage は `—`、`status` は outcome、`dispatch`・`worktree` を記録）、`worker-release` でそのラインのターミナルを閉じる（ワークツリーはここでは残る）
-- 印を残さずに止まったラインは、空の待機が 3 回続いたら `worker-list` を見て、`projection.liveness` が `exited` のときだけ ⚠️ として回収する（`unverifiable` は待ち続ける）
+- 印を残さずに止まったラインは、空の待機が 2 回続いたら `worker-list` を見て、`projection.liveness` が `exited` のときだけ ⚠️ として回収する（`unverifiable` は待ち続ける）
 - 結果表の `ワークツリー` にラインが走ったワークツリーのパスが残り、⚠️ / 🆘 の報告にはそのパスが添えられる
 - ⚠️ の再試行はワークツリーを残して使い回す。`clean-line.sh` は `*/impl-N` の Open PR を閉じ、ワークツリーを既定ブランチに `reset --hard` で戻す。
   メインセッションは表示名 `impl-<N>` のワークツリーがあれば `--worktree name:impl-<N>` で起動する（そのため失敗したラインの作業内容はローカルからも消える）

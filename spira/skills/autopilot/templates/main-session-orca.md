@@ -41,7 +41,7 @@
 待機は `run_in_background: true` の Bash で走らせ、その完了通知を待つ。待機中の Bash が既に走っていれば、新しく走らせずにその通知を待つ。
 
 ```bash
-orca orchestration check --wait --types "worker_done,escalation,question" --timeout-ms 900000 --json 2>/dev/null
+orca orchestration check --wait --types "worker_done,escalation,question" --timeout-ms 1800000 --json 2>/dev/null
 ```
 
 返ってきたバッチ（FIFO で、種類を問わず全メッセージが入る）の**メッセージをすべて**、種類ごとに次のように処理する。
@@ -57,7 +57,7 @@ orca orchestration check --wait --types "worker_done,escalation,question" --time
 `.done` を 1 つでも書いていれば 1 に戻り、書いていなければ待機の完了通知を待つ。
 
 タイムアウト・空のバッチは区切りであって失敗ではない。`--ack` を付けずに待機を走らせ直す。
-空が 3 回続いたら、`orca orchestration worker-list --run <Run の ID> --json` で走行中のラインの `projection.liveness` を見る。
+空が 2 回続いたら、`orca orchestration worker-list --run <Run の ID> --json` で走行中のラインの `projection.liveness` を見る。
 
 | liveness | 処理 |
 |:--|:--|
