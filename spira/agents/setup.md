@@ -60,6 +60,7 @@ model: inherit
 |:--|:--|
 | `## 実装内容` | `${CLAUDE_PLUGIN_ROOT}/templates/implementation-result.md`（初回） |
 | `## CI 修正 (N回目)` | `${CLAUDE_PLUGIN_ROOT}/templates/implementation-result.md`（差分版） |
+| `## 既定ブランチへの追従 (M回目)` | `${CLAUDE_PLUGIN_ROOT}/templates/implementation-result.md`（差分版） |
 | `## 人手対応待ち` | `${CLAUDE_PLUGIN_ROOT}/templates/blocked.md`（Infisical の有無で版を選ぶ） |
 
 共通ルール `${CLAUDE_PLUGIN_ROOT}/templates/_rules.md` もテンプレートと併せて必ず読むこと。

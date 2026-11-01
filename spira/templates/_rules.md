@@ -14,6 +14,7 @@ spira が GitHub Issue に書き込む本文・コメントすべてに適用す
 | `## 実装内容` | [implementation-result.md](./implementation-result.md) | 1,200 字 |
 | `## 設計判断に基づく修正` | [implementation-result.md](./implementation-result.md)（差分版） | 500 字 |
 | `## CI 修正 (N回目)` | [implementation-result.md](./implementation-result.md)（差分版） | 500 字 |
+| `## 既定ブランチへの追従 (M回目)` | [implementation-result.md](./implementation-result.md)（差分版） | 500 字 |
 | `## QA 結果` / `## CI 失敗 (N回目)` | [qa-result.md](./qa-result.md) | 300 字 |
 | `## PR 作成` | — | 200 字 |
 | `## CI 修正打ち切り` | — | 300 字 |
