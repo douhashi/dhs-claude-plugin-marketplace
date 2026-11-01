@@ -50,6 +50,7 @@ dhs-claude-plugin-marketplace/
 - **計画策定**: GitHub Issue に基づいて実装計画を作成するスキル（`spira:plan`）
 - **実装サイクル**: 計画済み Issue を入力に、実装・PR 作成・CI 監視を自律実行するスキル（`spira:implement`）
 - **一気通貫サイクル**: 計画から PR マージまでを単一フローで実行するスキル（`spira:do`）
+- **スパイク**: テーマ（引数・Issue URL・会話の流れ）から仮実装で確かめる問いを立て、ワークツリーで仮実装してドラフト PR（`spike` ラベル）まで送り、問いへの答え（実現可・条件付きで実現可・実現不可・未確認）と発見・課題を報告して、現 PR をそのまま本実装にする（採用）・捨てて `spira:create-issue` で本実装を Issue 化する（作り直し）・見送るのいずれかを推奨付きで提案するスキル（`spira:spike`）。PR は自分でマージせず、承認の前に PR を動かさない
 - **次タスク抽出**: 対応すべき Issue を 1 件抽出するスキル（`spira:pick`）
 - **自走開発**: 前提条件（必要な環境変数と、その置き場所の Infisical または `.env`。Infisical は `.infisical.json` のデフォルトブランチへのコミットまで求める。必要なシークレットが 0 件なら置き場所の検査は飛ばす）を検査し、前回のループで中断したラインの `impl-N`（worktree・ブランチ・未マージ PR）を片付け、`spira:sync-roadmap` でロードマップのずれを直してロードマップ未記載の Issue を一緒に整理してからループ開発のコンテキストを `.tmp` に書き出すスキル（`spira:autopilot`）と、それに従い `spira:pick` → `spira:do` を最大 5 ライン（`--lines` で変更可）で回し、ループ中に見つかったシステムを壊す不具合のロードマップへの追加と、ループ終了時のロードマップの整合修正（PR→マージ）を行いながら表で進捗を報告するエージェント（`spira:orchestrator`）。ラインは orchestrator の報告の `LAUNCH:` 行を受けてメインセッションが起動するバックグラウンドの `general-purpose` サブエージェントで（`bypassPermissions` 前提）、完了通知を `lines/N.done` に書いて回収し、会話記録 `subagents/agent-<agentId>.jsonl` で事後調査できる。Orca 管理下（`ORCA_PANE_KEY` あり）では、ラインを `orca orchestration` の監督つきワーカーとして Orca のワークツリー `impl-<N>` で起動し、`worker_done`（`succeeded` / `failed`）か `exited` を `check --wait` で受けて `lines/N.done` を書く。✅ のラインは回収時とループ終了時にワークツリーとブランチ（ローカル・リモート）を削除し、⚠️ の再試行はそのワークツリーを既定ブランチに戻して使い回す
 - **タスク管理**: `gh project` を操作するスキル群
