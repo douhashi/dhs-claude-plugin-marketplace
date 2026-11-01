@@ -77,6 +77,12 @@ dhs-claude-plugin-marketplace/
 │   │   │   ├── SKILL.md
 │   │   │   └── templates/
 │   │   │       └── investigation-report.md
+│   │   ├── spike/
+│   │   │   ├── SKILL.md
+│   │   │   └── templates/
+│   │   │       ├── notes.md
+│   │   │       ├── pr.md
+│   │   │       └── report.md
 │   │   ├── sync-roadmap/
 │   │   │   ├── SKILL.md
 │   │   │   └── templates/
@@ -156,6 +162,7 @@ Conventional Commits スタイル（`<type>(<scope>): <説明>`）で書く。
 - `type` の一覧と使い分けは `spira/skills/create-issue/templates/issue-plan.md` の「タイトルの書式」節が単一ソース
 - implement / do が作るコミット・PR の書式は `spira/templates/commit-and-pr.md` が単一ソース
 - 実装コミットと PR タイトルは、元 Issue のタイトルをそのまま使う
+- spike が作るスパイク PR だけは `type` を `spike` に固定し、マージするかが未定であることを示す。書式は `spira/skills/spike/templates/pr.md` が単一ソース
 
 ## テスト
 
