@@ -123,6 +123,35 @@ gh label list --repo OWNER/REPOSITORY --search escalated --json name --jq '.[].n
   gh label create escalated --repo OWNER/REPOSITORY --color d73a4a --description "人手による対応が必要"
 ```
 
+### 既定ブランチへの追従
+
+PR のブランチに既定ブランチの変更を取り込む。Phase 3 の PR 作成前と、Phase 4 で qa が `要追従` を返したときに行う。
+並行して進む他の Issue の PR が先にマージされると、この PR はコンフリクトして CI が起動しなくなる（GitHub はコンフリクトのある PR でワークフローを起動しない）ため、マージ前に追いつかせる。
+
+rebase ではなく merge で取り込む。push 済みのブランチを書き換えず force push が要らないためで、PR は squash マージするので履歴にも残らない。
+
+1. 既定ブランチ名を取得する
+   ```
+   gh repo view OWNER/REPOSITORY --json defaultBranchRef --jq .defaultBranchRef.name
+   ```
+2. `WORK_DIR` 内で取り込む。**コマンドは必ず分けて実行すること。**
+   1. `git fetch origin`
+   2. `git merge --no-edit origin/DEFAULT_BRANCH`
+3. 結果で分岐する
+
+   | 結果 | 行動 |
+   |:--|:--|
+   | `Already up to date.` | 何もしない |
+   | コンフリクトなく取り込めた | PR 作成後なら `git push` する。PR 作成前は push しない（Phase 3 で push する）。検証は CI に任せる |
+   | コンフリクトした | `git merge --abort` で戻し、Phase 2 と同じエージェント（`setup` または `implementer`）に解消させる |
+
+エージェントへのプロンプトには以下を含めること。
+
+- `WORK_DIR` で `git fetch origin` と `git merge origin/DEFAULT_BRANCH` をやり直し、コンフリクトを解消すること
+- 既定ブランチ側の変更は他の Issue で入ったものなので消さず、この Issue の変更と両立させること
+- テストと静的解析を通してからマージコミットを作ること。PR 作成後なら `git push` まで行うこと
+- `ISSUE_URL` と見出し `## 既定ブランチへの追従 (M回目)`（Phase 3 では `## 既定ブランチへの追従 (PR 作成前)`）を渡し、解消内容を **エージェント自身が** `gh issue comment` で記録すること
+
 ## 手順
 
 ### Phase 2: 実装（implementer or setup エージェント）
@@ -213,7 +242,7 @@ PO エージェントの判断を受け取ったら:
 コミットメッセージ・PR タイトル・PR 本文の書式は
 `${CLAUDE_PLUGIN_ROOT}/templates/commit-and-pr.md` を Read して従うこと。
 
-1. ワークツリー内で変更をコミットする（未コミットの変更がある場合）
+1. ワークツリー内で変更をコミットする（未コミットの変更がある場合）。続けて「既定ブランチへの追従」を行い、実装中に進んだ既定ブランチを取り込む
    ```
    git add -A
    git commit -m "TITLE"          # 元 Issue のタイトルをそのまま使う
@@ -242,7 +271,7 @@ PR: <作成された PR の URL>"
 
 ### Phase 4: QA・CI 修正ループ
 
-以下の手順を **最大 3 回** 繰り返してください。
+CI 修正の回数 N と、既定ブランチへの追従の回数 M を別々に数え（どちらも初期値 0。Phase 3 の追従は数えない）、それぞれ **最大 3 回** まで以下を繰り返してください。
 
 #### 4a. CI チェック監視（qa エージェント）
 
@@ -259,13 +288,20 @@ Agent ツール呼び出し:
 - PR 番号
 - CI チェックが全て通過したら squash マージすること
 - 本体モードでは、マージ後に削除するワークツリーとして `WORK_DIR`（`../REPOSITORY-impl-ISSUE_NO`）のパスを渡すこと。起動元モードでは削除対象を渡さないこと（qa は渡されたパスだけを削除する）
-- `ISSUE_URL` と見出し（CI 通過時は `## QA 結果`、CI 失敗時は `## CI 失敗 (N回目)` ※N はループ回数）を渡し、結果を **qa エージェント自身が** `gh issue comment` で記録すること
+- `ISSUE_URL` と見出し（CI 通過時・マージ不可時は `## QA 結果`、CI 失敗時は `## CI 失敗 (N回目)` ※N は CI 修正の回数 + 1）を渡し、結果を **qa エージェント自身が** `gh issue comment` で記録すること
+- 返答の 1 行目を `CI 通過` / `CI 失敗` / `要追従` / `マージ不可` のいずれかにすること
 
 #### 4b. 結果に応じた分岐
 
-**CI 通過・マージ成功の場合**: Phase 5（完了報告）に進む。
+qa の返答の 1 行目で分岐する。
 
-**CI 失敗の場合**:
+**`CI 通過` の場合**: Phase 5（完了報告）に進む。
+
+**`要追従` の場合**: 追従の回数 M を 1 増やす。3 を超えたら下の「打ち切り」を行う。超えなければ「既定ブランチへの追従」（見出しの M はこの回数）を行い、4a に戻る。CI 修正の回数 N は増やさない。
+
+**`マージ不可` の場合**: 修正では解消できないため、ループせずに下の「打ち切り」を行う。
+
+**`CI 失敗` の場合**: CI 修正の回数 N を 1 増やす。3 を超えたら下の「打ち切り」を行う。
 1. **Phase 2 で使用したのと同じエージェント（`setup` または `implementer`）を起動**し、ワークツリー `WORK_DIR` 内で CI 失敗の原因を修正させる
    - プロンプトには失敗したチェック名・エラー内容を含めること
    - `ISSUE_URL` と見出し `## CI 修正 (N回目)` を渡し、修正内容を **エージェント自身が** `gh issue comment` で記録させること
@@ -277,7 +313,8 @@ Agent ツール呼び出し:
    ```
 3. 4a に戻り、再度 qa エージェントで CI チェックを監視する
 
-**3 回修正しても CI が通らない場合**: 修正を打ち切り、以下を実行して終了する。
+**打ち切り**: N か M が 3 を超えた場合、または `マージ不可` の場合は、以下を実行して終了する。
+理由（CI 修正の上限・追従の上限・マージ不可）は、打ち切りコメントとエスカレーション Issue の書き分けに使う。
 
 1. 元 Issue に打ち切りコメントを記録（オーケストレータが直接記録）。
    `${CLAUDE_PLUGIN_ROOT}/templates/completion-report.md` の `## CI 修正打ち切り` 節に従い、300 字以内で記録する。
@@ -292,7 +329,7 @@ Agent ツール呼び出し:
    ```
 2. `escalated` ラベル付きのフォローアップ Issue を起票する。
    タイトルは `${CLAUDE_PLUGIN_ROOT}/templates/completion-report.md` の「エスカレーション Issue のタイトル」節に従い、
-   Conventional Commits スタイル（`fix(<scope>): #ISSUE_NO の CI 失敗を解消する`）で書く。
+   Conventional Commits スタイル（`fix(<scope>): #ISSUE_NO の CI 失敗を解消する`）で書く。打ち切りの理由が追従の上限・マージ不可でも同じタイトルにする（autopilot がこのタイトルでエスカレーションを見分けるため）。
    本文は同ファイルの「エスカレーション Issue の本文」節に従い、**500 字以内**とする。
    ```
    mkdir -p .tmp

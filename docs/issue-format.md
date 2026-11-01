@@ -21,7 +21,7 @@ spira が GitHub Issue に書き込む本文・コメントは、書式と記述
 | `plan-revision.md` | `## 計画の修正` | 500 字 |
 | `design-decision.md` | `## 設計判断` | 800 字／論点 |
 | `implementation-result.md` | `## 実装内容` | 1,200 字 |
-| `implementation-result.md`（差分版） | `## 設計判断に基づく修正` / `## CI 修正 (N回目)` | 500 字 |
+| `implementation-result.md`（差分版） | `## 設計判断に基づく修正` / `## CI 修正 (N回目)` / `## 既定ブランチへの追従 (M回目)` | 500 字 |
 | `qa-result.md` | `## QA 結果` / `## CI 失敗 (N回目)` | 300 字 |
 | `completion-report.md` | `## PR 作成` / `## 完了報告` / `## CI 修正打ち切り` / エスカレーション Issue 本文 | 200 / 500 / 300 / 500 字 |
 | `blocked.md` | `## 人手対応待ち` | 300 字 |
@@ -47,7 +47,7 @@ Issue のタイトルは Conventional Commits スタイル（`<type>(<scope>): <
 
 implement / do が CI 修正打ち切り時に起票するエスカレーション Issue も同じ書式に従う。
 こちらのタイトルは `spira/templates/completion-report.md` の「エスカレーション Issue のタイトル」節が
-単一ソースで、`fix(<scope>): #<元 Issue 番号> の CI 失敗を解消する` に固定する。
+単一ソースで、`fix(<scope>): #<元 Issue 番号> の CI 失敗を解消する` に固定する（既定ブランチへの追従の上限・マージ不可で打ち切ったときも同じ）。
 
 - 承認前に `gh issue create` を実行しない
 - 承認段階で本文の全文は提示しない。ユーザーが求めた Issue の分だけ `issue-body.md` に沿って提示する
@@ -74,7 +74,7 @@ SKILL.md で `@path` によるインポートは使えない（`@` は CLAUDE.md
 |:--|:--|:--|
 | `## 実装計画` / `## 計画の修正` | planner | エージェント自身 |
 | `## 設計判断` | po | エージェント自身 |
-| `## 実装内容` / `## 設計判断に基づく修正` / `## CI 修正 (N回目)` | implementer / setup | エージェント自身 |
+| `## 実装内容` / `## 設計判断に基づく修正` / `## CI 修正 (N回目)` / `## 既定ブランチへの追従 (M回目)` | implementer / setup | エージェント自身 |
 | `## QA 結果` / `## CI 失敗 (N回目)` | qa | エージェント自身 |
 | Issue 本文 | create-issue スキル | スキル自身 |
 | `## PR 作成` / `## 完了報告` / `## CI 修正打ち切り` / エスカレーション Issue 本文 | implement / do スキル | スキル自身 |
@@ -109,4 +109,5 @@ gh issue comment <ISSUE_URL> --body-file .tmp/spira-comment-<Issue 番号>.md
 | `## 計画の修正` | 論点 / 決定 / 計画への反映 の表 | `## 実装計画` |
 | `## 設計判断に基づく修正` | 修正したファイルと修正内容の表 | `## 実装内容` |
 | `## CI 修正 (N回目)` | 修正したファイルと修正内容の表 | `## 実装内容` |
+| `## 既定ブランチへの追従 (M回目)` | 解消したファイルと両立のさせ方の表 | `## 実装内容` |
 | `## 完了報告` | PR URL・マージ結果・変更ファイル数 | `## 実装内容` と PR の diff |
